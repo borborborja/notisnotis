@@ -324,3 +324,34 @@ body.resizing iframe { pointer-events: none; }
 .cmp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 0 1rem; }
 .cmp-grid .card { margin: 0; }
 @media (max-width: 900px) { .cmp-grid { grid-template-columns: 1fr; } }
+
+/* ---------- Sección colapsable del sidebar (Fuentes) ---------- */
+.sb-section { display: flex; flex-direction: column; }
+.sb-section-head { background: none; border: none; cursor: pointer; padding: .9rem .6rem .3rem;
+  font: inherit; font-size: .68rem; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--muted); font-weight: 700; text-align: left; display: flex; align-items: center; gap: .35rem; }
+.sb-section-head:hover { color: var(--text); }
+.sb-section-head .caret { font-size: .7rem; transition: transform .15s; }
+.sb-section:not(.collapsed) .sb-section-head .caret { transform: rotate(90deg); }
+.sb-section.collapsed .sb-section-body { display: none; }
+
+/* ---------- Story timeline ---------- */
+.story-view-switch { display: flex; align-items: center; justify-content: space-between;
+  margin-top: 1.2rem; gap: 1rem; }
+.story-view-switch h3 { margin: 0; }
+.timeline { position: relative; padding-left: 28px; margin-top: 1rem; }
+.timeline::before { content: ""; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+.tl-day { margin-bottom: 1rem; }
+.tl-day-head { font-weight: 700; font-size: .85rem; color: var(--muted); margin: 0 0 .4rem -28px;
+  padding-left: 28px; padding-right: .8rem; background: var(--panel); display: inline-block;
+  position: relative; text-transform: capitalize; }
+.tl-item { position: relative; padding: .35rem 0; display: flex; align-items: baseline;
+  gap: .4rem; flex-wrap: wrap; }
+.tl-dot { position: absolute; left: -23px; top: .55rem; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--unknown); border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--border); }
+.tl-time { color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums;
+  min-width: 3em; display: inline-block; }
+.tl-title { font-weight: 600; }
+.tl-source { color: var(--muted); font-size: .85rem; }
+.tl-ext { color: var(--muted); }
+.tl-ext:hover { color: var(--accent); }

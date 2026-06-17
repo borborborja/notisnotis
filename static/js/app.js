@@ -26,6 +26,31 @@
     });
   }
 
+  // Colapso de secciones del sidebar (persistente en localStorage).
+  var SKEY = "nn_section_collapsed";
+  function getSectionCollapsed() {
+    try { return JSON.parse(localStorage.getItem(SKEY) || "[]"); } catch (e) { return []; }
+  }
+  function setSectionCollapsed(list) { localStorage.setItem(SKEY, JSON.stringify(list)); }
+  function initSections() {
+    var col = getSectionCollapsed();
+    document.querySelectorAll(".sb-section").forEach(function (sec) {
+      var key = sec.dataset.section || "";
+      if (col.indexOf(key) !== -1) sec.classList.add("collapsed");
+      var btn = sec.querySelector("[data-section-toggle]");
+      if (btn) {
+        btn.addEventListener("click", function () {
+          sec.classList.toggle("collapsed");
+          var list = getSectionCollapsed();
+          var i = list.indexOf(key);
+          if (sec.classList.contains("collapsed")) { if (i === -1) list.push(key); }
+          else if (i !== -1) list.splice(i, 1);
+          setSectionCollapsed(list);
+        });
+      }
+    });
+  }
+
   // Sidebar off-canvas en móvil.
   function initSidebarToggle() {
     var btn = document.querySelector("[data-sidebar-toggle]");
@@ -259,7 +284,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     // Cada init aislado: que un fallo no impida el resto.
-    [initGroups, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
+    [initGroups, initSections, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
      initResizers, initTypeControls, initPush, initPWA].forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });

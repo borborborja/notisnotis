@@ -26,7 +26,9 @@
   {% if 'compare' in features %}<a href="{% url 'stories:compare' %}" class="sb-item"><span><svg class="ic"><use href="#i-layers"/></svg> Comparar</span></a>{% endif %}
 </nav>
 
-<div class="sb-section-title">Categorías</div>
+<div class="sb-section" data-section="sources">
+<button class="sb-section-head" type="button" data-section-toggle><span class="caret">▸</span> Fuentes</button>
+<div class="sb-section-body">
 <nav class="sb-nav">
   {% for cat in sidebar_categories %}
     <div class="sb-group" data-collapse>
@@ -53,7 +55,7 @@
       <div class="sb-group-head">
         <button class="caret-btn" type="button" data-collapse-toggle><span class="caret">▸</span></button>
         <a class="sb-group-link" href="{% url 'articles:list' %}?category=none">
-          <span class="sb-group-name">Sin categoría</span>
+          <span class="sb-group-name">Sin agrupar</span>
         </a>
       </div>
       <div class="sb-group-body">
@@ -67,6 +69,7 @@
     </div>
   {% endif %}
 </nav>
+</div></div>
 
 {% if sidebar_tags %}
 <div class="sb-section-title">Etiquetas</div>

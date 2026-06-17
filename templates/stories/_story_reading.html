@@ -16,17 +16,50 @@
     {% if story.perspectives.right %}<p><strong style="color:var(--right)">Derecha:</strong> {{ story.perspectives.right }}</p>{% endif %}
   {% endif %}
 
-  <h3>Cobertura por sesgo</h3>
-  {% for bucket, group in grouped.items %}
-    <div class="cov-group">
-      <h4><span class="dot seg-{{ bucket }}"></span>{{ group.label }}</h4>
-      {% for article in group.articles %}
-        <div class="cov-item">
-          <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
-          <span class="item-meta">· {{ article.source.name }}</span>
-          {% if article.url %}· <a href="{{ article.url }}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-external"/></svg></a>{% endif %}
+  <div class="story-view-switch">
+    <h3>Cobertura</h3>
+    <div class="viewswitch">
+      <a href="?view=bias"
+         hx-get="{% url 'stories:reading' story.pk %}?view=bias" hx-target="#reading-pane" hx-swap="innerHTML"
+         class="{% if view == 'bias' %}active{% endif %}" title="Por sesgo"><svg class="ic"><use href="#i-grid"/></svg> Por sesgo</a>
+      <a href="?view=timeline"
+         hx-get="{% url 'stories:reading' story.pk %}?view=timeline" hx-target="#reading-pane" hx-swap="innerHTML"
+         class="{% if view == 'timeline' %}active{% endif %}" title="Timeline"><svg class="ic"><use href="#i-clock"/></svg> Timeline</a>
+    </div>
+  </div>
+
+  {% if view == 'timeline' %}
+    <div class="timeline">
+      {% for day in timeline %}
+        <div class="tl-day">
+          <div class="tl-day-head">{% if day.date %}{{ day.date|date:"D, d M Y" }}{% else %}Sin fecha{% endif %}</div>
+          {% for sa in day.items %}
+            <div class="tl-item">
+              <span class="tl-dot seg-{{ sa.article.source.bias }}" title="{{ sa.article.source.get_bias_display }}"></span>
+              <span class="tl-time">{% if sa.article.published_at %}{{ sa.article.published_at|date:"H:i" }}{% else %}—{% endif %}</span>
+              <a class="tl-title" href="{% url 'articles:detail' sa.article.pk %}">{{ sa.article.title }}</a>
+              <span class="tl-source">· {{ sa.article.source.name }}</span>
+              {% if sa.article.url %}<a class="tl-ext" href="{{ sa.article.url }}" target="_blank" rel="noopener" title="Original"><svg class="ic"><use href="#i-external"/></svg></a>{% endif %}
+            </div>
+          {% endfor %}
         </div>
+      {% empty %}
+        <p class="muted">Sin artículos con fecha de publicación.</p>
       {% endfor %}
     </div>
-  {% endfor %}
+  {% else %}
+    {% for bucket, group in grouped.items %}
+      <div class="cov-group">
+        <h4><span class="dot seg-{{ bucket }}"></span>{{ group.label }}</h4>
+        {% for article in group.articles %}
+          <div class="cov-item">
+            <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+            <span class="item-meta">· {{ article.source.name }}</span>
+            {% if article.published_at %}<span class="item-meta">· {{ article.published_at|date:"d M H:i" }}</span>{% endif %}
+            {% if article.url %}· <a href="{{ article.url }}" target="_blank" rel="noopener" title="Original"><svg class="ic"><use href="#i-external"/></svg></a>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% endif %}
 </article>

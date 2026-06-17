@@ -92,17 +92,34 @@ def compare_sources(request):
 
 
 def _story_context(request, pk):
+    from itertools import groupby
+
     story = get_object_or_404(Story, pk=pk, user=request.user)
-    sas = story.story_articles.select_related("article", "article__source").order_by(
+    # Agrupado por sesgo (vista por defecto)
+    sas_bias = story.story_articles.select_related("article", "article__source").order_by(
         "-article__published_at"
     )
     grouped = {b.value: {"label": b.label, "articles": []} for b in BIAS_ORDER}
     grouped["unknown"] = {"label": "Desconocido", "articles": []}
-    for sa in sas:
+    for sa in sas_bias:
         bucket = sa.article.source.bias
         grouped.setdefault(bucket, {"label": bucket, "articles": []})["articles"].append(sa.article)
     grouped = {k: v for k, v in grouped.items() if v["articles"]}
-    return {"story": story, "grouped": grouped, "bars": _bias_bars(story.bias_distribution)}
+
+    # Timeline cronológico ascendente, agrupado por día
+    sas_time = list(
+        story.story_articles.select_related("article", "article__source")
+        .order_by("article__published_at")
+    )
+    def _day(sa):
+        return sa.article.published_at.date() if sa.article.published_at else None
+    timeline = [{"date": d, "items": list(g)} for d, g in groupby(sas_time, key=_day)]
+
+    view = request.GET.get("view") or request.POST.get("view") or "bias"
+    if view not in ("bias", "timeline"):
+        view = "bias"
+    return {"story": story, "grouped": grouped, "bars": _bias_bars(story.bias_distribution),
+            "timeline": timeline, "view": view}
 
 
 @login_required
