@@ -147,8 +147,9 @@ Usuario de pruebas: **`demo` / `demo12345`** (tiene datos reales cargados). Sirv
 - `Article.embedding` es JSON; la similitud es en Python. No asumas pgvector.
 
 ## 9. Estado y tareas planificadas
-Resumen ejecutable en [`docs/ROADMAP.md`](docs/ROADMAP.md). El histórico de diseño
-completo está en `~/.claude/plans/quiero-programar-una-app-peaceful-origami.md`.
+Estado en [`docs/ROADMAP.md`](docs/ROADMAP.md); **specs ejecutables autocontenidas** de
+todo lo pendiente en [`docs/PHASES.md`](docs/PHASES.md) (objetivo, modelos, endpoints,
+ficheros, aceptación y verificación por tarea — no necesitas nada fuera del repo).
 Hecho: agregador, lector enriquecido, UI Feedly, fetch concurrente+ETag, búsqueda,
 suscripción/descubrimiento, categorías, filtros/reglas, tags, sync Fever+GReader, MCP,
 digest email. Pendiente: web push (Fase B), Fase C (dieta de sesgo, temas, tendencias),
