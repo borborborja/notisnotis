@@ -4,7 +4,6 @@ from __future__ import annotations
 from django.utils import timezone
 
 from aiproviders.client import get_chat_client
-from stories.similarity import cosine
 
 LANGS = [
     ("es", "Español"), ("en", "Inglés"), ("ca", "Catalán"),
@@ -67,17 +66,16 @@ def summarize_article(article, client=None):
 # --------------------------------------------------------------------------- contexto + chat
 def related_articles(article, user, k=8):
     """Artículos del usuario más relacionados (semántica si hay embedding)."""
-    from .models import Article
+    from stories.nn import top_k_articles
 
-    base = Article.objects.filter(feed__user=user).exclude(pk=article.pk).select_related("source")
     if not article.embedding:
-        return list(base.order_by("-published_at")[:k])
-    scored = [
-        (cosine(article.embedding, a.embedding), a)
-        for a in base.filter(embedding__isnull=False)
-    ]
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [a for _, a in scored[:k]]
+        from .models import Article
+
+        return list(
+            Article.objects.filter(feed__user=user).exclude(pk=article.pk)
+            .select_related("source").order_by("-published_at")[:k]
+        )
+    return [a for _, a in top_k_articles(user, article.embedding, k=k, exclude_pk=article.pk)]
 
 
 def build_context(article, user, k=8):

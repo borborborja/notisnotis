@@ -20,10 +20,10 @@
   <a href="{% url 'stories:home' %}?filter=blindspot" class="sb-item">
     <span><svg class="ic"><use href="#i-alert"/></svg> Blindspots</span>{% if sidebar_counts.blindspots %}<span class="sb-count alert">{{ sidebar_counts.blindspots }}</span>{% endif %}
   </a>
-  <a href="{% url 'stories:trending' %}" class="sb-item"><span><svg class="ic"><use href="#i-arrow-up"/></svg> Tendencias</span></a>
-  <a href="{% url 'stories:bias_diet' %}" class="sb-item"><span><svg class="ic"><use href="#i-grid"/></svg> Mi dieta</span></a>
-  <a href="{% url 'stories:topic_list' %}" class="sb-item"><span><svg class="ic"><use href="#i-search"/></svg> Temas</span></a>
-  <a href="{% url 'stories:compare' %}" class="sb-item"><span><svg class="ic"><use href="#i-layers"/></svg> Comparar</span></a>
+  {% if 'trending' in features %}<a href="{% url 'stories:trending' %}" class="sb-item"><span><svg class="ic"><use href="#i-arrow-up"/></svg> Tendencias</span></a>{% endif %}
+  {% if 'bias_diet' in features %}<a href="{% url 'stories:bias_diet' %}" class="sb-item"><span><svg class="ic"><use href="#i-grid"/></svg> Mi dieta</span></a>{% endif %}
+  {% if 'topics' in features %}<a href="{% url 'stories:topic_list' %}" class="sb-item"><span><svg class="ic"><use href="#i-search"/></svg> Temas</span></a>{% endif %}
+  {% if 'compare' in features %}<a href="{% url 'stories:compare' %}" class="sb-item"><span><svg class="ic"><use href="#i-layers"/></svg> Comparar</span></a>{% endif %}
 </nav>
 
 <div class="sb-section-title">Categorías</div>

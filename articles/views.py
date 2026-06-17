@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 from accounts.models import UserConfig
 from aiproviders.client import get_chat_client
 from aiproviders.config import effective_config
+from features.decorators import feature_required
 
 from .ai_actions import LANGS, chat_reply, reading_prefs, summarize_article, translate_article
 from .enrich import enrich_article
@@ -300,6 +301,7 @@ def mark_seen(request, pk):
 
 
 @login_required
+@feature_required("translate")
 @require_POST
 def translate(request, pk):
     article = get_object_or_404(Article.objects.select_related("source", "feed"), pk=pk, feed__user=request.user)
@@ -312,6 +314,7 @@ def translate(request, pk):
 
 
 @login_required
+@feature_required("summarize")
 @require_POST
 def summarize(request, pk):
     article = get_object_or_404(Article.objects.select_related("source", "feed"), pk=pk, feed__user=request.user)
@@ -376,6 +379,7 @@ def send_webhook(request, pk):
 
 
 @login_required
+@feature_required("chat")
 def chat_panel(request, pk):
     article = get_object_or_404(Article.objects.select_related("source", "feed"), pk=pk, feed__user=request.user)
     key = f"chat_{pk}"
@@ -386,6 +390,7 @@ def chat_panel(request, pk):
 
 
 @login_required
+@feature_required("chat")
 @require_POST
 def chat_message(request, pk):
     article = get_object_or_404(Article.objects.select_related("source", "feed"), pk=pk, feed__user=request.user)

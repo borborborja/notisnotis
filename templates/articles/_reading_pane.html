@@ -23,9 +23,12 @@
 
   <!-- Acciones IA -->
   <div class="ai-bar">
+    {% if 'summarize' in features %}
     <form hx-post="{% url 'articles:summarize' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">
       {% csrf_token %}<button class="tbtn"><svg class="ic"><use href="#i-file-text"/></svg> Resumir</button>
     </form>
+    {% endif %}
+    {% if 'translate' in features %}
     <form hx-post="{% url 'articles:translate' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML" class="ai-translate">
       {% csrf_token %}
       <select name="lang">
@@ -33,7 +36,10 @@
       </select>
       <button class="tbtn"><svg class="ic"><use href="#i-globe"/></svg> Traducir</button>
     </form>
+    {% endif %}
+    {% if 'chat' in features %}
     <button class="tbtn" hx-get="{% url 'articles:chat' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML"><svg class="ic"><use href="#i-message"/></svg> Conversar</button>
+    {% endif %}
     <a class="tbtn" href="{% url 'articles:export_markdown' article.pk %}"><svg class="ic"><use href="#i-download"/></svg> .md</a>
     {% if webhook_url %}
     <form hx-post="{% url 'articles:send_webhook' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">

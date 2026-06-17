@@ -48,11 +48,17 @@
         <td>{{ feed.title|default:feed.url }}</td>
         <td>{{ feed.category.name|default:"—" }}</td>
         <td>{{ feed.source.name }} <span class="tag">{{ feed.source.get_bias_display }}</span></td>
-        <td>{% if feed.enabled %}Activo{% else %}<span class="muted">Pausado</span>{% endif %}
-            {% if feed.last_error %}<span class="tag badge-blindspot" title="{{ feed.last_error }}">error</span>{% endif %}</td>
+        <td>{% if feed.enabled %}Activo{% else %}<span class="tag badge-blindspot">Desactivado</span>{% endif %}
+            {% if feed.fail_count %}<span class="tag badge-blindspot" title="{{ feed.last_error }}">{{ feed.fail_count }} fallos</span>{% endif %}</td>
         <td>
           <a href="{% url 'feeds:feed_edit' feed.pk %}">Editar</a>
           ·
+          {% if not feed.enabled or feed.fail_count %}
+          <form method="post" action="{% url 'feeds:reactivate_feed' feed.pk %}" class="inline">{% csrf_token %}
+            <button class="linkbtn">Reactivar</button>
+          </form>
+          ·
+          {% endif %}
           <form method="post" action="{% url 'feeds:toggle_feed' feed.pk %}" class="inline">{% csrf_token %}
             <button class="linkbtn">{% if feed.enabled %}Pausar{% else %}Activar{% endif %}</button>
           </form>

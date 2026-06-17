@@ -97,6 +97,22 @@ class SubscribeHelperTests(TestCase):
         self.assertFalse(created2)
 
 
+class FeedHealthTests(TestCase):
+    def test_reactivate(self):
+        from feeds.models import Source
+
+        u = get_user_model().objects.create_user("h", "", "pw")
+        self.client.login(username="h", password="pw")
+        src = Source.objects.create(name="S", domain="s.com")
+        feed = Feed.objects.create(user=u, source=src, url="http://s/rss", enabled=False, fail_count=12,
+                                  last_error="boom")
+        self.client.post(f"/feeds/{feed.pk}/reactivate/", HTTP_HOST="localhost")
+        feed.refresh_from_db()
+        self.assertTrue(feed.enabled)
+        self.assertEqual(feed.fail_count, 0)
+        self.assertEqual(feed.last_error, "")
+
+
 class RuleEngineTests(TestCase):
     def setUp(self):
         from articles.models import Article, Tag

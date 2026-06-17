@@ -216,6 +216,18 @@ def feed_set_category(request, pk):
 
 
 @login_required
+@require_POST
+def reactivate_feed(request, pk):
+    feed = get_object_or_404(Feed, pk=pk, user=request.user)
+    feed.enabled = True
+    feed.fail_count = 0
+    feed.last_error = ""
+    feed.save(update_fields=["enabled", "fail_count", "last_error"])
+    messages.success(request, "Feed reactivado.")
+    return redirect("feeds:feed_list")
+
+
+@login_required
 def feed_edit(request, pk):
     feed = get_object_or_404(Feed.objects.select_related("source"), pk=pk, user=request.user)
     categories = Category.objects.filter(user=request.user)

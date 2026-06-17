@@ -39,11 +39,14 @@ Detalle de cada ítem en [`docs/PHASES.md`](PHASES.md).
   historia: pendiente menor en `_story_reading.html`.)
 
 ### Fase D — plataforma
-- [ ] **D1 · PWA + offline**.
-- [ ] **D2 · Gestión de cuenta** (password/email, borrar, 2FA).
-- [ ] **D3 · Salud de feeds** (panel de errores + reactivar).
-- [ ] **D4 · pgvector** — sustituir coseno en Python por VectorField + ANN.
-- [ ] **D5 · Backup/restore** + import Pocket/Instapaper.
+- [x] **D1 · PWA + offline** — `manifest.webmanifest`, SW en `/sw.js` (caché shell + push),
+  icono, registro en `app.js`. *Instalación real: verificar en despliegue HTTPS.*
+- [x] **D2 · Gestión de cuenta** — cambiar email/contraseña, borrar cuenta (pestaña Cuenta).
+  *2FA TOTP: pendiente (requiere `django-otp`).*
+- [x] **D3 · Salud de feeds** — estado/fallos en Feeds + reactivar.
+- [~] **D4 · pgvector** — **NN desacoplado** en `stories/nn.py` (related/búsqueda/MCP lo usan);
+  falta activar VectorField+ANN en Postgres real (punto de extensión marcado). Ver PHASES D4.
+- [x] **D5 · Backup/restore** — export/import JSON + import Pocket/Instapaper (pestaña Cuenta).
 
 ## Reglas al avanzar
 - Implementa **fase a fase**, con tests + verificación al cerrar cada una.

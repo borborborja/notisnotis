@@ -90,14 +90,11 @@ def build_server():
     def search_articles(query: str, k: int = 10) -> list:
         """Búsqueda semántica de artículos por similitud de embedding."""
         from aiproviders.client import get_embed_client
-        from stories.similarity import cosine
+        from stories.nn import top_k_articles
 
         vec = get_embed_client(user).embed([query])[0]
-        scored = []
-        for a in Article.objects.filter(feed__user=user, embedding__isnull=False).select_related("source"):
-            scored.append((cosine(vec, a.embedding), a))
-        scored.sort(key=lambda x: x[0], reverse=True)
-        return [{**_article_dict(a), "score": round(score, 3)} for score, a in scored[:k]]
+        return [{**_article_dict(a), "score": round(score, 3)}
+                for score, a in top_k_articles(user, vec, k=k)]
 
     @mcp.tool()
     def list_articles(unread: bool = False, saved: bool = False, limit: int = 25) -> list:

@@ -46,6 +46,11 @@ Stack: **Django 4.2**, PostgreSQL (SQLite en dev), `feedparser`, `beautifulsoup4
 9. **Provider `mock`** debe seguir funcionando sin claves (es como se prueba todo offline).
    Si añades una tarea de IA, añade su rama en `aiproviders/providers/mock.py`.
 10. **No subas secretos.** `.env` está en `.gitignore`. Todo va a `.env.example` vacío.
+11. **Toda función se declara en el registro de features** (`features/registry.py`) y se
+    gatea con `@feature_required("key")` (vistas) y `{% if 'key' in features %}` (plantillas).
+    El sistema está *dormido* por defecto (`FEATURES_ENFORCED=0` → todo activo); permite
+    tiers/beta/overrides por usuario sin tocar el código. Ver [`docs/FEATURES.md`](docs/FEATURES.md).
+    Distíngelo de optconfig: **feature = acceso (quién)**, **capability = configuración (cómo)**.
 
 ## 3. Organización del código
 Proyecto Django `notisnotis/` (settings, urls, wsgi/asgi, **`optconfig.py`**).

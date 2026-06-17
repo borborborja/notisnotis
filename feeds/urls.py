@@ -19,6 +19,7 @@ urlpatterns = [
     path("categories/<int:pk>/delete/", views.category_delete, name="category_delete"),
     path("<int:pk>/set-category/", views.feed_set_category, name="feed_set_category"),
     path("<int:pk>/edit/", views.feed_edit, name="feed_edit"),
+    path("<int:pk>/reactivate/", views.reactivate_feed, name="reactivate_feed"),
     path("<int:pk>/toggle/", views.toggle_feed, name="toggle_feed"),
     path("<int:pk>/delete/", views.delete_feed, name="delete_feed"),
 ]

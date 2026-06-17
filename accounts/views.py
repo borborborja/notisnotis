@@ -16,6 +16,7 @@ TABS = [
     ("filters", "Filtros"),
     ("notifications", "Notificaciones"),
     ("tokens", "API / MCP"),
+    ("account", "Cuenta"),
 ]
 FONTS = [("sans", "Sans-serif"), ("serif", "Serif")]
 SIZES = [("s", "Pequeña"), ("m", "Mediana"), ("l", "Grande")]
@@ -79,6 +80,22 @@ def settings_view(request, tab="general"):
 
             save_digest_prefs(request.user, request.POST)
             messages.success(request, "Preferencias de notificaciones guardadas.")
+        elif action == "save_email":
+            request.user.email = request.POST.get("email", "").strip()
+            request.user.save(update_fields=["email"])
+            messages.success(request, "Email actualizado.")
+        elif action == "save_password":
+            return _change_password(request, tab)
+        elif action == "delete_account":
+            from django.contrib.auth import logout
+
+            if request.POST.get("confirm") == request.user.get_username():
+                user = request.user
+                logout(request)
+                user.delete()
+                messages.success(request, "Cuenta eliminada.")
+                return redirect("login")
+            messages.error(request, "La confirmación no coincide; cuenta NO eliminada.")
         return redirect("account_settings_tab", tab=tab)
 
     ctx = {"tabs": TABS, "active_tab": tab}
@@ -177,6 +194,45 @@ def _save_reading(request):
     config.data["read_size"] = request.POST.get("read_size", "m")
     config.data["read_width"] = request.POST.get("read_width", "normal")
     config.save(update_fields=["data"])
+
+
+@login_required
+def export_data(request):
+    from django.http import JsonResponse
+
+    from .datatransfer import export_user_data
+
+    resp = JsonResponse(export_user_data(request.user))
+    resp["Content-Disposition"] = 'attachment; filename="notisnotis-export.json"'
+    return resp
+
+
+@login_required
+def import_data(request):
+    if request.method == "POST" and request.FILES.get("file"):
+        from .datatransfer import detect_and_import
+
+        f = request.FILES["file"]
+        try:
+            kind, result = detect_and_import(request.user, f.name, f.read())
+            messages.success(request, f"Importado ({kind}): {result}")
+        except Exception as exc:  # noqa: BLE001
+            messages.error(request, f"No se pudo importar: {exc}")
+    return redirect("account_settings_tab", tab="account")
+
+
+def _change_password(request, tab):
+    from django.contrib.auth import update_session_auth_hash
+    from django.contrib.auth.forms import PasswordChangeForm
+
+    form = PasswordChangeForm(request.user, request.POST)
+    if form.is_valid():
+        user = form.save()
+        update_session_auth_hash(request, user)  # no cerrar sesión
+        messages.success(request, "Contraseña cambiada.")
+    else:
+        messages.error(request, "; ".join(f"{k}: {v[0]}" for k, v in form.errors.items()))
+    return redirect("account_settings_tab", tab=tab)
 
 
 def _save_filters(request):

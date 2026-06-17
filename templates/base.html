@@ -5,6 +5,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}NotisNotis{% endblock %}</title>
+  <link rel="manifest" href="{% static 'manifest.webmanifest' %}">
+  <meta name="theme-color" content="#7c5cff">
+  <link rel="icon" href="{% static 'icons/icon.svg' %}">
   <script>(function(){var r=document.documentElement;var t=localStorage.getItem('nn_theme')||'auto';var d=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);r.setAttribute('data-theme',d?'dark':'light');var sw=localStorage.getItem('nn_sidebar_w');if(sw)r.style.setProperty('--sidebar-w',sw+'px');var lw=localStorage.getItem('nn_list_w');if(lw)r.style.setProperty('--list-w',lw+'px');})();</script>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <script src="{% static 'js/htmx.min.js' %}" defer></script>

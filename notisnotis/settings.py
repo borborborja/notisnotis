@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "mcpserver",
     "syncapi",
     "notifications",
+    "features",
 ]
 
 MIDDLEWARE = [
@@ -64,6 +65,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "feeds.context_processors.sidebar",
+                "features.context_processors.features",
             ],
         },
     },

@@ -1,0 +1,13 @@
+{
+  "name": "NotisNotis",
+  "short_name": "NotisNotis",
+  "description": "Lector RSS self-hosted + agregador con IA",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#14161b",
+  "theme_color": "#7c5cff",
+  "icons": [
+    { "src": "/static/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

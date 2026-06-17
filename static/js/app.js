@@ -236,7 +236,7 @@
     var info = await (await fetch("/notifications/push/key/", { credentials: "same-origin" })).json();
     if (!info.enabled) return say("Push no disponible (falta configuración VAPID).");
     if ((await Notification.requestPermission()) !== "granted") return say("Permiso denegado.");
-    var reg = await navigator.serviceWorker.register("/static/js/sw-push.js");
+    var reg = await navigator.serviceWorker.register("/sw.js");
     var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8(info.key) });
     await fetch("/notifications/push/subscribe/", {
       method: "POST", credentials: "same-origin",
@@ -250,10 +250,17 @@
     if (btn) btn.addEventListener("click", function () { subscribePush(document.getElementById("push-status")); });
   }
 
+  // ---- PWA: registra el service worker (offline + base para push) ----
+  function initPWA() {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(function () {});
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     // Cada init aislado: que un fallo no impida el resto.
     [initGroups, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
-     initResizers, initTypeControls, initPush].forEach(function (fn) {
+     initResizers, initTypeControls, initPush, initPWA].forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });
     var h = document.querySelector("[data-help-close]");
