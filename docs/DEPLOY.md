@@ -25,7 +25,16 @@ python manage.py runserver              # http://127.0.0.1:8000
 ```
 Con `mock` todo funciona sin claves. Usuario de pruebas existente: `demo` / `demo12345`.
 
-## 2. Producción con Docker
+## 1b. Imagen Docker publicada (GitHub Actions → GHCR)
+Cada push a `main` (o un tag `v*`) ejecuta `.github/workflows/docker.yml`: corre los
+tests y, si pasan, construye y publica la imagen en **GitHub Container Registry**:
+`ghcr.io/borborborja/notisnotis` (tags: `latest`, `sha-xxxx`, y `vX.Y.Z` en tags).
+
+Para usarla en vez de construir localmente, en `compose.yaml` cambia `build: .` por
+`image: ghcr.io/borborborja/notisnotis:latest` (en `web`, `scheduler` y `mcp`). Si el
+repo es privado, primero `docker login ghcr.io` con un PAT con scope `read:packages`.
+
+## 2. Producción con Docker (build local)
 ```bash
 cp .env.example .env     # rellena SECRET_KEY, ALLOWED_HOSTS, DATABASE_URL, claves...
 docker compose up -d                 # web (gunicorn) + db (postgres) + scheduler
