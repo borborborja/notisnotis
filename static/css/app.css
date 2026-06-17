@@ -326,6 +326,7 @@ body.resizing iframe { pointer-events: none; }
 @media (max-width: 900px) { .cmp-grid { grid-template-columns: 1fr; } }
 
 /* ---------- Sección colapsable del sidebar (Fuentes) ---------- */
+.sb-sep { border: 0; border-top: 1px solid var(--border); margin: .8rem .5rem .2rem; }
 .sb-section { display: flex; flex-direction: column; }
 .sb-section-head { background: none; border: none; cursor: pointer; padding: .9rem .6rem .3rem;
   font: inherit; font-size: .68rem; text-transform: uppercase; letter-spacing: .05em;
