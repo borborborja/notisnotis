@@ -64,6 +64,18 @@
 {% endif %}
 
 <div class="card">
+  <h3>Notificaciones push</h3>
+  {% if webpush_enabled %}
+    <p class="muted">Recibe un aviso en este dispositivo cuando aparezca un blindspot nuevo.</p>
+    <button class="btn" type="button" data-push-subscribe>Activar en este dispositivo</button>
+    <p class="muted" id="push-status"></p>
+  {% else %}
+    <p class="muted">Push no disponible: el operador debe activar <code>WEBPUSH_ENABLED</code>
+      y configurar las claves VAPID (<code>VAPID_PUBLIC_KEY</code>/<code>VAPID_PRIVATE_KEY</code>).</p>
+  {% endif %}
+</div>
+
+<div class="card">
   <h3>Enviar a (webhook / read-it-later)</h3>
   <p class="muted">El botón "Enviar" del lector hará POST del artículo (JSON) a esta URL
     (Wallabag, n8n, Readwise…).</p>

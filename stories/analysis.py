@@ -87,5 +87,20 @@ def analyze_story(story, client=None):
     story.blindspot_side = side
     story.analyzed_at = timezone.now()
     story.dirty = False
+
+    # Notificación push al detectar un blindspot por primera vez.
+    notify = is_blind and not story.blindspot_notified
+    if notify:
+        story.blindspot_notified = True
+    elif not is_blind:
+        story.blindspot_notified = False
     story.save()
+
+    if notify:
+        try:
+            from notifications.push import send_push
+
+            send_push(story.user, "Nuevo blindspot", story.headline, url=f"/story/{story.pk}/")
+        except Exception:  # noqa: BLE001
+            pass
     return story

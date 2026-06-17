@@ -26,6 +26,21 @@ DIGEST = Capability(
     label="Resumen por email (digest)",
 )
 
+# Web Push (VAPID). Las claves suelen ser globales del operador, pero siguen la cascade.
+VAPID_FIELDS = [
+    ("vapid_public", "VAPID_PUBLIC_KEY", "", "str", False, "Clave pública VAPID", None),
+    ("vapid_private", "VAPID_PRIVATE_KEY", "", "str", True, "Clave privada VAPID", None),
+    ("vapid_email", "VAPID_ADMIN_EMAIL", "", "str", False, "Email admin VAPID (mailto)", None),
+]
+
+WEBPUSH = Capability(
+    key="webpush",
+    flag_env="WEBPUSH_ENABLED",
+    fields=VAPID_FIELDS,
+    required=["vapid_public", "vapid_private"],
+    label="Notificaciones push",
+)
+
 # Preferencias personales del digest (siempre por usuario, nunca .env).
 FREQUENCIES = [("daily", "Diario"), ("weekly", "Semanal")]
 

@@ -12,6 +12,7 @@ urlpatterns = [
     path("accounts/settings/", account_views.settings_view, name="account_settings"),
     path("accounts/settings/<str:tab>/", account_views.settings_view, name="account_settings_tab"),
     path("api/", include("syncapi.urls")),
+    path("notifications/", include("notifications.urls")),
     path("feeds/", include("feeds.urls")),
     path("articles/", include("articles.urls")),
     path("", include("stories.urls")),

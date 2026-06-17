@@ -115,6 +115,19 @@ def _filtered_articles(request):
         tag = Tag.objects.filter(id=tag_id, user=request.user).first()
         title = f"#{tag.name}" if tag else "Etiqueta"
 
+    topic_id = request.GET.get("topic")
+    if topic_id:
+        from stories.models import Topic
+        from stories.topics import topic_terms
+
+        topic = Topic.objects.filter(id=topic_id, user=request.user).first()
+        if topic:
+            term_q = Q()
+            for term in topic_terms(topic):
+                term_q |= Q(title__icontains=term) | Q(summary__icontains=term)
+            qs = qs.filter(term_q)
+            title = f"Tema: {topic.name}"
+
     q = request.GET.get("q", "").strip()
     if q:
         qs, title = _apply_search(qs, q)

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Tendencias · NotisNotis{% endblock %}
+{% block content %}
+<div class="reader">
+  <div class="list-col">
+    <header class="toolbar"><h1 class="toolbar-title">Tendencias</h1></header>
+    <div class="article-items view-magazine">
+      {% for story in page %}
+        <article class="item item-mag" hx-get="{% url 'stories:reading' story.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">
+          <div class="item-main">
+            <div class="item-top">
+              <span class="item-source">{{ story.n }} fuentes</span>
+              {% if story.is_blindspot %}<span class="tag badge-blindspot"><svg class="ic"><use href="#i-alert"/></svg> Blindspot</span>{% endif %}
+              <span class="item-meta">· {{ story.last_updated|date:"d M H:i" }}</span>
+            </div>
+            <h3 class="item-headline">{{ story.headline }}</h3>
+            {% include "partials/biasbar.html" with bars=story.bars %}
+          </div>
+        </article>
+      {% empty %}
+        <div class="reading-empty"><p>Nada destacado todavía.</p></div>
+      {% endfor %}
+    </div>
+    <div class="col-resizer" data-resize="list"></div>
+  </div>
+  <aside class="reading" id="reading-pane"><div class="reading-empty"><p>Selecciona una historia.</p></div></aside>
+</div>
+{% endblock %}

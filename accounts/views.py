@@ -104,6 +104,9 @@ def settings_view(request, tab="general"):
         ctx["smtp_locked"] = DIGEST.locked_fields()
         ctx["digest"] = digest_prefs(request.user)
         ctx["frequencies"] = FREQUENCIES
+        from notifications.config import WEBPUSH
+
+        ctx["webpush_enabled"] = WEBPUSH.enabled() and bool(WEBPUSH.resolve(request.user)["vapid_public"])
     if tab == "ai":
         ctx["editable"] = editable_fields(request.user)
         ctx["locked"] = locked_fields()

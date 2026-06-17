@@ -72,7 +72,7 @@ class Command(BaseCommand):
         skipped = feeds.count() - len(due) if hasattr(feeds, "count") else 0
 
         # --- Red en paralelo; BD secuencial (seguro con SQLite) ---
-        prefs_cache, rules_cache = {}, {}
+        prefs_cache, rules_cache, topics_cache = {}, {}, {}
         total_new, total_blocked, not_modified, errors = 0, 0, 0, 0
         with ThreadPoolExecutor(max_workers=max(1, opts["workers"])) as pool:
             for feed, parsed, error in pool.map(_download, due):
@@ -104,6 +104,9 @@ class Command(BaseCommand):
                 if rules:
                     for art in new_articles:
                         apply_rules(art, rules)
+
+                if new_articles:
+                    self._notify_topics(feed.user, new_articles, topics_cache)
 
                 if feed.crawler and settings.FULLTEXT_ENABLED:
                     self._crawl(new_articles)
@@ -156,6 +159,26 @@ class Command(BaseCommand):
         if mode == "title" and title:
             return Article.objects.filter(feed__user_id=feed.user_id, title=title).exists()
         return False
+
+    def _notify_topics(self, user, articles, cache):
+        topics = cache.get(user.id)
+        if topics is None:
+            from stories.topics import load_notify_topics
+
+            topics = cache[user.id] = load_notify_topics(user)
+        if not topics:
+            return
+        from notifications.push import send_push
+        from stories.topics import article_matches
+
+        for art in articles:
+            for topic, terms in topics:
+                if article_matches(terms, art):
+                    try:
+                        send_push(user, f"Tema: {topic.name}", art.title, url=f"/articles/{art.pk}/")
+                    except Exception:  # noqa: BLE001
+                        pass
+                    break
 
     def _crawl(self, articles):
         from articles.fulltext import populate_full_text

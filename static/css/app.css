@@ -319,3 +319,8 @@ body.resizing iframe { pointer-events: none; }
 .chip-x:hover { color: var(--right); }
 .tag-input { width: 120px; padding: .15rem .4rem; font-size: .8rem; }
 .tags-row form.inline { display: inline-flex; }
+
+/* ---------- Comparar fuentes ---------- */
+.cmp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 0 1rem; }
+.cmp-grid .card { margin: 0; }
+@media (max-width: 900px) { .cmp-grid { grid-template-columns: 1fr; } }

@@ -10,3 +10,5 @@ gunicorn==22.0.0
 whitenoise==6.11.0
 # Servidor MCP (opcional, solo para `manage.py run_mcp`)
 mcp==1.2.0
+# Web Push (opcional; requiere Python >= 3.10, corre en Docker)
+pywebpush==1.14.1

@@ -222,10 +222,38 @@
     }, { passive: true });
   }
 
+  // ---- Web Push (suscripción) ----
+  function urlB64ToUint8(base64) {
+    var pad = "=".repeat((4 - (base64.length % 4)) % 4);
+    var b64 = (base64 + pad).replace(/-/g, "+").replace(/_/g, "/");
+    var raw = atob(b64), out = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+  async function subscribePush(statusEl) {
+    function say(m) { if (statusEl) statusEl.textContent = m; }
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return say("Tu navegador no soporta push.");
+    var info = await (await fetch("/notifications/push/key/", { credentials: "same-origin" })).json();
+    if (!info.enabled) return say("Push no disponible (falta configuración VAPID).");
+    if ((await Notification.requestPermission()) !== "granted") return say("Permiso denegado.");
+    var reg = await navigator.serviceWorker.register("/static/js/sw-push.js");
+    var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8(info.key) });
+    await fetch("/notifications/push/subscribe/", {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
+      body: JSON.stringify(sub),
+    });
+    say("Notificaciones activadas en este dispositivo.");
+  }
+  function initPush() {
+    var btn = document.querySelector("[data-push-subscribe]");
+    if (btn) btn.addEventListener("click", function () { subscribePush(document.getElementById("push-status")); });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     // Cada init aislado: que un fallo no impida el resto.
     [initGroups, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
-     initResizers, initTypeControls].forEach(function (fn) {
+     initResizers, initTypeControls, initPush].forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });
     var h = document.querySelector("[data-help-close]");

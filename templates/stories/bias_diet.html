@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Mi dieta informativa · NotisNotis{% endblock %}
+{% block content %}
+<h1>Mi dieta informativa</h1>
+<div class="card">
+  <div class="filters">
+    <a class="tbtn {% if days == 7 %}active{% endif %}" href="?days=7">7 días</a>
+    <a class="tbtn {% if days == 30 %}active{% endif %}" href="?days=30">30 días</a>
+    <a class="tbtn {% if days == 90 %}active{% endif %}" href="?days=90">90 días</a>
+  </div>
+  <p class="muted">Sesgo de los <strong>{{ total }}</strong> artículos que has leído en los últimos {{ days }} días.</p>
+  {% include "partials/biasbar.html" with bars=bars %}
+  <p>{{ message }}</p>
+</div>
+{% endblock %}

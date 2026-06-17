@@ -29,12 +29,14 @@ Tablero de qué está hecho y qué falta. Marca aquí cuando completes algo.
 Detalle de cada ítem en [`docs/PHASES.md`](PHASES.md).
 
 ### Fase B (resto)
-- [ ] **B1 · Web push** — VAPID + `PushSubscription` + service worker (`pywebpush`).
+- [x] **B1 · Web push** — VAPID (cascade) + `PushSubscription` + service worker + `pywebpush`;
+  disparo en blindspots nuevos y temas con alerta. *Falta verificación real con HTTPS+VAPID.*
 
 ### Fase C — diferenciadores del agregador
-- [ ] **C1 · Dieta informativa** — sesgo de lo que el usuario *lee*.
-- [ ] **C2 · Seguir temas + alertas** (keyword o embedding).
-- [ ] **C3 · Tendencias / comparar fuentes / línea temporal**.
+- [x] **C1 · Dieta informativa** — `/diet/` (sesgo de lo leído).
+- [x] **C2 · Seguir temas + alertas** — `stories.Topic`, filtro `?topic=`, push en `fetch_feeds`.
+- [x] **C3 · Tendencias / comparar fuentes** — `/trending/`, `/compare/`. (Línea temporal de
+  historia: pendiente menor en `_story_reading.html`.)
 
 ### Fase D — plataforma
 - [ ] **D1 · PWA + offline**.

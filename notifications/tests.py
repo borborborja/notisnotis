@@ -30,6 +30,33 @@ class CapabilityStateTests(TestCase):
             self.assertTrue(DIGEST.needs_user_config(None))
 
 
+class PushTests(TestCase):
+    def setUp(self):
+        get_user_model().objects.create_user("p", "", "pw")
+        self.client.login(username="p", password="pw")
+
+    def test_subscribe_creates_record(self):
+        import json as _json
+
+        from notifications.models import PushSubscription
+        body = _json.dumps({"endpoint": "https://push/abc", "keys": {"p256dh": "k", "auth": "a"}})
+        r = self.client.post("/notifications/push/subscribe/", data=body,
+                             content_type="application/json", HTTP_HOST="localhost")
+        self.assertEqual(r.status_code, 204)
+        self.assertTrue(PushSubscription.objects.filter(endpoint="https://push/abc").exists())
+
+    def test_key_disabled(self):
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("WEBPUSH_ENABLED", None)
+            r = self.client.get("/notifications/push/key/", HTTP_HOST="localhost")
+            self.assertFalse(r.json()["enabled"])
+
+    def test_send_push_disabled_returns_zero(self):
+        from notifications.push import send_push
+        with patch.dict(os.environ, {"WEBPUSH_ENABLED": "0"}):
+            self.assertEqual(send_push(get_user_model().objects.get(username="p"), "t", "b"), 0)
+
+
 class SendDigestTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user("u", "u@x.com", "pw")
