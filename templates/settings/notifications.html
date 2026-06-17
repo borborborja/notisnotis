@@ -1,0 +1,84 @@
+{% extends "settings/base.html" %}
+{% block tab %}
+<h1>Notificaciones</h1>
+
+{% if not digest_enabled %}
+<div class="card">
+  <p class="muted">El resumen por email (digest) está <strong>desactivado por el operador</strong>
+    (<code>DIGEST_ENABLED=0</code> en <code>.env</code>).</p>
+</div>
+{% else %}
+
+{% if smtp_locked %}
+<div class="card">
+  <h3>Servidor de correo (configurado por el operador)</h3>
+  <p class="muted">El envío usa el SMTP global de la instancia; no necesitas configurar nada.</p>
+  <table>{% for f in smtp_locked %}<tr><td>{{ f.label }}</td><td><code>{{ f.value }}</code></td></tr>{% endfor %}</table>
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>Resumen por email (digest)</h3>
+  <form method="post" action="{% url 'account_settings_tab' 'notifications' %}">{% csrf_token %}
+    <input type="hidden" name="action" value="save_digest">
+
+    {% if needs_user_smtp %}
+      <p class="muted">El operador no ha configurado un SMTP global: indica tu propio servidor de correo.</p>
+      {% for f in smtp_editable %}
+        <div class="form-row">
+          <label>{{ f.label }}</label>
+          {% if f.type == 'bool' %}
+            <input type="checkbox" name="{{ f.key }}" value="1" {% if f.value == '1' %}checked{% endif %}>
+          {% elif f.secret %}
+            <input type="password" name="{{ f.key }}" placeholder="{% if f.value %}•••••• (guardado){% else %}sin definir{% endif %}">
+          {% else %}
+            <input type="text" name="{{ f.key }}" value="{{ f.value }}" placeholder="por defecto: {{ f.default }}">
+          {% endif %}
+        </div>
+      {% endfor %}
+      <hr>
+    {% endif %}
+
+    <p><label><input type="checkbox" name="digest_optin" value="1" {% if digest.optin %}checked{% endif %}>
+      Quiero recibir el resumen por email</label></p>
+    <div class="form-row">
+      <label>Frecuencia</label>
+      <select name="digest_frequency">
+        {% for v, n in frequencies %}<option value="{{ v }}" {% if digest.frequency == v %}selected{% endif %}>{{ n }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Hora de envío (0–23)</label>
+      <input type="text" name="digest_hour" value="{{ digest.hour }}">
+    </div>
+    <div class="form-row">
+      <label>Email de destino</label>
+      <input type="text" name="digest_email" value="{{ digest.email }}" placeholder="{{ user.email }}">
+    </div>
+    <p><label><input type="checkbox" name="digest_blindspots" value="1" {% if digest.include_blindspots %}checked{% endif %}>
+      Incluir blindspots</label></p>
+
+    <button class="btn" type="submit">Guardar</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>Enviar a (webhook / read-it-later)</h3>
+  <p class="muted">El botón "Enviar" del lector hará POST del artículo (JSON) a esta URL
+    (Wallabag, n8n, Readwise…).</p>
+  <form method="post" action="{% url 'account_settings_tab' 'notifications' %}">{% csrf_token %}
+    <input type="hidden" name="action" value="save_digest">
+    <input type="hidden" name="digest_optin" value="{% if digest.optin %}1{% endif %}">
+    <input type="hidden" name="digest_frequency" value="{{ digest.frequency }}">
+    <input type="hidden" name="digest_hour" value="{{ digest.hour }}">
+    <input type="hidden" name="digest_email" value="{{ digest.email }}">
+    <input type="hidden" name="digest_blindspots" value="{% if digest.include_blindspots %}1{% endif %}">
+    <div class="form-row">
+      <label>URL de webhook</label>
+      <input type="text" name="webhook_url" value="{{ digest.webhook_url }}" placeholder="https://...">
+    </div>
+    <button class="btn" type="submit">Guardar</button>
+  </form>
+</div>
+{% endblock %}

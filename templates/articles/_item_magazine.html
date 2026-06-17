@@ -1,0 +1,20 @@
+<article class="item item-mag {% if article.is_read %}is-read{% endif %}"
+  data-pk="{{ article.pk }}" hx-get="{% url 'articles:reading' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML"
+  hx-on::after-request="this.classList.add('is-read')">
+  <div class="item-main">
+    <div class="item-top">
+      {% include "partials/source_icon.html" with source=article.source %}
+      <span class="item-source">{{ article.source.name }}</span>
+      <span class="tag">{{ article.source.get_bias_display }}</span>
+      {% if article.in_blindspot %}<span class="tag badge-blindspot"><svg class="ic"><use href="#i-alert"/></svg> Blindspot</span>{% endif %}
+      {% if article.published_at %}<span class="item-meta">· {{ article.published_at|date:"d M H:i" }}</span>{% endif %}
+      {% if article.reading_minutes %}<span class="item-meta">· <svg class="ic"><use href="#i-clock"/></svg> {{ article.reading_minutes }} min</span>{% endif %}
+    </div>
+    <h3 class="item-headline">{{ article.title }}</h3>
+    {% if article.summary %}<p class="item-excerpt">{{ article.summary|striptags|truncatewords:32 }}</p>{% endif %}
+    <div class="item-flags">
+      {% if article.is_saved %}<span class="mini-badge"><svg class="ic ic-fill"><use href="#i-star"/></svg> Guardado</span>{% endif %}
+      {% if article.is_enriched %}<span class="mini-badge"><svg class="ic"><use href="#i-sparkles"/></svg></span>{% endif %}
+    </div>
+  </div>
+</article>

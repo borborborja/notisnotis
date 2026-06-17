@@ -1,0 +1,54 @@
+"""Factoría de clientes de IA con resolución de config por usuario (.env > usuario > default)."""
+from __future__ import annotations
+
+from django.conf import settings
+
+from .config import effective_config
+from .providers.mock import MockChatProvider, MockEmbedProvider
+from .providers.ollama import OllamaChatProvider, OllamaEmbedProvider
+from .providers.ollama_cloud import OllamaCloudChatProvider, OllamaCloudEmbedProvider
+from .providers.openrouter import OpenRouterChatProvider, OpenRouterEmbedProvider
+
+_CHAT = {
+    "mock": MockChatProvider,
+    "openrouter": OpenRouterChatProvider,
+    "ollama": OllamaChatProvider,
+    "ollama_cloud": OllamaCloudChatProvider,
+}
+_EMBED = {
+    "mock": MockEmbedProvider,
+    "openrouter": OpenRouterEmbedProvider,
+    "ollama": OllamaEmbedProvider,
+    "ollama_cloud": OllamaCloudEmbedProvider,
+}
+
+
+def _provider_kwargs(provider, cfg):
+    return {
+        "openrouter": {"api_key": cfg["openrouter_api_key"], "base_url": cfg["openrouter_base_url"]},
+        "ollama": {"base_url": cfg["ollama_base_url"]},
+        "ollama_cloud": {"api_key": cfg["ollama_cloud_api_key"], "base_url": cfg["ollama_cloud_base_url"]},
+        "mock": {},
+    }.get(provider, {})
+
+
+def get_chat_client(user=None):
+    cfg = effective_config(user)
+    provider = cfg["chat_provider"]
+    cls = _CHAT.get(provider)
+    if cls is None:
+        raise ValueError(f"Proveedor de chat desconocido: {provider}")
+    kwargs = _provider_kwargs(provider, cfg)
+    kwargs["timeout"] = settings.AI["TIMEOUT"]
+    return cls(model=cfg["chat_model"], **kwargs)
+
+
+def get_embed_client(user=None):
+    cfg = effective_config(user)
+    provider = cfg["embed_provider"]
+    cls = _EMBED.get(provider)
+    if cls is None:
+        raise ValueError(f"Proveedor de embeddings desconocido: {provider}")
+    kwargs = _provider_kwargs(provider, cfg)
+    kwargs["timeout"] = settings.AI["TIMEOUT"]
+    return cls(model=cfg["embed_model"], dim=cfg["embed_dim"], **kwargs)

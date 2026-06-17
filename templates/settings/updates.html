@@ -1,0 +1,49 @@
+{% extends "settings/base.html" %}
+{% block tab %}
+<h1>Actualización en background</h1>
+
+<div class="card">
+  <p class="muted">El servidor descarga tus feeds en segundo plano para que al entrar estén al día.
+    Aquí defines cada cuánto.</p>
+  <form method="post" action="{% url 'account_settings_tab' 'updates' %}">{% csrf_token %}
+    <input type="hidden" name="action" value="save_updates">
+
+    <p>
+      <label>
+        <input type="checkbox" name="smart_mode" value="1" {% if smart_mode %}checked{% endif %}>
+        <strong>Modo inteligente</strong> — ajusta la cadencia de cada fuente según su frecuencia de publicación.
+      </label>
+    </p>
+
+    <p>
+      <label><strong>Cadencia por defecto</strong> (cuando el modo inteligente está desactivado)</label><br>
+      <select name="default_minutes">
+        {% for m, label in cadence_choices %}
+          <option value="{{ m }}" {% if m == default_minutes %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </p>
+
+    <button class="btn" type="submit">Guardar</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Cadencia actual por feed</h3>
+  <table>
+    <thead><tr><th>Feed</th><th>Modo</th><th>Cada</th><th>Última descarga</th></tr></thead>
+    <tbody>
+    {% for feed in feeds %}
+      <tr>
+        <td>{{ feed.title|default:feed.source.name }}</td>
+        <td>{% if feed.auto_interval %}<span class="tag">inteligente</span>{% else %}manual{% endif %}</td>
+        <td>{{ feed.fetch_interval_minutes }} min</td>
+        <td>{{ feed.last_fetched|date:"d M H:i"|default:"—" }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="muted">Sin feeds todavía.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base_plain.html" %}
+{% block title %}Entrar · NotisNotis{% endblock %}
+{% block content %}
+<h2>Entrar</h2>
+<form method="post">{% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn" type="submit">Entrar</button>
+</form>
+<p class="item-meta">¿No tienes cuenta? <a href="{% url 'register' %}">Regístrate</a>.</p>
+{% endblock %}

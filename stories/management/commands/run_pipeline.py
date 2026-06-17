@@ -1,0 +1,29 @@
+from django.core.management import call_command
+from django.core.management.base import BaseCommand
+
+
+class Command(BaseCommand):
+    help = "Orquesta el pipeline completo: fetch → embed → (enrich) → cluster → rate → analyze."
+
+    def add_arguments(self, parser):
+        parser.add_argument("--user", help="limitar a un username donde aplique")
+        parser.add_argument("--skip-fetch", action="store_true")
+
+    def handle(self, *args, **opts):
+        user = opts.get("user")
+        user_args = {"user": user} if user else {}
+
+        def run(cmd, **kw):
+            self.stdout.write(self.style.MIGRATE_HEADING(f"→ {cmd}"))
+            call_command(cmd, **kw)
+
+        if not opts["skip_fetch"]:
+            run("compute_intervals", **user_args)  # modo inteligente: ajusta cadencias
+            run("fetch_feeds", **user_args)         # solo descarga feeds vencidos
+        run("embed_articles", **user_args)
+        run("enrich_articles", **user_args)  # solo enriquece usuarios en modo batch
+        run("cluster_stories", **user_args)
+        run("rate_sources")
+        run("fetch_favicons", limit=25)  # trickle: evita bloquear el pipeline
+        run("analyze_stories")
+        self.stdout.write(self.style.SUCCESS("Pipeline completado."))

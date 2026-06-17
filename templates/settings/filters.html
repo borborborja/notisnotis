@@ -1,0 +1,29 @@
+{% extends "settings/base.html" %}
+{% block tab %}
+<h1>Filtros</h1>
+
+<div class="card">
+  <p class="muted">Reglas estilo miniflux: una expresión regular por línea (sin distinción de mayúsculas).
+    Se aplican al descargar, sobre el título y el resumen.</p>
+  <form method="post" action="{% url 'account_settings_tab' 'filters' %}">{% csrf_token %}
+    <input type="hidden" name="action" value="save_filters">
+
+    <div class="form-row">
+      <label>Bloquear (descarta los que coincidan)</label>
+      <textarea name="block_rules" placeholder="publicidad&#10;(?i)patrocinado">{{ block_rules }}</textarea>
+    </div>
+    <div class="form-row">
+      <label>Conservar solo (si hay reglas, descarta los que NO coincidan)</label>
+      <textarea name="keep_rules" placeholder="inteligencia artificial&#10;clima">{{ keep_rules }}</textarea>
+    </div>
+    <div class="form-row">
+      <label>Deduplicado entre feeds</label>
+      <select name="dedupe">
+        {% for v, n in dedupe_choices %}<option value="{{ v }}" {% if dedupe == v %}selected{% endif %}>{{ n }}</option>{% endfor %}
+      </select>
+    </div>
+
+    <button class="btn" type="submit">Guardar</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% for m in history %}
+  <div class="bubble bubble-{{ m.role }}">{{ m.content|linebreaksbr }}</div>
+{% empty %}
+  <div class="chat-hint">
+    <p>Pregunta lo que quieras sobre esta noticia. La IA tiene en contexto este artículo
+    y otras noticias relacionadas de tus fuentes, para responder con más perspectiva.</p>
+  </div>
+{% endfor %}

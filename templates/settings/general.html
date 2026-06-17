@@ -1,0 +1,62 @@
+{% extends "settings/base.html" %}
+{% block tab %}
+<h1>General</h1>
+
+<div class="card">
+  <h3>Tema</h3>
+  <p class="muted">Elige el aspecto de la interfaz. Se aplica al instante en este dispositivo.</p>
+  <div class="theme-switch" role="group">
+    <button class="tbtn" data-theme-set="light"><svg class="ic"><use href="#i-sun"/></svg> Claro</button>
+    <button class="tbtn" data-theme-set="dark"><svg class="ic"><use href="#i-moon"/></svg> Oscuro</button>
+    <button class="tbtn" data-theme-set="auto"><svg class="ic"><use href="#i-monitor"/></svg> Automático</button>
+  </div>
+  <p class="muted" id="theme-current"></p>
+</div>
+
+<div class="card">
+  <h3>Lectura e IA</h3>
+  <p class="muted">Traduce y resume artículos al abrirlos. El idioma se usa también en el chat con la IA.</p>
+  <form method="post" action="{% url 'account_settings_tab' 'general' %}">{% csrf_token %}
+    <input type="hidden" name="action" value="save_reading">
+    <p>
+      <label><strong>Idioma de traducción</strong></label><br>
+      <select name="translate_lang">
+        {% for code, name in langs %}<option value="{{ code }}" {% if code == reading.lang %}selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+    </p>
+    <p><label><input type="checkbox" name="auto_translate" value="1" {% if reading.auto_translate %}checked{% endif %}>
+      Traducir automáticamente al abrir un artículo</label></p>
+    <p><label><input type="checkbox" name="auto_summarize" value="1" {% if reading.auto_summarize %}checked{% endif %}>
+      Resumir automáticamente al abrir un artículo</label></p>
+    <p><label><input type="checkbox" name="auto_mark_scroll" value="1" {% if reading.auto_mark_scroll %}checked{% endif %}>
+      Marcar como leído automáticamente al pasar el scroll</label></p>
+
+    <hr>
+    <h4>Tipografía del artículo</h4>
+    <div class="form-row">
+      <label>Fuente</label>
+      <select name="read_font">{% for v, n in fonts %}<option value="{{ v }}" {% if reading.font == v %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+    </div>
+    <div class="form-row">
+      <label>Tamaño</label>
+      <select name="read_size">{% for v, n in sizes %}<option value="{{ v }}" {% if reading.size == v %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+    </div>
+    <div class="form-row">
+      <label>Ancho de lectura</label>
+      <select name="read_width">{% for v, n in widths %}<option value="{{ v }}" {% if reading.width == v %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+    </div>
+    <button class="btn" type="submit">Guardar</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Cuenta</h3>
+  <table>
+    <tr><td>Usuario</td><td>{{ user.username }}</td></tr>
+    <tr><td>Email</td><td>{{ user.email|default:"—" }}</td></tr>
+  </table>
+  <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+    <button class="btn btn-ghost" type="submit">Cerrar sesión</button>
+  </form>
+</div>
+{% endblock %}

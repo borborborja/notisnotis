@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ story.headline }} · NotisNotis{% endblock %}
+{% block content %}
+<div class="reader single">
+  <div class="reading" id="reading-pane">
+    <p class="back"><a href="{% url 'stories:home' %}"><svg class="ic"><use href="#i-arrow-left"/></svg> Historias</a></p>
+    {% include "stories/_story_reading.html" %}
+  </div>
+</div>
+{% endblock %}

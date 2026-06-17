@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Reglas · NotisNotis{% endblock %}
+{% block content %}
+<h1>Reglas de automatización</h1>
+<div class="card">
+  <p class="muted">Si un artículo nuevo cumple la condición, se le aplican las acciones al descargarlo.
+    Condiciones vacías = comodín. El patrón es una expresión regular.</p>
+  <form method="post">{% csrf_token %}
+    <div class="form-row"><label>Nombre</label><input type="text" name="name" required></div>
+    <div class="form-row"><label>Patrón (regex, opcional)</label><input type="text" name="pattern" placeholder="(?i)oferta|publicidad"></div>
+    <div class="form-row">
+      <label>Buscar en</label>
+      <select name="match_in"><option value="any">Título o resumen</option><option value="title">Título</option><option value="summary">Resumen</option></select>
+    </div>
+    <div class="form-row">
+      <label>Feed (opcional)</label>
+      <select name="feed"><option value="">— Cualquiera —</option>{% for f in feeds %}<option value="{{ f.id }}">{{ f.title|default:f.source.name }}</option>{% endfor %}</select>
+    </div>
+    <div class="form-row">
+      <label>Categoría (opcional)</label>
+      <select name="category"><option value="">— Cualquiera —</option>{% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select>
+    </div>
+    <p><strong>Acciones:</strong>
+      <label><input type="checkbox" name="action_mark_read" value="1"> Marcar leído</label>
+      <label><input type="checkbox" name="action_star" value="1"> Guardar (★)</label>
+    </p>
+    <div class="form-row"><label>Etiquetar con (opcional)</label><input type="text" name="action_tag" placeholder="nombre de etiqueta"></div>
+    <button class="btn" type="submit">Crear regla</button>
+  </form>
+</div>
+
+<div class="card">
+  <table>
+    <thead><tr><th>Regla</th><th>Condición</th><th>Acciones</th><th>Estado</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rules %}
+      <tr>
+        <td>{{ r.name }}</td>
+        <td class="muted">
+          {% if r.pattern %}<code>{{ r.pattern }}</code> en {{ r.get_match_in_display }}{% endif %}
+          {% if r.feed %}· {{ r.feed.title|default:r.feed.source.name }}{% endif %}
+          {% if r.category %}· {{ r.category.name }}{% endif %}
+        </td>
+        <td>{% if r.action_mark_read %}<span class="tag">leído</span>{% endif %}
+            {% if r.action_star %}<span class="tag">★</span>{% endif %}
+            {% if r.action_tag %}<span class="tag">#{{ r.action_tag.name }}</span>{% endif %}</td>
+        <td>{% if r.enabled %}Activa{% else %}<span class="muted">Pausada</span>{% endif %}</td>
+        <td>
+          <form method="post" action="{% url 'feeds:rule_toggle' r.pk %}" class="inline">{% csrf_token %}<button class="linkbtn">{% if r.enabled %}Pausar{% else %}Activar{% endif %}</button></form>
+          ·
+          <form method="post" action="{% url 'feeds:rule_delete' r.pk %}" class="inline" onsubmit="return confirm('¿Eliminar regla?')">{% csrf_token %}<button class="linkbtn">Eliminar</button></form>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="muted">Sin reglas todavía.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

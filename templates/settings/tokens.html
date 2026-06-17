@@ -1,0 +1,52 @@
+{% extends "settings/base.html" %}
+{% block tab %}
+<h1>API / MCP</h1>
+
+<div class="card">
+  <h3>Sincronización con lectores (Fever / Google Reader)</h3>
+  <p class="muted">Conecta apps como Reeder, NetNewsWire o Fiery Feeds. Usa estos datos en el lector.</p>
+  <table>
+    <tr><td>Usuario</td><td><code>{{ user.username }}</code></td></tr>
+    <tr><td>Contraseña de app</td><td><code>{{ sync.password }}</code></td></tr>
+    <tr><td>Endpoint Fever</td><td><code>{{ fever_url }}</code></td></tr>
+    <tr><td>Endpoint Google Reader</td><td><code>{{ greader_url }}</code></td></tr>
+  </table>
+  <p class="muted">En el lector elige "Fever" o "Google Reader (self-hosted)", indica la URL,
+    tu usuario y la contraseña de app de arriba.</p>
+  <form method="post" action="{% url 'account_settings_tab' 'tokens' %}"
+        onsubmit="return confirm('Regenerar invalidará la credencial actual en tus lectores. ¿Continuar?')">
+    {% csrf_token %}<input type="hidden" name="action" value="gen_sync_password">
+    <button class="btn btn-ghost" type="submit"><svg class="ic"><use href="#i-rotate"/></svg> Regenerar credencial</button>
+  </form>
+</div>
+
+<div class="card">
+  <p class="muted">Tokens para el servidor MCP (consumo desde un LLM). Filtran por tu usuario.</p>
+  <table>
+    <thead><tr><th>Nombre</th><th>Token</th><th>Creado</th><th></th></tr></thead>
+    <tbody>
+    {% for t in tokens %}
+      <tr>
+        <td>{{ t.name }}</td>
+        <td><code>{{ t.token }}</code></td>
+        <td>{{ t.created_at|date:"d M Y" }}</td>
+        <td>
+          <form method="post" action="{% url 'account_settings_tab' 'tokens' %}" class="inline">{% csrf_token %}
+            <input type="hidden" name="action" value="delete_token">
+            <input type="hidden" name="token_id" value="{{ t.pk }}">
+            <button class="linkbtn">Revocar</button>
+          </form>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="muted">Sin tokens.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <form method="post" action="{% url 'account_settings_tab' 'tokens' %}">{% csrf_token %}
+    <input type="hidden" name="action" value="new_token">
+    <input type="text" name="name" placeholder="nombre del token" value="default">
+    <button class="btn" type="submit">Generar token</button>
+  </form>
+</div>
+{% endblock %}

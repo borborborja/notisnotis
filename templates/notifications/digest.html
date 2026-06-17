@@ -1,0 +1,24 @@
+<div style="font-family:-apple-system,system-ui,sans-serif;max-width:640px;margin:0 auto;color:#1f2733">
+  <h1 style="font-size:1.3rem">NotisNotis — resumen {% if days == 7 %}semanal{% else %}diario{% endif %}</h1>
+
+  {% if blindspots %}
+  <h2 style="font-size:1rem;color:#c53030">⚠ Blindspots</h2>
+  <ul>
+    {% for s in blindspots %}
+      <li><strong>{{ s.headline }}</strong> <span style="color:#8a93a2">· {{ s.article_count }} fuentes</span></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <h2 style="font-size:1rem">Sin leer</h2>
+  <ul>
+    {% for a in articles %}
+      <li>
+        <a href="{{ a.url }}" style="color:#7c5cff;text-decoration:none">{{ a.title }}</a>
+        <span style="color:#8a93a2">· {{ a.source.name }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <p style="color:#8a93a2;font-size:.85rem">— NotisNotis · gestiona tu digest en Ajustes → Notificaciones</p>
+</div>

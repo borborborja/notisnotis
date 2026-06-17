@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}NotisNotis{% endblock %}</title>
+  <script>(function(){var r=document.documentElement;var t=localStorage.getItem('nn_theme')||'auto';var d=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);r.setAttribute('data-theme',d?'dark':'light');var sw=localStorage.getItem('nn_sidebar_w');if(sw)r.style.setProperty('--sidebar-w',sw+'px');var lw=localStorage.getItem('nn_list_w');if(lw)r.style.setProperty('--list-w',lw+'px');})();</script>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'js/htmx.min.js' %}" defer></script>
+  <script src="{% static 'js/app.js' %}" defer></script>
+</head>
+<body class="app" data-font="{{ reading_ui.font }}" data-size="{{ reading_ui.size }}" data-width="{{ reading_ui.width }}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  {% include "partials/icons.html" %}
+  <button class="sidebar-toggle" data-sidebar-toggle aria-label="Menú"><svg class="ic"><use href="#i-menu"/></svg></button>
+  <aside class="sidebar" data-sidebar>
+    {% include "partials/sidebar.html" %}
+    <div class="col-resizer" data-resize="sidebar"></div>
+  </aside>
+  <main class="main">
+    <div class="messages">
+      {% for message in messages %}<div class="msg msg-{{ message.tags }}">{{ message }}</div>{% endfor %}
+    </div>
+    {% block content %}{% endblock %}
+  </main>
+
+  <div id="kb-help" class="kb-help" data-help-close>
+    <div class="kb-card">
+      <h3><svg class="ic"><use href="#i-keyboard"/></svg> Atajos de teclado</h3>
+      <ul class="kb-list">
+        <li><kbd>j</kbd> / <kbd>k</kbd> Siguiente / anterior</li>
+        <li><kbd>o</kbd> / <kbd>Enter</kbd> Abrir</li>
+        <li><kbd>m</kbd> Marcar leído</li>
+        <li><kbd>s</kbd> Guardar</li>
+        <li><kbd>r</kbd> Refrescar</li>
+        <li><kbd>/</kbd> Buscar</li>
+        <li><kbd>?</kbd> Esta ayuda · <kbd>Esc</kbd> Cerrar</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

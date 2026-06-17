@@ -1,0 +1,8 @@
+{% if bars %}
+<div class="biasbar">
+  {% for b in bars %}{% if b.pct %}<span class="seg-{{ b.bucket }}" style="width: {{ b.pct }}%" title="{{ b.label }}: {{ b.count }}"></span>{% endif %}{% endfor %}
+</div>
+<div class="biaslegend">
+  {% for b in bars %}{% if b.count %}<span><span class="dot seg-{{ b.bucket }}"></span>{{ b.label }} ({{ b.count }})</span>{% endif %}{% endfor %}
+</div>
+{% endif %}

@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class SyncapiConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "syncapi"
+    verbose_name = "Sincronización (Fever / Google Reader)"

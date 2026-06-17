@@ -1,0 +1,87 @@
+{% load static %}
+<div class="sb-brand">
+  <a href="{% url 'articles:list' %}"><svg class="ic"><use href="#i-rss"/></svg> NotisNotis</a>
+</div>
+
+<form class="sb-search" action="{% url 'articles:list' %}" method="get">
+  <input type="search" name="q" placeholder="Buscar…" value="{{ request.GET.q }}">
+</form>
+
+<nav class="sb-nav">
+  <a href="{% url 'articles:list' %}?filter=unread" class="sb-item">
+    <span><svg class="ic"><use href="#i-inbox"/></svg> Todos</span>{% if sidebar_counts.unread %}<span class="sb-count">{{ sidebar_counts.unread }}</span>{% endif %}
+  </a>
+  <a href="{% url 'articles:list' %}?filter=saved" class="sb-item">
+    <span><svg class="ic"><use href="#i-star"/></svg> Guardados</span>{% if sidebar_counts.saved %}<span class="sb-count">{{ sidebar_counts.saved }}</span>{% endif %}
+  </a>
+  <a href="{% url 'stories:home' %}" class="sb-item">
+    <span><svg class="ic"><use href="#i-layers"/></svg> Historias</span>{% if sidebar_counts.stories %}<span class="sb-count">{{ sidebar_counts.stories }}</span>{% endif %}
+  </a>
+  <a href="{% url 'stories:home' %}?filter=blindspot" class="sb-item">
+    <span><svg class="ic"><use href="#i-alert"/></svg> Blindspots</span>{% if sidebar_counts.blindspots %}<span class="sb-count alert">{{ sidebar_counts.blindspots }}</span>{% endif %}
+  </a>
+</nav>
+
+<div class="sb-section-title">Categorías</div>
+<nav class="sb-nav">
+  {% for cat in sidebar_categories %}
+    <div class="sb-group" data-collapse>
+      <div class="sb-group-head">
+        <button class="caret-btn" type="button" data-collapse-toggle><span class="caret">▸</span></button>
+        <a class="sb-group-link" href="{% url 'articles:list' %}?category={{ cat.id }}">
+          <span class="sb-group-name">{{ cat.name }}</span>
+        </a>
+        {% if cat.unread %}<span class="sb-count">{{ cat.unread }}</span>{% endif %}
+      </div>
+      <div class="sb-group-body">
+        {% for feed in cat.feeds %}
+          <a href="{% url 'articles:list' %}?feed={{ feed.id }}" class="sb-item sb-feed">
+            <span>{% include "partials/source_icon.html" with source=feed.source %}<span class="sb-feed-name">{{ feed.title|default:feed.source.name }}</span></span>
+            {% if feed.unread %}<span class="sb-count">{{ feed.unread }}</span>{% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+
+  {% if sidebar_uncategorized %}
+    <div class="sb-group" data-collapse>
+      <div class="sb-group-head">
+        <button class="caret-btn" type="button" data-collapse-toggle><span class="caret">▸</span></button>
+        <a class="sb-group-link" href="{% url 'articles:list' %}?category=none">
+          <span class="sb-group-name">Sin categoría</span>
+        </a>
+      </div>
+      <div class="sb-group-body">
+        {% for feed in sidebar_uncategorized %}
+          <a href="{% url 'articles:list' %}?feed={{ feed.id }}" class="sb-item sb-feed">
+            <span>{% include "partials/source_icon.html" with source=feed.source %}<span class="sb-feed-name">{{ feed.title|default:feed.source.name }}</span></span>
+            {% if feed.unread %}<span class="sb-count">{{ feed.unread }}</span>{% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</nav>
+
+{% if sidebar_tags %}
+<div class="sb-section-title">Etiquetas</div>
+<nav class="sb-nav">
+  {% for t in sidebar_tags %}
+    <a href="{% url 'articles:list' %}?tag={{ t.id }}" class="sb-item">
+      <span>#{{ t.name }}</span><span class="sb-count">{{ t.n }}</span>
+    </a>
+  {% endfor %}
+</nav>
+{% endif %}
+
+<div class="sb-footer">
+  <a href="{% url 'feeds:subscribe' %}" class="sb-item"><span><svg class="ic"><use href="#i-plus"/></svg> Añadir feed</span></a>
+  <a href="{% url 'feeds:feed_list' %}" class="sb-item"><span><svg class="ic"><use href="#i-rss"/></svg> Feeds</span></a>
+  <a href="{% url 'feeds:upload_opml' %}" class="sb-item"><span><svg class="ic"><use href="#i-upload"/></svg> Importar OPML</span></a>
+  <a href="{% url 'account_settings' %}" class="sb-item"><span><svg class="ic"><use href="#i-settings"/></svg> Ajustes</span></a>
+  <button type="button" class="sb-item linkbtn" data-theme-toggle><span><svg class="ic"><use href="#i-moon"/></svg> Tema</span></button>
+  <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+    <button type="submit" class="sb-item linkbtn"><span><svg class="ic"><use href="#i-logout"/></svg> Salir ({{ user.username }})</span></button>
+  </form>
+</div>

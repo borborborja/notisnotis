@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Editar feed · NotisNotis{% endblock %}
+{% block content %}
+<h1>Editar feed</h1>
+<div class="card">
+  <p class="muted">{% include "partials/source_icon.html" with source=feed.source %} {{ feed.source.name }} · <code>{{ feed.url }}</code></p>
+  <form method="post">{% csrf_token %}
+    <div class="form-row">
+      <label>Título</label>
+      <input type="text" name="title" value="{{ feed.title }}" placeholder="{{ feed.source.name }}">
+    </div>
+    <div class="form-row">
+      <label>Categoría</label>
+      <select name="category">
+        <option value="">— Sin categoría —</option>
+        {% for c in categories %}<option value="{{ c.id }}" {% if feed.category_id == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label><input type="checkbox" name="enabled" value="1" {% if feed.enabled %}checked{% endif %}> Activo</label>
+    </div>
+    <div class="form-row">
+      <label><input type="checkbox" name="crawler" value="1" {% if feed.crawler %}checked{% endif %}>
+        Descargar texto completo automáticamente (crawler)</label>
+    </div>
+    <div class="form-row">
+      <label><input type="checkbox" name="auto_interval" value="1" {% if feed.auto_interval %}checked{% endif %}>
+        Cadencia inteligente</label>
+    </div>
+    <div class="form-row">
+      <label>Cadencia manual (minutos)</label>
+      <input type="text" name="interval" value="{{ feed.fetch_interval_minutes }}">
+    </div>
+    <button class="btn" type="submit">Guardar</button>
+    <a class="btn btn-ghost" href="{% url 'feeds:feed_list' %}">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

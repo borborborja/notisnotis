@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ article.title }} · NotisNotis{% endblock %}
+{% block content %}
+<div class="reader single">
+  <div class="reading" id="reading-pane">
+    <p class="back"><a href="{% url 'articles:list' %}"><svg class="ic"><use href="#i-arrow-left"/></svg> Lector</a></p>
+    {% include "articles/_reading_pane.html" %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% load static %}
+<article class="reading-article">
+  <div class="reading-head">
+    <div class="reading-source">
+      {% include "partials/source_icon.html" with source=article.source %}
+      <strong>{{ article.source.name }}</strong>
+      <span class="tag">{{ article.source.get_bias_display }}</span>
+      {% if article.source.factuality %}<span class="tag">factualidad: {{ article.source.factuality }}</span>{% endif %}
+    </div>
+    <div class="reading-actions">
+      <form hx-post="{% url 'articles:toggle_saved' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">
+        {% csrf_token %}<button class="tbtn" title="Guardar"><svg class="ic {% if article.is_saved %}ic-fill{% endif %}"><use href="#i-star"/></svg></button>
+      </form>
+      {% if article.url %}<a class="tbtn" href="{{ article.url }}" target="_blank" rel="noopener">Original <svg class="ic"><use href="#i-external"/></svg></a>{% endif %}
+      {% if story_link %}<a class="tbtn" href="{% url 'stories:detail' story_link.pk %}"><svg class="ic"><use href="#i-layers"/></svg> Historia</a>{% endif %}
+      <span class="type-ctl">
+        <button class="tbtn" type="button" data-type="size-" title="Texto más pequeño">A−</button>
+        <button class="tbtn" type="button" data-type="size+" title="Texto más grande">A+</button>
+        <button class="tbtn" type="button" data-type="serif" title="Alternar serif">Aa</button>
+      </span>
+    </div>
+  </div>
+
+  <!-- Acciones IA -->
+  <div class="ai-bar">
+    <form hx-post="{% url 'articles:summarize' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">
+      {% csrf_token %}<button class="tbtn"><svg class="ic"><use href="#i-file-text"/></svg> Resumir</button>
+    </form>
+    <form hx-post="{% url 'articles:translate' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML" class="ai-translate">
+      {% csrf_token %}
+      <select name="lang">
+        {% for code, name in langs %}<option value="{{ code }}" {% if code == prefs.lang %}selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+      <button class="tbtn"><svg class="ic"><use href="#i-globe"/></svg> Traducir</button>
+    </form>
+    <button class="tbtn" hx-get="{% url 'articles:chat' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML"><svg class="ic"><use href="#i-message"/></svg> Conversar</button>
+    <a class="tbtn" href="{% url 'articles:export_markdown' article.pk %}"><svg class="ic"><use href="#i-download"/></svg> .md</a>
+    {% if webhook_url %}
+    <form hx-post="{% url 'articles:send_webhook' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">
+      {% csrf_token %}<button class="tbtn"><svg class="ic"><use href="#i-external"/></svg> Enviar</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- Etiquetas -->
+  <div class="tags-row">
+    {% for t in article_tags %}
+      <span class="tag tag-chip">#{{ t.name }}
+        <form hx-post="{% url 'articles:tag_remove' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML" class="inline">
+          {% csrf_token %}<input type="hidden" name="tag_id" value="{{ t.id }}">
+          <button class="chip-x" title="Quitar">×</button>
+        </form>
+      </span>
+    {% endfor %}
+    <form hx-post="{% url 'articles:tag_add' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML" class="inline">
+      {% csrf_token %}
+      <input type="text" name="name" list="tag-list" placeholder="+ etiqueta" class="tag-input">
+      <datalist id="tag-list">{% for t in all_tags %}<option value="{{ t.name }}">{% endfor %}</datalist>
+    </form>
+  </div>
+
+  {% if article.tldr %}
+  <div class="tldr"><strong><svg class="ic"><use href="#i-file-text"/></svg> Resumen</strong><div>{{ article.tldr|linebreaksbr }}</div></div>
+  {% endif %}
+
+  {% if article.translated_at and not show_original %}
+    <h1 class="reading-title">{{ article.translated_title|default:article.title }}</h1>
+    <p class="item-meta">
+      <svg class="ic"><use href="#i-globe"/></svg> Traducido al {{ article.translation_lang }}
+      {% if article.reading_minutes %}· <svg class="ic"><use href="#i-clock"/></svg> {{ article.reading_minutes }} min{% endif %}
+      · <a hx-get="{% url 'articles:reading' article.pk %}?original=1" hx-target="#reading-pane" hx-swap="innerHTML" href="#">ver original</a>
+    </p>
+    <div class="reading-body">{{ article.translated_body|default:article.body|linebreaksbr }}</div>
+  {% else %}
+    <h1 class="reading-title">{{ article.title }}</h1>
+    {% if article.published_at %}<p class="item-meta">{{ article.published_at|date:"d M Y H:i" }}
+      {% if article.reading_minutes %}· <svg class="ic"><use href="#i-clock"/></svg> {{ article.reading_minutes }} min{% endif %}
+      {% if article.translated_at %}· <a hx-get="{% url 'articles:reading' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML" href="#">ver traducción</a>{% endif %}</p>{% endif %}
+    <div class="reading-body">{{ article.full_text|default:article.body|default:article.summary|safe }}</div>
+  {% endif %}
+
+  {% if article.enclosure_url %}
+  <div class="enclosure">
+    {% if 'audio' in article.enclosure_type %}<audio controls src="{{ article.enclosure_url }}"></audio>
+    {% elif 'image' in article.enclosure_type %}<img src="{{ article.enclosure_url }}" alt="">
+    {% elif 'video' in article.enclosure_type %}<video controls src="{{ article.enclosure_url }}"></video>
+    {% else %}<a class="tbtn" href="{{ article.enclosure_url }}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-external"/></svg> Adjunto</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if not article.full_text and fulltext_enabled %}
+  <form hx-post="{% url 'articles:fetch_fulltext' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">
+    {% csrf_token %}<button class="btn">Leer completo</button>
+  </form>
+  {% elif article.full_text %}
+  <p class="item-meta">Texto completo vía {{ article.fulltext_source }}.</p>
+  {% endif %}
+
+  {% if article.is_enriched %}
+  <section class="enrich">
+    <h3><svg class="ic"><use href="#i-sparkles"/></svg> Contexto</h3>
+    {% if article.context %}<p>{{ article.context }}</p>{% endif %}
+    {% if article.framing_note %}<p class="item-meta"><strong>Encuadre:</strong> {{ article.framing_note }}</p>{% endif %}
+    {% if article.claims %}
+      <h4>Afirmaciones señaladas</h4>
+      {% for claim in article.claims %}
+        <div class="claim {{ claim.flag }}">
+          <span class="flag">{{ claim.flag }}</span>
+          <div>{{ claim.text }}</div>
+          {% if claim.note %}<div class="item-meta">{{ claim.note }}</div>{% endif %}
+        </div>
+      {% endfor %}
+    {% endif %}
+  </section>
+  {% endif %}
+</article>

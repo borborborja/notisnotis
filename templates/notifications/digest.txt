@@ -1,0 +1,12 @@
+NotisNotis — resumen {% if days == 7 %}semanal{% else %}diario{% endif %}
+
+{% if blindspots %}== Blindspots =={% for s in blindspots %}
+- {{ s.headline }} ({{ s.article_count }} fuentes)
+{% endfor %}
+{% endif %}
+== Sin leer =={% for a in articles %}
+- {{ a.title }} — {{ a.source.name }}
+  {{ a.url }}
+{% endfor %}
+
+— NotisNotis

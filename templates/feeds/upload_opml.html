@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Importar OPML · NotisNotis{% endblock %}
+{% block content %}
+<h1>Importar OPML</h1>
+<div class="card">
+  <p class="muted">Sube el archivo OPML con tus suscripciones RSS. Crearemos los feeds y las fuentes.</p>
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    <p><input type="file" name="opml" accept=".opml,.xml,text/xml" required></p>
+    <button class="btn" type="submit">Importar</button>
+  </form>
+</div>
+{% endblock %}

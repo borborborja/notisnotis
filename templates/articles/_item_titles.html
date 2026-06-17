@@ -1,0 +1,9 @@
+<article class="item item-title {% if article.is_read %}is-read{% endif %}"
+  data-pk="{{ article.pk }}" hx-get="{% url 'articles:reading' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML"
+  hx-on::after-request="this.classList.add('is-read')">
+  {% include "partials/source_icon.html" with source=article.source %}
+  <span class="item-headline">{{ article.title }}</span>
+  {% if article.in_blindspot %}<span class="mini-badge"><svg class="ic"><use href="#i-alert"/></svg></span>{% endif %}
+  {% if article.is_saved %}<span class="mini-badge"><svg class="ic ic-fill"><use href="#i-star"/></svg></span>{% endif %}
+  <span class="item-meta">{{ article.source.name }}{% if article.published_at %} · {{ article.published_at|date:"d M H:i" }}{% endif %}</span>
+</article>

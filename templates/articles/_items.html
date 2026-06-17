@@ -1,0 +1,7 @@
+{% for article in page %}{% include item_template %}{% endfor %}
+{% if page.has_next %}
+<div class="load-more" hx-get="{% url 'articles:list' %}?{{ qparams }}&view={{ view }}&page={{ page.next_page_number }}"
+     hx-trigger="revealed" hx-swap="outerHTML">Cargando…</div>
+{% elif not page.object_list %}
+<div class="reading-empty"><p>No hay artículos aquí.</p></div>
+{% endif %}

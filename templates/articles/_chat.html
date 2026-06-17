@@ -1,0 +1,19 @@
+{% load static %}
+<div class="chat">
+  <div class="chat-head">
+    <button class="tbtn" hx-get="{% url 'articles:reading' article.pk %}" hx-target="#reading-pane" hx-swap="innerHTML"><svg class="ic"><use href="#i-arrow-left"/></svg> Artículo</button>
+    <span class="chat-title"><svg class="ic"><use href="#i-message"/></svg> {{ article.title|truncatechars:60 }}</span>
+    <a class="tbtn" href="#" hx-get="{% url 'articles:chat' article.pk %}?reset=1" hx-target="#reading-pane" hx-swap="innerHTML"><svg class="ic"><use href="#i-rotate"/></svg> Reiniciar</a>
+  </div>
+
+  <div id="chat-thread" class="chat-thread">
+    {% include "articles/_chat_thread.html" %}
+  </div>
+
+  <form class="chat-input" hx-post="{% url 'articles:chat_send' article.pk %}" hx-target="#chat-thread"
+        hx-swap="innerHTML" hx-on::after-request="this.reset()" hx-disabled-elt="find button">
+    {% csrf_token %}
+    <input name="message" placeholder="Pregunta sobre esta noticia…" autocomplete="off" required>
+    <button class="btn">Enviar</button>
+  </form>
+</div>

@@ -1,0 +1,32 @@
+{% load static %}
+<article class="reading-article">
+  <h1 class="reading-title">{{ story.headline }}</h1>
+  {% if story.is_blindspot %}
+    <p><span class="tag badge-blindspot"><svg class="ic"><use href="#i-alert"/></svg> Blindspot: cobertura escasa {% if story.blindspot_side == 'left' %}de izquierda{% else %}de derecha{% endif %}</span></p>
+  {% endif %}
+  {% include "partials/biasbar.html" with bars=bars %}
+
+  {% if story.neutral_summary %}
+    <h3>Resumen neutral</h3><p>{{ story.neutral_summary }}</p>
+  {% endif %}
+  {% if story.perspectives %}
+    <h3>Perspectivas</h3>
+    {% if story.perspectives.left %}<p><strong style="color:var(--left)">Izquierda:</strong> {{ story.perspectives.left }}</p>{% endif %}
+    {% if story.perspectives.center %}<p><strong style="color:var(--center)">Centro:</strong> {{ story.perspectives.center }}</p>{% endif %}
+    {% if story.perspectives.right %}<p><strong style="color:var(--right)">Derecha:</strong> {{ story.perspectives.right }}</p>{% endif %}
+  {% endif %}
+
+  <h3>Cobertura por sesgo</h3>
+  {% for bucket, group in grouped.items %}
+    <div class="cov-group">
+      <h4><span class="dot seg-{{ bucket }}"></span>{{ group.label }}</h4>
+      {% for article in group.articles %}
+        <div class="cov-item">
+          <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
+          <span class="item-meta">· {{ article.source.name }}</span>
+          {% if article.url %}· <a href="{{ article.url }}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-external"/></svg></a>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</article>

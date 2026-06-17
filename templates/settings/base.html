@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ajustes · NotisNotis</title>
+  <script>(function(){var t=localStorage.getItem('nn_theme')||'auto';var d=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');})();</script>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'js/app.js' %}" defer></script>
+</head>
+<body class="settings">
+  {% include "partials/icons.html" %}
+  <header class="set-top">
+    <a class="back" href="{% url 'articles:list' %}"><svg class="ic"><use href="#i-arrow-left"/></svg> Volver</a>
+    <span class="brand"><svg class="ic"><use href="#i-settings"/></svg> Ajustes</span>
+  </header>
+  <div class="set-shell">
+    <nav class="set-nav">
+      {% for key, label in tabs %}
+        <a href="{% url 'account_settings_tab' key %}" class="set-tab {% if key == active_tab %}active{% endif %}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+    <section class="set-content">
+      {% for message in messages %}<div class="msg msg-{{ message.tags }}">{{ message }}</div>{% endfor %}
+      {% block tab %}{% endblock %}
+    </section>
+  </div>
+</body>
+</html>

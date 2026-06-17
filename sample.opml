@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head><title>NotisNotis sample feeds</title></head>
+  <body>
+    <outline text="Generalistas" title="Generalistas">
+      <outline text="BBC News" title="BBC News" type="rss"
+               xmlUrl="http://feeds.bbci.co.uk/news/rss.xml" htmlUrl="https://www.bbc.com/news"/>
+      <outline text="NPR News" title="NPR News" type="rss"
+               xmlUrl="https://feeds.npr.org/1001/rss.xml" htmlUrl="https://www.npr.org"/>
+      <outline text="The Guardian" title="The Guardian" type="rss"
+               xmlUrl="https://www.theguardian.com/world/rss" htmlUrl="https://www.theguardian.com"/>
+    </outline>
+    <outline text="Opinión" title="Opinión">
+      <outline text="Fox News" title="Fox News" type="rss"
+               xmlUrl="https://moxie.foxnews.com/google-publisher/latest.xml" htmlUrl="https://www.foxnews.com"/>
+    </outline>
+  </body>
+</opml>
