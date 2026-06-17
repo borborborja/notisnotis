@@ -1,13 +1,10 @@
 # Despliegue y operación
 
-## 0. Estado del repositorio
-El proyecto **todavía NO está en ningún repositorio Git**. Para inicializarlo:
+## 0. Repositorio
+Código en **https://github.com/borborborja/notisnotis**. Clonar:
 
 ```bash
-cd /Users/borja/Codi/notisnotis
-git init && git add -A && git commit -m "NotisNotis: estado inicial"
-# crea el remoto (ejemplo) y sube:
-gh repo create notisnotis --private --source=. --push      # o git remote add origin <url> && git push -u origin main
+git clone https://github.com/borborborja/notisnotis.git && cd notisnotis
 ```
 `.gitignore` ya excluye `.venv/`, `db.sqlite3`, `.env`, `staticfiles/`, `__pycache__`.
 **Nunca** comitees `.env` ni claves. Las migraciones **sí** se comitean.
@@ -45,9 +42,8 @@ docker compose --profile mcp up -d   # + servidor MCP (HTTP en :8765), opcional
 - Variables clave en `.env`: `DEBUG=0`, `SECRET_KEY`, `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`,
   `DATABASE_URL`, `TIME_ZONE`, y las de IA/SMTP según el patrón cascade (ver CLAUDE.md §6).
 
-> Homelab Micapum: el `compose.yaml` puede alinearse con las convenciones del usuario
-> (redes `cloudflare-net`/`xarxa_docker_micapum`, rutas `/opt/stacks`, labels Dockflare/
-> Watchtower) — usar el skill `docker-deploy` para esa parte si aplica.
+> El `compose.yaml` se puede adaptar a tu infraestructura (redes externas, rutas de
+> volúmenes, labels de reverse-proxy/auto-update) según tu propio homelab.
 
 ## 3. Tareas programadas (cron)
 El `scheduler` ya corre el pipeline. El **digest** se programa aparte (es time-based):

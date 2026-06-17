@@ -14,6 +14,7 @@ services:
       retries: 5
 
   web:
+    image: ghcr.io/borborborja/notisnotis:latest
     build: .
     env_file: .env
     depends_on:
@@ -25,6 +26,7 @@ services:
 
   # Refresco periódico del pipeline (sin daemon cron).
   scheduler:
+    image: ghcr.io/borborborja/notisnotis:latest
     build: .
     env_file: .env
     depends_on:
@@ -41,6 +43,7 @@ services:
 
   # Servidor MCP por HTTP/SSE (opcional). Define NOTISNOTIS_API_TOKEN en .env.
   mcp:
+    image: ghcr.io/borborborja/notisnotis:latest
     build: .
     env_file: .env
     depends_on:

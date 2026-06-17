@@ -162,4 +162,5 @@ Fase D (PWA, cuenta/2FA, **pgvector**, backup).
 
 ## 10. Deploy
 Ver [`docs/DEPLOY.md`](docs/DEPLOY.md). Resumen: `docker compose up` (web + db + scheduler;
-perfil `mcp` opcional). **Aún no está en ningún repositorio Git.**
+perfil `mcp` opcional). Repo: https://github.com/borborborja/notisnotis (CI publica
+la imagen en `ghcr.io/borborborja/notisnotis`).
