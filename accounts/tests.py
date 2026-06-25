@@ -155,6 +155,17 @@ class TwoFactorTests(TestCase):
         self.assertEqual(self.client.get("/articles/", **H).status_code, 200)
 
 
+class SettingsTabsRenderTests(TestCase):
+    def setUp(self):
+        get_user_model().objects.create_user("tabs", "t@x.com", "pw-initial-1")
+        self.client.login(username="tabs", password="pw-initial-1")
+
+    def test_all_tabs_render(self):
+        for tab in ("general", "ai", "updates", "filters", "notifications", "tokens", "account"):
+            r = self.client.get(f"/accounts/settings/{tab}/", **H)
+            self.assertEqual(r.status_code, 200, f"tab {tab} no renderiza")
+
+
 class AiSettingsUiTests(TestCase):
     def setUp(self):
         get_user_model().objects.create_user("ai", "ai@x.com", "pw-initial-1")

@@ -28,7 +28,8 @@
         <div class="form-row">
           <label>{{ f.label }}</label>
           {% if f.type == 'bool' %}
-            <input type="checkbox" name="{{ f.key }}" value="1" {% if f.value == '1' %}checked{% endif %}>
+            <label class="switch"><input type="checkbox" name="{{ f.key }}" value="1" {% if f.value == '1' %}checked{% endif %}>
+              <span>Usar TLS</span></label>
           {% elif f.secret %}
             <input type="password" name="{{ f.key }}" placeholder="{% if f.value %}•••••• (guardado){% else %}sin definir{% endif %}">
           {% else %}
@@ -39,8 +40,10 @@
       <hr>
     {% endif %}
 
-    <p><label><input type="checkbox" name="digest_optin" value="1" {% if digest.optin %}checked{% endif %}>
-      Quiero recibir el resumen por email</label></p>
+    <div class="form-row">
+      <label class="switch"><input type="checkbox" name="digest_optin" value="1" {% if digest.optin %}checked{% endif %}>
+        <span>Quiero recibir el resumen por email</span></label>
+    </div>
     <div class="form-row">
       <label>Frecuencia</label>
       <select name="digest_frequency">
@@ -48,15 +51,18 @@
       </select>
     </div>
     <div class="form-row">
-      <label>Hora de envío (0–23)</label>
-      <input type="text" name="digest_hour" value="{{ digest.hour }}">
+      <label>Hora de envío</label>
+      <input type="number" min="0" max="23" class="narrow" name="digest_hour" value="{{ digest.hour }}">
+      <p class="field-help muted">Hora del día (0–23) a la que se envía el resumen.</p>
     </div>
     <div class="form-row">
       <label>Email de destino</label>
       <input type="text" name="digest_email" value="{{ digest.email }}" placeholder="{{ user.email }}">
     </div>
-    <p><label><input type="checkbox" name="digest_blindspots" value="1" {% if digest.include_blindspots %}checked{% endif %}>
-      Incluir blindspots</label></p>
+    <div class="form-row">
+      <label class="switch"><input type="checkbox" name="digest_blindspots" value="1" {% if digest.include_blindspots %}checked{% endif %}>
+        <span>Incluir blindspots (puntos ciegos) en el resumen</span></label>
+    </div>
 
     <button class="btn" type="submit">Guardar</button>
   </form>

@@ -9,18 +9,21 @@
     <input type="hidden" name="action" value="save_filters">
 
     <div class="form-row">
-      <label>Bloquear (descarta los que coincidan)</label>
+      <label>Bloquear</label>
       <textarea name="block_rules" placeholder="publicidad&#10;(?i)patrocinado">{{ block_rules }}</textarea>
+      <p class="field-help muted">Descarta los artículos cuyo título o resumen coincida con alguna línea.</p>
     </div>
     <div class="form-row">
-      <label>Conservar solo (si hay reglas, descarta los que NO coincidan)</label>
+      <label>Conservar solo</label>
       <textarea name="keep_rules" placeholder="inteligencia artificial&#10;clima">{{ keep_rules }}</textarea>
+      <p class="field-help muted">Si pones reglas aquí, se descarta todo lo que NO coincida con ninguna. Déjalo vacío para no filtrar.</p>
     </div>
     <div class="form-row">
       <label>Deduplicado entre feeds</label>
       <select name="dedupe">
         {% for v, n in dedupe_choices %}<option value="{{ v }}" {% if dedupe == v %}selected{% endif %}>{{ n }}</option>{% endfor %}
       </select>
+      <p class="field-help muted">Evita el mismo artículo repetido cuando lo publican varias de tus fuentes.</p>
     </div>
 
     <button class="btn" type="submit">Guardar</button>

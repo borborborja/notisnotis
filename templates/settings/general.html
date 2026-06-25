@@ -18,18 +18,25 @@
   <p class="muted">Traduce y resume artículos al abrirlos. El idioma se usa también en el chat con la IA.</p>
   <form method="post" action="{% url 'account_settings_tab' 'general' %}">{% csrf_token %}
     <input type="hidden" name="action" value="save_reading">
-    <p>
-      <label><strong>Idioma de traducción</strong></label><br>
+    <div class="form-row">
+      <label>Idioma de traducción</label>
       <select name="translate_lang">
         {% for code, name in langs %}<option value="{{ code }}" {% if code == reading.lang %}selected{% endif %}>{{ name }}</option>{% endfor %}
       </select>
-    </p>
-    <p><label><input type="checkbox" name="auto_translate" value="1" {% if reading.auto_translate %}checked{% endif %}>
-      Traducir automáticamente al abrir un artículo</label></p>
-    <p><label><input type="checkbox" name="auto_summarize" value="1" {% if reading.auto_summarize %}checked{% endif %}>
-      Resumir automáticamente al abrir un artículo</label></p>
-    <p><label><input type="checkbox" name="auto_mark_scroll" value="1" {% if reading.auto_mark_scroll %}checked{% endif %}>
-      Marcar como leído automáticamente al pasar el scroll</label></p>
+      <p class="field-help muted">Se usa al traducir y también como idioma del chat con la IA.</p>
+    </div>
+    <div class="form-row">
+      <label class="switch"><input type="checkbox" name="auto_translate" value="1" {% if reading.auto_translate %}checked{% endif %}>
+        <span>Traducir automáticamente al abrir un artículo</span></label>
+    </div>
+    <div class="form-row">
+      <label class="switch"><input type="checkbox" name="auto_summarize" value="1" {% if reading.auto_summarize %}checked{% endif %}>
+        <span>Resumir automáticamente al abrir un artículo</span></label>
+    </div>
+    <div class="form-row">
+      <label class="switch"><input type="checkbox" name="auto_mark_scroll" value="1" {% if reading.auto_mark_scroll %}checked{% endif %}>
+        <span>Marcar como leído al pasar el scroll</span></label>
+    </div>
 
     <hr>
     <h4>Tipografía del artículo</h4>

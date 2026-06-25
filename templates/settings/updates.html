@@ -8,21 +8,22 @@
   <form method="post" action="{% url 'account_settings_tab' 'updates' %}">{% csrf_token %}
     <input type="hidden" name="action" value="save_updates">
 
-    <p>
-      <label>
-        <input type="checkbox" name="smart_mode" value="1" {% if smart_mode %}checked{% endif %}>
-        <strong>Modo inteligente</strong> — ajusta la cadencia de cada fuente según su frecuencia de publicación.
-      </label>
-    </p>
+    <div class="form-row">
+      <label class="switch"><input type="checkbox" name="smart_mode" value="1" {% if smart_mode %}checked{% endif %}>
+        <span>Modo inteligente</span></label>
+      <p class="field-help muted">Ajusta automáticamente cada cuánto se consulta cada fuente
+        según la frecuencia con la que publica. Recomendado.</p>
+    </div>
 
-    <p>
-      <label><strong>Cadencia por defecto</strong> (cuando el modo inteligente está desactivado)</label><br>
+    <div class="form-row">
+      <label>Cadencia por defecto</label>
       <select name="default_minutes">
         {% for m, label in cadence_choices %}
           <option value="{{ m }}" {% if m == default_minutes %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
-    </p>
+      <p class="field-help muted">Se usa para las fuentes cuando el modo inteligente está desactivado.</p>
+    </div>
 
     <button class="btn" type="submit">Guardar</button>
   </form>
