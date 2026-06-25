@@ -6,8 +6,12 @@
     <header class="toolbar">
       <h1 class="toolbar-title">{{ list_title }}</h1>
       <div class="toolbar-actions">
-        <a class="tbtn {% if not filter %}active{% endif %}" href="{% url 'stories:home' %}">Todas</a>
-        <a class="tbtn {% if filter == 'blindspot' %}active{% endif %}" href="?filter=blindspot"><svg class="ic"><use href="#i-alert"/></svg> Blindspots</a>
+        <span class="viewswitch">
+          <a class="{% if sort == 'coverage' %}active{% endif %}" href="?sort=coverage{% if multi %}&multi=1{% endif %}{% if filter %}&filter={{ filter }}{% endif %}">Cobertura</a>
+          <a class="{% if sort == 'recent' %}active{% endif %}" href="?sort=recent{% if multi %}&multi=1{% endif %}{% if filter %}&filter={{ filter }}{% endif %}">Recientes</a>
+        </span>
+        <a class="tbtn {% if multi %}active{% endif %}" href="?{% if not multi %}multi=1&{% endif %}sort={{ sort }}{% if filter %}&filter={{ filter }}{% endif %}" title="Solo historias con varias fuentes"><svg class="ic"><use href="#i-rss"/></svg> Multi-fuente</a>
+        <a class="tbtn {% if filter == 'blindspot' %}active{% endif %}" href="?filter=blindspot&sort={{ sort }}"><svg class="ic"><use href="#i-alert"/></svg> Blindspots</a>
       </div>
     </header>
 
@@ -17,7 +21,8 @@
           hx-get="{% url 'stories:reading' story.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">
           <div class="item-main">
             <div class="item-top">
-              <span class="item-source">{{ story.article_count }} fuentes</span>
+              <span class="item-source">{{ story.n_sources }} fuente{{ story.n_sources|pluralize }}</span>
+              {% if story.n_articles > story.n_sources %}<span class="item-meta">· {{ story.n_articles }} art.</span>{% endif %}
               {% if story.is_blindspot %}<span class="tag badge-blindspot"><svg class="ic"><use href="#i-alert"/></svg> Blindspot</span>{% endif %}
               <span class="item-meta">· {{ story.last_updated|date:"d M H:i" }}</span>
             </div>

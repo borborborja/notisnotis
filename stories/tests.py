@@ -133,3 +133,40 @@ class NNBackendTests(TestCase):
         from stories.nn import top_k_articles
 
         self.assertEqual(top_k_articles(self.user, [], k=5), [])
+
+
+class ClusteringSourceTests(TestCase):
+    def test_same_source_not_clustered(self):
+        from django.contrib.auth import get_user_model
+        from feeds.models import Feed, Source
+        from articles.models import Article
+        from stories.models import Story
+        from django.core.management import call_command
+
+        u = get_user_model().objects.create_user("cl", "", "pw")
+        src = Source.objects.create(name="Blog", domain="blog.com")
+        feed = Feed.objects.create(user=u, source=src, url="http://blog/rss")
+        # Dos entradas de la MISMA fuente con embeddings idénticos (títulos casi iguales).
+        Article.objects.create(feed=feed, source=src, guid="c1", title="Cap 73", embedding=[1.0, 0.0])
+        Article.objects.create(feed=feed, source=src, guid="c2", title="Cap 75", embedding=[1.0, 0.0])
+        call_command("cluster_stories", "--user", "cl")
+        # No deben acabar en la misma historia (cada fuente aporta una sola perspectiva).
+        self.assertEqual(Story.objects.filter(user=u).count(), 2)
+
+    def test_different_sources_cluster(self):
+        from django.contrib.auth import get_user_model
+        from feeds.models import Feed, Source
+        from articles.models import Article
+        from stories.models import Story
+        from django.core.management import call_command
+
+        u = get_user_model().objects.create_user("cl2", "", "pw")
+        s1 = Source.objects.create(name="A", domain="a.com")
+        s2 = Source.objects.create(name="B", domain="b.com")
+        f1 = Feed.objects.create(user=u, source=s1, url="http://a/rss")
+        f2 = Feed.objects.create(user=u, source=s2, url="http://b/rss")
+        Article.objects.create(feed=f1, source=s1, guid="x1", title="Evento", embedding=[1.0, 0.0])
+        Article.objects.create(feed=f2, source=s2, guid="x2", title="Evento", embedding=[1.0, 0.0])
+        call_command("cluster_stories", "--user", "cl2")
+        # Dos fuentes distintas, mismo suceso → una sola historia con 2 fuentes.
+        self.assertEqual(Story.objects.filter(user=u).count(), 1)

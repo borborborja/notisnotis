@@ -15,20 +15,34 @@ from .models import Story
 
 @login_required
 def home(request):
-    qs = Story.objects.filter(user=request.user).prefetch_related("story_articles")
+    qs = (Story.objects.filter(user=request.user)
+          .prefetch_related("story_articles")
+          .annotate(n_sources=Count("story_articles__article__source", distinct=True),
+                    n_articles=Count("story_articles", distinct=True)))
     flt = request.GET.get("filter", "")
     title = "Historias"
     if flt == "blindspot":
         qs = qs.filter(is_blindspot=True)
         title = "⚠ Blindspots"
-    bucket = request.GET.get("bias")
-    if bucket:
-        qs = [s for s in qs if s.bias_distribution.get(bucket, 0) > 0]
+    multi = request.GET.get("multi") == "1"
+    if multi:
+        qs = qs.filter(n_sources__gte=2)
+        title = "Multi-fuente"
+    # Orden: por cobertura (nº de fuentes distintas) por defecto, o por recencia.
+    sort = "recent" if request.GET.get("sort") == "recent" else "coverage"
+    qs = qs.order_by("-last_updated") if sort == "recent" else qs.order_by("-n_sources", "-last_updated")
 
-    page = Paginator(list(qs), 20).get_page(request.GET.get("page"))
+    bucket = request.GET.get("bias")
+    stories = list(qs)
+    if bucket:
+        stories = [s for s in stories if s.bias_distribution.get(bucket, 0) > 0]
+
+    page = Paginator(stories, 20).get_page(request.GET.get("page"))
     for story in page:
         story.bars = _bias_bars(story.bias_distribution)
-    return render(request, "stories/home.html", {"page": page, "filter": flt, "bucket": bucket, "list_title": title})
+    return render(request, "stories/home.html",
+                  {"page": page, "filter": flt, "bucket": bucket, "list_title": title,
+                   "sort": sort, "multi": multi})
 
 
 @login_required

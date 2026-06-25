@@ -57,7 +57,6 @@ def _coverage_text(articles, limit=25):
 
 
 def analyze_story(story, client=None):
-    client = client or get_chat_client()
     articles = [sa.article for sa in story.story_articles.select_related("article", "article__source")]
     if not articles:
         return story
@@ -65,14 +64,21 @@ def analyze_story(story, client=None):
     dist = compute_bias_distribution(articles)
     is_blind, side = detect_blindspot(dist)
 
-    messages = [
-        {"role": "system", "content": SYSTEM},
-        {"role": "user", "content": PROMPT.format(coverage=_coverage_text(articles))},
-    ]
-    try:
-        data = client.chat(messages, json=True)
-    except Exception:
-        data = {}
+    # La síntesis LLM (resumen neutral + perspectivas) solo tiene sentido con VARIAS
+    # fuentes. Las historias de una sola fuente se procesan sin LLM (ahorra coste): se
+    # quedan con su titular y la barra de sesgo.
+    n_sources = len({a.source_id for a in articles})
+    data = {}
+    if n_sources >= 2:
+        client = client or get_chat_client()
+        messages = [
+            {"role": "system", "content": SYSTEM},
+            {"role": "user", "content": PROMPT.format(coverage=_coverage_text(articles))},
+        ]
+        try:
+            data = client.chat(messages, json=True)
+        except Exception:
+            data = {}
 
     persp = data.get("perspectives") or {}
     story.headline = (data.get("headline") or story.headline or articles[0].title)[:500]
