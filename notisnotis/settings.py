@@ -32,9 +32,11 @@ if not DEBUG and SECRET_KEY == INSECURE_DEV_KEY:
 # ---------------------------------------------------------------------------
 # Seguridad (activa en producción; en dev/DEBUG no fuerza HTTPS)
 # ---------------------------------------------------------------------------
-# Cookies: solo por HTTPS y sin acceso desde JS cuando no estamos en dev.
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+# Cookies: por defecto solo por HTTPS (Secure) en producción. Si además sirves la app
+# por http en la LAN, pon COOKIE_SECURE=0 en .env para no perder la sesión al recargar.
+_cookie_secure = env_bool("COOKIE_SECURE", not DEBUG)
+SESSION_COOKIE_SECURE = _cookie_secure
+CSRF_COOKIE_SECURE = _cookie_secure
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
