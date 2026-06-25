@@ -40,4 +40,56 @@
 
   <button class="btn" type="submit">Guardar configuración</button>
 </form>
+
+{# Mantenimiento de embeddings #}
+<div class="card">
+  <h3>Embeddings: estado y mantenimiento</h3>
+  <p class="muted">Los embeddings son los “vectores” con los que se agrupan las noticias y
+    funciona la búsqueda. Si cambias de modelo de embeddings, los artículos ya procesados
+    conservan los vectores antiguos: hay que <strong>recalcularlos</strong> para que todos
+    usen el mismo modelo.</p>
+
+  <table>
+    <tr><td>Proveedor / modelo</td><td><code>{{ emb_provider }}</code> · <code>{{ emb_model|default:"(por defecto)" }}</code></td></tr>
+    <tr><td>Dimensión configurada</td><td>{{ emb_configured_dim }}</td></tr>
+    <tr><td>Dimensión de tus vectores actuales</td><td>{{ emb_sample_dim|default:"— (aún sin embeddings)" }}</td></tr>
+    {% if emb_column_dim %}<tr><td>Dimensión de la columna (BD)</td><td>{{ emb_column_dim }}</td></tr>{% endif %}
+  </table>
+
+  {% if emb_mismatch %}
+    <p class="ai-err"><strong>⚠ Las dimensiones no coinciden</strong> ({{ emb_sample_dim }} vs {{ emb_configured_dim }}
+      configurada). Has cambiado de modelo: <strong>debes recalcular los embeddings</strong> abajo
+      (y, si tu modelo usa otra dimensión, ajustarla primero).</p>
+  {% elif emb_sample_dim %}
+    <p class="muted">✓ Dimensiones coherentes. Si has cambiado de modelo (misma dimensión),
+      conviene recalcular igualmente para no mezclar dos modelos.</p>
+  {% endif %}
+
+  <form method="post" action="{% url 'account_settings_tab' 'ai' %}"
+        onsubmit="return confirm('¿Recalcular tus embeddings? Se borran los vectores actuales y se reconstruyen tus historias en la próxima actualización.')">{% csrf_token %}
+    <input type="hidden" name="action" value="reembed">
+    <button class="btn btn-ghost" type="submit"><svg class="ic"><use href="#i-refresh"/></svg> Recalcular mis embeddings</button>
+    <p class="field-help muted">Invalida tus vectores; el scheduler los regenera con el modelo
+      actual (puede tardar según cuántos artículos tengas). También reconstruye tus historias.</p>
+  </form>
+
+  {% if user.is_superuser %}
+  <hr>
+  <form method="post" action="{% url 'account_settings_tab' 'ai' %}"
+        onsubmit="return confirm('Esto BORRA los embeddings de TODOS los usuarios y cambia la columna en la base de datos. ¿Continuar?')">{% csrf_token %}
+    <input type="hidden" name="action" value="set_embed_dim">
+    <div class="form-row">
+      <label>Dimensión de la columna pgvector (operador)</label>
+      <input type="number" class="narrow" name="embed_dim_new" min="8" max="4096"
+             value="{{ emb_column_dim|default:emb_configured_dim }}">
+      <p class="field-help muted">Pon la <strong>dimensión nativa de tu modelo</strong>:
+        nomic-embed-text = 768, all-minilm = 384, mxbai-embed-large = 1024,
+        text-embedding-3-* / jina-v3 = la que pidas (recortan). Esto altera la columna en
+        Postgres, <strong>borra los embeddings de todos</strong> y reconstruye el índice.
+        Acuérdate de poner también <code>AI_EMBED_DIM</code> con ese valor en el <code>.env</code>.</p>
+    </div>
+    <button class="btn" style="background:var(--right);border-color:var(--right)" type="submit">Aplicar dimensión (afecta a TODOS)</button>
+  </form>
+  {% endif %}
+</div>
 {% endblock %}

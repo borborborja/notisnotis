@@ -57,3 +57,69 @@ class TagTests(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertIn("text/markdown", r["Content-Type"])
         self.assertIn(b"# Hola", r.content)
+
+
+class EmbeddingAdminTests(TestCase):
+    def setUp(self):
+        from stories.models import Story
+
+        self.user = get_user_model().objects.create_user("emb", "", "pw")
+        src = Source.objects.create(name="S", domain="s.com")
+        feed = Feed.objects.create(user=self.user, source=src, url="http://s/rss")
+        Article.objects.create(feed=feed, source=src, guid="a", title="A",
+                               embedding=[0.1, 0.2, 0.3])
+        Article.objects.create(feed=feed, source=src, guid="b", title="B", embedding=None)
+        Story.objects.create(user=self.user, headline="H")
+
+    def test_sample_dim(self):
+        from articles.embedding_admin import sample_embedding_dim
+
+        self.assertEqual(sample_embedding_dim(self.user), 3)
+
+    def test_reset_user_embeddings(self):
+        from articles.embedding_admin import reset_user_embeddings
+        from stories.models import Story
+
+        reset_user_embeddings(self.user)
+        self.assertEqual(Article.objects.filter(feed__user=self.user, embedding__isnull=False).count(), 0)
+        self.assertEqual(Story.objects.filter(user=self.user).count(), 0)
+
+    def test_pgvector_helpers_noop_on_sqlite(self):
+        from articles.embedding_admin import pgvector_column_dim, set_pgvector_dim
+
+        # En SQLite no hay columna pgvector real: helpers degradan limpiamente.
+        self.assertIsNone(pgvector_column_dim())
+        self.assertFalse(set_pgvector_dim(384))
+
+
+class ReembedViewTests(TestCase):
+    def setUp(self):
+        self.U = get_user_model()
+        self.U.objects.create_user("re", "", "pw-initial-1")
+        self.client.login(username="re", password="pw-initial-1")
+        src = Source.objects.create(name="S", domain="s.com")
+        feed = Feed.objects.create(user=self.U.objects.get(username="re"), source=src, url="http://s/rss")
+        Article.objects.create(feed=feed, source=src, guid="a", title="A", embedding=[1.0, 2.0])
+
+    def test_reembed_nulls_user_embeddings(self):
+        r = self.client.post("/accounts/settings/ai/", {"action": "reembed"}, **H)
+        self.assertEqual(r.status_code, 302)
+        self.assertEqual(Article.objects.filter(embedding__isnull=False).count(), 0)
+
+    def test_set_embed_dim_requires_superuser(self):
+        r = self.client.post("/accounts/settings/ai/",
+                             {"action": "set_embed_dim", "embed_dim_new": "384"}, **H)
+        self.assertEqual(r.status_code, 302)
+        # Usuario normal: NO se aplica (sus embeddings siguen).
+        self.assertEqual(Article.objects.filter(embedding__isnull=False).count(), 1)
+
+    def test_set_embed_dim_superuser_saves(self):
+        u = self.U.objects.get(username="re")
+        u.is_superuser = True
+        u.is_staff = True
+        u.save()
+        r = self.client.post("/accounts/settings/ai/",
+                             {"action": "set_embed_dim", "embed_dim_new": "384"}, **H)
+        self.assertEqual(r.status_code, 302)
+        from accounts.models import UserConfig
+        self.assertEqual(UserConfig.objects.get(user=u).data.get("embed_dim"), "384")

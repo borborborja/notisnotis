@@ -13,6 +13,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--user", help="limitar a un username")
         parser.add_argument("--batch", type=int, default=32)
+        parser.add_argument("--all", action="store_true",
+                            help="re-embebe TODOS los artículos, no solo los que no tienen embedding")
 
     def handle(self, *args, **opts):
         User = get_user_model()
@@ -22,9 +24,10 @@ class Command(BaseCommand):
 
         done = 0
         for user in users:
-            pending = list(
-                Article.objects.filter(feed__user=user, embedding__isnull=True).order_by("id")
-            )
+            qs = Article.objects.filter(feed__user=user)
+            if not opts.get("all"):
+                qs = qs.filter(embedding__isnull=True)
+            pending = list(qs.order_by("id"))
             if not pending:
                 continue
             client = get_embed_client(user)

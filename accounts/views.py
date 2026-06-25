@@ -81,6 +81,37 @@ def settings_view(request, tab="general"):
 
             save_digest_prefs(request.user, request.POST)
             messages.success(request, "Preferencias de notificaciones guardadas.")
+        elif action == "reembed":
+            from articles.embedding_admin import reset_user_embeddings
+
+            n = reset_user_embeddings(request.user)
+            messages.success(request,
+                             f"{n} artículos marcados: se recalcularán los embeddings en la "
+                             "próxima actualización (el scheduler corre cada pocos minutos).")
+            return redirect("account_settings_tab", tab="ai")
+        elif action == "set_embed_dim":
+            if not request.user.is_superuser:
+                messages.error(request, "Solo el operador puede cambiar la dimensión.")
+                return redirect("account_settings_tab", tab="ai")
+            from articles.embedding_admin import reset_all_embeddings, set_pgvector_dim
+
+            try:
+                n = int(request.POST.get("embed_dim_new", "0"))
+            except ValueError:
+                n = 0
+            if not 8 <= n <= 4096:
+                messages.error(request, "Dimensión no válida (8–4096).")
+                return redirect("account_settings_tab", tab="ai")
+            reset_all_embeddings()
+            applied = set_pgvector_dim(n)
+            cfg, _ = UserConfig.objects.get_or_create(user=request.user)
+            cfg.data["embed_dim"] = str(n)
+            cfg.save(update_fields=["data"])
+            extra = "" if applied else " (SQLite: solo se guardó el valor; la columna pgvector es de Postgres)"
+            messages.success(request,
+                             f"Dimensión ajustada a {n}. Se han invalidado todos los embeddings y "
+                             f"se recalcularán.{extra} Pon también AI_EMBED_DIM={n} en tu .env.")
+            return redirect("account_settings_tab", tab="ai")
         elif action == "save_email":
             request.user.email = request.POST.get("email", "").strip()
             request.user.save(update_fields=["email"])
@@ -134,6 +165,17 @@ def settings_view(request, tab="general"):
         ctx["ai_options"] = [st[k] for k in
                              ("enrich_mode", "cluster_threshold", "cluster_window_days",
                               "embed_dim", "fulltext_enabled")]
+        # Estado de embeddings: detecta si hay que recalcular tras cambiar de modelo.
+        from articles.embedding_admin import pgvector_column_dim, sample_embedding_dim
+
+        configured = st["embed_dim"]["effective"]
+        sample = sample_embedding_dim(request.user)
+        ctx["emb_configured_dim"] = configured
+        ctx["emb_sample_dim"] = sample
+        ctx["emb_column_dim"] = pgvector_column_dim()
+        ctx["emb_provider"] = st["embed_provider"]["effective"]
+        ctx["emb_model"] = st["embed_model"]["effective"]
+        ctx["emb_mismatch"] = bool(sample) and str(sample) != str(configured)
     elif tab == "updates":
         cfg = getattr(request.user, "config", None)
         data = cfg.data if cfg else {}
