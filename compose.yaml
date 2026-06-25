@@ -1,14 +1,16 @@
 services:
   db:
-    image: postgres:16
+    # Imagen Postgres con la extensión pgvector preinstalada (búsqueda ANN).
+    image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_DB: notisnotis
-      POSTGRES_USER: notisnotis
-      POSTGRES_PASSWORD: notisnotis
+      POSTGRES_DB: ${POSTGRES_DB:-notisnotis}
+      POSTGRES_USER: ${POSTGRES_USER:-notisnotis}
+      # PROD: define POSTGRES_PASSWORD en .env (no uses el valor de ejemplo).
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-notisnotis}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U notisnotis"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-notisnotis}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,6 +25,13 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+    healthcheck:
+      # curl ya está instalado en la imagen; /accounts/login/ responde 200 sin auth.
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/accounts/login/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
 
   # Refresco periódico del pipeline (sin daemon cron).
   scheduler:

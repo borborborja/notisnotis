@@ -12,3 +12,13 @@ whitenoise==6.11.0
 mcp==1.2.0
 # Web Push (opcional; requiere Python >= 3.10, corre en Docker)
 pywebpush==1.14.1
+# Búsqueda vectorial ANN en Postgres (pgvector). En SQLite/dev la columna queda
+# inactiva y se usa el fallback coseno en Python (ver stories/nn.py).
+pgvector==0.4.2
+# 2FA (TOTP) + códigos de recuperación. qrcode genera el QR en SVG (sin Pillow).
+django-otp==1.7.0
+qrcode==8.2
+# Almacenamiento de media en S3 / compatible (MinIO, R2, Spaces) — opcional.
+# Solo se importa si el operador define AWS_STORAGE_BUCKET_NAME (ver settings).
+django-storages==1.14.6
+boto3==1.42.97

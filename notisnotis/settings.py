@@ -2,6 +2,7 @@
 from pathlib import Path
 
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 import os
 
@@ -14,12 +15,37 @@ def env_bool(name, default=False):
     return os.environ.get(name, str(int(default))).strip().lower() in ("1", "true", "yes", "on")
 
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "change-me-insecure-dev-key")
+INSECURE_DEV_KEY = "change-me-insecure-dev-key"
+SECRET_KEY = os.environ.get("SECRET_KEY", INSECURE_DEV_KEY)
 DEBUG = env_bool("DEBUG", False)
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
 ]
+
+# En producción (DEBUG=0) no se permite arrancar con la SECRET_KEY de desarrollo.
+if not DEBUG and SECRET_KEY == INSECURE_DEV_KEY:
+    raise ImproperlyConfigured(
+        "SECRET_KEY no configurada: define SECRET_KEY en el entorno antes de arrancar con DEBUG=0."
+    )
+
+# ---------------------------------------------------------------------------
+# Seguridad (activa en producción; en dev/DEBUG no fuerza HTTPS)
+# ---------------------------------------------------------------------------
+# Cookies: solo por HTTPS y sin acceso desde JS cuando no estamos en dev.
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+SECURE_CONTENT_TYPE_NOSNIFF = True
+# Detrás de un reverse proxy (Nginx/Traefik) que termina TLS.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", not DEBUG)
+# HSTS apagado por defecto (0); súbelo en .env solo cuando el dominio sirva siempre HTTPS.
+SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", False)
+SECURE_HSTS_PRELOAD = env_bool("SECURE_HSTS_PRELOAD", False)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -38,6 +64,10 @@ INSTALLED_APPS = [
     "syncapi",
     "notifications",
     "features",
+    # 2FA (TOTP + códigos de recuperación)
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
 ]
 
 MIDDLEWARE = [
@@ -47,6 +77,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # OTP debe ir tras Authentication; añade request.user.is_verified().
+    "django_otp.middleware.OTPMiddleware",
+    # Fuerza el reto 2FA a usuarios con dispositivo confirmado aún no verificados.
+    "accounts.middleware.Require2FAMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -107,6 +141,24 @@ STORAGES = {
     },
 }
 
+# Media (ficheros subidos). En local va a disco; ver bloque S3 abajo.
+MEDIA_URL = os.environ.get("MEDIA_URL", "/media/")
+MEDIA_ROOT = BASE_DIR / "media"
+
+# ---------------------------------------------------------------------------
+# Almacenamiento S3 / compatible (opcional, configurado por el operador)
+# ---------------------------------------------------------------------------
+from notisnotis import storagecfg  # noqa: E402  (módulo puro, sin deps de Django)
+
+if storagecfg.s3_enabled(os.environ):
+    for _k, _v in storagecfg.aws_settings(os.environ).items():
+        globals()[_k] = _v
+    STORAGES["default"] = {"BACKEND": storagecfg.S3_BACKEND}
+    if storagecfg.static_to_s3(os.environ):
+        # Estáticos también en S3 (sustituye a whitenoise); colección bajo /static.
+        AWS_LOCATION = "static"
+        STORAGES["staticfiles"] = {"BACKEND": storagecfg.S3_BACKEND}
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_URL = "login"
@@ -144,3 +196,24 @@ FULLTEXT_BOT_UA = os.environ.get(
     "FULLTEXT_BOT_UA",
     "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
 )
+
+# ---------------------------------------------------------------------------
+# Logging (a stdout; nivel configurable por entorno)
+# ---------------------------------------------------------------------------
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"},
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "standard"},
+    },
+    "root": {"handlers": ["console"], "level": LOG_LEVEL},
+    "loggers": {
+        "django": {"handlers": ["console"], "level": LOG_LEVEL, "propagate": False},
+        # Apps de NotisNotis: heredan del root, pero las dejamos explícitas para ajustarlas.
+        "notisnotis": {"handlers": ["console"], "level": LOG_LEVEL, "propagate": False},
+    },
+}
