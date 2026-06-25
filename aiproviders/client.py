@@ -4,20 +4,25 @@ from __future__ import annotations
 from django.conf import settings
 
 from .config import effective_config
+from .providers.jina import JinaEmbedProvider
 from .providers.mock import MockChatProvider, MockEmbedProvider
 from .providers.ollama import OllamaChatProvider, OllamaEmbedProvider
 from .providers.ollama_cloud import OllamaCloudChatProvider, OllamaCloudEmbedProvider
+from .providers.openai import OpenAIChatProvider, OpenAIEmbedProvider
 from .providers.openrouter import OpenRouterChatProvider, OpenRouterEmbedProvider
 
 _CHAT = {
     "mock": MockChatProvider,
     "openrouter": OpenRouterChatProvider,
+    "openai": OpenAIChatProvider,
     "ollama": OllamaChatProvider,
     "ollama_cloud": OllamaCloudChatProvider,
 }
 _EMBED = {
     "mock": MockEmbedProvider,
     "openrouter": OpenRouterEmbedProvider,
+    "openai": OpenAIEmbedProvider,
+    "jina": JinaEmbedProvider,
     "ollama": OllamaEmbedProvider,
     "ollama_cloud": OllamaCloudEmbedProvider,
 }
@@ -26,6 +31,8 @@ _EMBED = {
 def _provider_kwargs(provider, cfg):
     return {
         "openrouter": {"api_key": cfg["openrouter_api_key"], "base_url": cfg["openrouter_base_url"]},
+        "openai": {"api_key": cfg["openai_api_key"], "base_url": cfg["openai_base_url"]},
+        "jina": {"api_key": cfg["jina_api_key"], "base_url": cfg["jina_base_url"]},
         "ollama": {"base_url": cfg["ollama_base_url"]},
         "ollama_cloud": {"api_key": cfg["ollama_cloud_api_key"], "base_url": cfg["ollama_cloud_base_url"]},
         "mock": {},

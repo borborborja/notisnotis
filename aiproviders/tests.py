@@ -98,3 +98,130 @@ class ParseJsonTests(TestCase):
     def test_invalid_raises(self):
         with self.assertRaises(AIError):
             BaseChatProvider.parse_json("esto no es json")
+
+
+class _FakeResp:
+    def __init__(self, payload, status_code=200):
+        self._payload = payload
+        self.status_code = status_code
+        self.text = str(payload)
+
+    def json(self):
+        return self._payload
+
+
+class OpenAIProviderTests(TestCase):
+    def test_embed_batch_and_dimensions(self):
+        from aiproviders.providers.openai import OpenAIEmbedProvider
+
+        payload = {"data": [
+            {"index": 1, "embedding": [0.1, 0.2]},
+            {"index": 0, "embedding": [0.3, 0.4]},  # desordenado a propósito
+        ]}
+        with mock.patch("aiproviders.providers.openai.requests.post",
+                        return_value=_FakeResp(payload)) as post:
+            e = OpenAIEmbedProvider(model="text-embedding-3-small", dim=2, api_key="k", timeout=5)
+            vecs = e.embed(["uno", "dos"])
+        # Se reordena por index y se devuelven los vectores en orden de entrada.
+        self.assertEqual(vecs, [[0.3, 0.4], [0.1, 0.2]])
+        body = post.call_args.kwargs["json"]
+        self.assertEqual(body["input"], ["uno", "dos"])  # batch
+        self.assertEqual(body["dimensions"], 2)          # recorte a embed_dim
+        headers = post.call_args.kwargs["headers"]
+        self.assertEqual(headers["Authorization"], "Bearer k")
+        self.assertTrue(post.call_args.args[0].endswith("/embeddings"))
+
+    def test_embed_without_key_raises(self):
+        from aiproviders.providers.openai import OpenAIEmbedProvider
+
+        with self.assertRaises(AIError):
+            OpenAIEmbedProvider(dim=2, api_key="", timeout=5).embed(["x"])
+
+    def test_embed_http_error_raises(self):
+        from aiproviders.providers.openai import OpenAIEmbedProvider
+
+        with mock.patch("aiproviders.providers.openai.requests.post",
+                        return_value=_FakeResp({"error": "bad"}, status_code=401)):
+            with self.assertRaises(AIError):
+                OpenAIEmbedProvider(dim=2, api_key="k", timeout=5).embed(["x"])
+
+    def test_chat_json_mode(self):
+        from aiproviders.providers.openai import OpenAIChatProvider
+
+        payload = {"choices": [{"message": {"content": '{"ok": true}'}}]}
+        with mock.patch("aiproviders.providers.openai.requests.post",
+                        return_value=_FakeResp(payload)) as post:
+            c = OpenAIChatProvider(model="gpt-4o-mini", api_key="k", timeout=5)
+            out = c.chat([{"role": "user", "content": "hola"}], json=True)
+        self.assertEqual(out, {"ok": True})
+        self.assertEqual(post.call_args.kwargs["json"]["response_format"], {"type": "json_object"})
+        self.assertTrue(post.call_args.args[0].endswith("/chat/completions"))
+
+
+class JinaProviderTests(TestCase):
+    def test_embed_batch_and_dimensions(self):
+        from aiproviders.providers.jina import JinaEmbedProvider
+
+        payload = {"data": [
+            {"index": 0, "embedding": [1.0, 0.0]},
+            {"index": 1, "embedding": [0.0, 1.0]},
+        ]}
+        with mock.patch("aiproviders.providers.jina.requests.post",
+                        return_value=_FakeResp(payload)) as post:
+            e = JinaEmbedProvider(model="jina-embeddings-v3", dim=2, api_key="k", timeout=5)
+            vecs = e.embed(["a", "b"])
+        self.assertEqual(vecs, [[1.0, 0.0], [0.0, 1.0]])
+        body = post.call_args.kwargs["json"]
+        self.assertEqual(body["input"], ["a", "b"])
+        self.assertEqual(body["dimensions"], 2)
+
+    def test_embed_without_key_raises(self):
+        from aiproviders.providers.jina import JinaEmbedProvider
+
+        with self.assertRaises(AIError):
+            JinaEmbedProvider(dim=2, api_key="", timeout=5).embed(["x"])
+
+
+class ProviderSelectionTests(TestCase):
+    """La cascada selecciona los nuevos providers y la UI los expone como campos editables."""
+
+    def test_get_clients_for_openai_and_jina(self):
+        from aiproviders.providers.jina import JinaEmbedProvider
+        from aiproviders.providers.openai import OpenAIChatProvider, OpenAIEmbedProvider
+
+        user = User.objects.create_user("sel", password="x")
+        UserConfig.objects.create(user=user, data={
+            "chat_provider": "openai", "embed_provider": "jina",
+        })
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("AI_DEFAULT_PROVIDER", None)
+            os.environ.pop("AI_EMBED_PROVIDER", None)
+            self.assertIsInstance(get_chat_client(user), OpenAIChatProvider)
+            self.assertIsInstance(get_embed_client(user), JinaEmbedProvider)
+        user2 = User.objects.create_user("sel2", password="x")
+        UserConfig.objects.create(user=user2, data={"embed_provider": "openai"})
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("AI_EMBED_PROVIDER", None)
+            self.assertIsInstance(get_embed_client(user2), OpenAIEmbedProvider)
+
+    def test_new_fields_are_editable_in_ui(self):
+        from aiproviders.config import editable_fields
+
+        user = User.objects.create_user("ui", password="x")
+        with mock.patch.dict(os.environ, {}, clear=False):
+            for var in ("OPENAI_API_KEY", "JINA_API_KEY"):
+                os.environ.pop(var, None)
+            keys = {f["key"] for f in editable_fields(user)}
+        self.assertIn("openai_api_key", keys)
+        self.assertIn("jina_api_key", keys)
+
+    def test_operator_env_locks_openai_key(self):
+        from aiproviders.config import editable_fields, locked_fields
+
+        user = User.objects.create_user("lock", password="x")
+        with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-operador"}):
+            editable_keys = {f["key"] for f in editable_fields(user)}
+            locked_keys = {f["key"] for f in locked_fields()}
+        # Fijada por el operador: sale de editables y aparece como bloqueada (solo lectura).
+        self.assertNotIn("openai_api_key", editable_keys)
+        self.assertIn("openai_api_key", locked_keys)
