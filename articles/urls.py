@@ -10,6 +10,7 @@ urlpatterns = [
     path("pref/", views.set_reading_pref, name="set_reading_pref"),
     path("<int:pk>/", views.article_detail, name="detail"),
     path("<int:pk>/reading/", views.reading_pane, name="reading"),
+    path("<int:pk>/related/", views.related_panel, name="related"),
     path("<int:pk>/fulltext/", views.fetch_fulltext, name="fetch_fulltext"),
     path("<int:pk>/save/", views.toggle_saved, name="toggle_saved"),
     path("<int:pk>/read/", views.mark_read, name="mark_read"),

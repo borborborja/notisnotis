@@ -1,0 +1,27 @@
+{% if story_others %}
+<section class="related-block">
+  <h3><svg class="ic"><use href="#i-rss"/></svg> Otras fuentes sobre este suceso</h3>
+  <ul class="related-list">
+    {% for a in story_others %}
+      <li><a href="#" hx-get="{% url 'articles:reading' a.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">
+        <span class="rel-source">{{ a.source.name }}</span><span class="rel-title">{{ a.title }}</span></a></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if semantic %}
+<section class="related-block">
+  <h3><svg class="ic"><use href="#i-sparkles"/></svg> Relacionado en otras fuentes</h3>
+  <ul class="related-list">
+    {% for a in semantic %}
+      <li><a href="#" hx-get="{% url 'articles:reading' a.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">
+        <span class="rel-source">{{ a.source.name }}</span><span class="rel-title">{{ a.title }}</span></a></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if not story_others and not semantic %}
+<p class="muted">Ninguna otra de tus fuentes cubre esto todavía.</p>
+{% endif %}

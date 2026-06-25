@@ -138,3 +138,28 @@ class ReembedViewTests(TestCase):
         self.assertEqual(r.status_code, 302)
         from accounts.models import UserConfig
         self.assertEqual(UserConfig.objects.get(user=u).data.get("embed_dim"), "384")
+
+
+class RelatedPanelTests(TestCase):
+    def setUp(self):
+        self.U = get_user_model()
+        self.U.objects.create_user("rp", "", "pw-initial-1")
+        self.client.login(username="rp", password="pw-initial-1")
+        u = self.U.objects.get(username="rp")
+        self.s1 = Source.objects.create(name="Medio A", domain="a.com")
+        self.s2 = Source.objects.create(name="Medio B", domain="b.com")
+        f1 = Feed.objects.create(user=u, source=self.s1, url="http://a/rss")
+        f2 = Feed.objects.create(user=u, source=self.s2, url="http://b/rss")
+        # Mismo suceso en dos fuentes (embeddings iguales) → relacionado por embedding.
+        self.a = Article.objects.create(feed=f1, source=self.s1, guid="a1", title="Suceso X", embedding=[1.0, 0.0])
+        Article.objects.create(feed=f2, source=self.s2, guid="b1", title="Suceso X (B)", embedding=[1.0, 0.0])
+
+    def test_related_shows_other_source(self):
+        r = self.client.get(f"/articles/{self.a.pk}/related/", **H)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Medio B")
+
+    def test_reading_pane_includes_related_lazy_section(self):
+        r = self.client.get(f"/articles/{self.a.pk}/reading/", **H)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "related-wrap")

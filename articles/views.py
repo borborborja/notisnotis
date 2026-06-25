@@ -202,6 +202,35 @@ def reading_pane(request, pk):
     return render(request, "articles/_reading_pane.html", _reading_ctx(request, article))
 
 
+@login_required
+def related_panel(request, pk):
+    """Sección 'Otras fuentes' del lector (carga diferida por htmx)."""
+    from .ai_actions import related_articles
+
+    article = get_object_or_404(
+        Article.objects.select_related("source"), pk=pk, feed__user=request.user
+    )
+    # 1) Otras fuentes de la MISMA historia: cobertura real del mismo suceso.
+    story_others, seen = [], {article.source_id}
+    sa = article.stories.filter(story__user=request.user).select_related("story").first()
+    if sa:
+        for x in sa.story.story_articles.select_related("article", "article__source"):
+            if x.article_id != article.id and x.article.source_id not in seen:
+                story_others.append(x.article)
+                seen.add(x.article.source_id)
+    # 2) Relacionados por embedding, de OTRAS fuentes (temas parecidos).
+    semantic = []
+    for a in related_articles(article, request.user, k=20):
+        if a.source_id in seen:
+            continue
+        seen.add(a.source_id)
+        semantic.append(a)
+        if len(semantic) >= 6:
+            break
+    return render(request, "articles/_related.html",
+                  {"article": article, "story_others": story_others, "semantic": semantic})
+
+
 def _reading_ctx(request, article):
     story = article.stories.filter(story__user=request.user).select_related("story").first()
     return {
