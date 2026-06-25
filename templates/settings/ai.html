@@ -73,6 +73,15 @@
       actual (puede tardar según cuántos artículos tengas). También reconstruye tus historias.</p>
   </form>
 
+  <form method="post" action="{% url 'account_settings_tab' 'ai' %}"
+        onsubmit="return confirm('¿Reprocesar TODOS tus artículos con el modelo actual? Se rehacen embeddings, agrupación y análisis. Útil si los procesaste con otro proveedor (p.ej. mock).')">{% csrf_token %}
+    <input type="hidden" name="action" value="reindex">
+    <button class="btn btn-ghost" type="submit"><svg class="ic"><use href="#i-refresh"/></svg> Reprocesar todos mis artículos (embeddings + análisis)</button>
+    <p class="field-help muted">Como “Recalcular”, pero además invalida el análisis de IA (contexto,
+      afirmaciones, resúmenes, traducciones) para rehacerlo con el modelo actual. Úsalo si
+      importaste feeds antes de configurar tu proveedor de IA (p.ej. estabas en <code>mock</code>).</p>
+  </form>
+
   {% if user.is_superuser %}
   <hr>
   <form method="post" action="{% url 'account_settings_tab' 'ai' %}"

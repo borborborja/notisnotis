@@ -113,6 +113,21 @@ class ReembedViewTests(TestCase):
         # Usuario normal: NO se aplica (sus embeddings siguen).
         self.assertEqual(Article.objects.filter(embedding__isnull=False).count(), 1)
 
+    def test_reindex_clears_embeddings_and_enrichment(self):
+        from stories.models import Story
+
+        u = self.U.objects.get(username="re")
+        Article.objects.filter(feed__user=u).update(
+            context="[mock] ctx", enriched_at="2026-01-01T00:00:00Z", tldr="[mock]")
+        Story.objects.create(user=u, headline="H")
+        r = self.client.post("/accounts/settings/ai/", {"action": "reindex"}, **H)
+        self.assertEqual(r.status_code, 302)
+        a = Article.objects.get(feed__user=u)
+        self.assertIsNone(a.embedding)
+        self.assertIsNone(a.enriched_at)
+        self.assertEqual(a.context, "")
+        self.assertEqual(Story.objects.filter(user=u).count(), 0)
+
     def test_set_embed_dim_superuser_saves(self):
         u = self.U.objects.get(username="re")
         u.is_superuser = True

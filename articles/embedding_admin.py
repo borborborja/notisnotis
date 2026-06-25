@@ -46,6 +46,26 @@ def reset_user_embeddings(user):
     return n
 
 
+def reindex_user_articles(user):
+    """Reprocesa TODO del usuario: invalida embeddings + análisis IA y borra historias.
+
+    Tras esto, el pipeline (scheduler) re-embebe, re-agrupa y re-analiza con el proveedor
+    actual; el enriquecimiento del lector se rehace al abrir cada artículo (on_demand) o en
+    lote si enrich_mode=batch. Útil al cambiar de proveedor (p.ej. de mock a OpenAI).
+    """
+    from articles.models import Article
+    from stories.models import Story
+
+    n = Article.objects.filter(feed__user=user).update(
+        embedding=None, embedding_vec=None, embedded_at=None,
+        context="", claims=[], framing_note="", enriched_at=None,
+        tldr="", summarized_at=None,
+        translated_title="", translated_body="", translation_lang="", translated_at=None,
+    )
+    Story.objects.filter(user=user).delete()
+    return n
+
+
 def reset_all_embeddings():
     """Invalida TODOS los embeddings y borra TODAS las historias (operador)."""
     from articles.models import Article

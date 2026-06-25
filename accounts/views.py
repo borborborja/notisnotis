@@ -90,6 +90,15 @@ def settings_view(request, tab="general"):
                              f"{n} artículos marcados: se recalcularán los embeddings en la "
                              "próxima actualización (el scheduler corre cada pocos minutos).")
             return redirect("account_settings_tab", tab="ai")
+        elif action == "reindex":
+            from articles.embedding_admin import reindex_user_articles
+
+            n = reindex_user_articles(request.user)
+            messages.success(request,
+                             f"{n} artículos marcados para reprocesar: se recalcularán embeddings, "
+                             "agrupación y análisis con el modelo actual en la próxima actualización. "
+                             "El enriquecimiento del lector se rehace al abrir cada artículo.")
+            return redirect("account_settings_tab", tab="ai")
         elif action == "set_embed_dim":
             if not request.user.is_superuser:
                 messages.error(request, "Solo el operador puede cambiar la dimensión.")
