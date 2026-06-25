@@ -8,6 +8,8 @@ que el embedding sea JSON fuera de este módulo.
 """
 from __future__ import annotations
 
+from django.db import connection
+
 from .similarity import cosine
 
 
@@ -15,6 +17,22 @@ def _python_topk(qs, vector, k):
     scored = [(cosine(vector, a.embedding), a) for a in qs if a.embedding]
     scored.sort(key=lambda x: x[0], reverse=True)
     return scored[:k]
+
+
+def _pgvector_topk(qs, vector, k):
+    """Top-k vía índice ANN de pgvector. Devuelve None si no está disponible."""
+    try:
+        from pgvector.django import CosineDistance
+
+        rows = list(
+            qs.exclude(embedding_vec__isnull=True)
+            .annotate(_distance=CosineDistance("embedding_vec", vector))
+            .order_by("_distance")[:k]
+        )
+    except Exception:  # noqa: BLE001 — extensión/columna no disponibles → fallback
+        return None
+    # CosineDistance = 1 - similitud_coseno; reconstruimos el score que esperan las vistas.
+    return [(1 - a._distance, a) for a in rows]
 
 
 def top_k_articles(user, vector, k=10, exclude_pk=None):
@@ -26,7 +44,9 @@ def top_k_articles(user, vector, k=10, exclude_pk=None):
     qs = Article.objects.filter(feed__user=user, embedding__isnull=False).select_related("source")
     if exclude_pk:
         qs = qs.exclude(pk=exclude_pk)
-    # --- Punto de extensión pgvector ---
-    # if connection.vendor == "postgresql" and <pgvector activo>:
-    #     return [(1 - d, a) for a, d in qs.order_by(CosineDistance("embedding_vec", vector))[:k] ...]
+    # Postgres: búsqueda ANN con pgvector. SQLite/dev o fallo: coseno en Python.
+    if connection.vendor == "postgresql":
+        result = _pgvector_topk(qs, vector, k)
+        if result is not None:
+            return result
     return _python_topk(qs, vector, k)

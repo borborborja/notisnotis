@@ -100,3 +100,36 @@ class PhaseCTests(TestCase):
         terms = topic_terms(t)
         self.assertTrue(article_matches(terms, type("A", (), {"title": "El CLIMA hoy", "summary": ""})))
         self.assertFalse(article_matches(terms, type("A", (), {"title": "Deportes", "summary": ""})))
+
+
+class NNBackendTests(TestCase):
+    """Backend de vecinos: en SQLite usa el fallback coseno en Python (pgvector solo PG)."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from feeds.models import Feed, Source
+        from articles.models import Article
+
+        self.user = get_user_model().objects.create_user("nn", "", "pw")
+        src = Source.objects.create(name="S", domain="s.com", bias="center")
+        feed = Feed.objects.create(user=self.user, source=src, url="http://s/rss")
+        # Embeddings 3D sencillos: a y b alineados con la consulta, c ortogonal.
+        Article.objects.create(feed=feed, source=src, guid="a", title="A", embedding=[1.0, 0.0, 0.0])
+        Article.objects.create(feed=feed, source=src, guid="b", title="B", embedding=[0.9, 0.1, 0.0])
+        Article.objects.create(feed=feed, source=src, guid="c", title="C", embedding=[0.0, 0.0, 1.0])
+
+    def test_top_k_ranks_by_similarity(self):
+        from stories.nn import top_k_articles
+
+        results = top_k_articles(self.user, [1.0, 0.0, 0.0], k=2)
+        self.assertEqual(len(results), 2)
+        titles = [a.title for _, a in results]
+        # Los dos más cercanos a la consulta son A y B (no C, ortogonal).
+        self.assertEqual(set(titles), {"A", "B"})
+        # Devuelve (score, Article) ordenado de mayor a menor score.
+        self.assertGreaterEqual(results[0][0], results[1][0])
+
+    def test_empty_vector_returns_empty(self):
+        from stories.nn import top_k_articles
+
+        self.assertEqual(top_k_articles(self.user, [], k=5), [])

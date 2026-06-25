@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from pgvector.django import HnswIndex, VectorField
 
 from feeds.models import Feed, Source
 
@@ -37,6 +38,11 @@ class Article(models.Model):
     # Embedding (JSON portable; similitud coseno en Python — ver stories/similarity.py)
     embedding = models.JSONField(null=True, blank=True)
     embedded_at = models.DateTimeField(null=True, blank=True)
+    # Mismo embedding como vector nativo pgvector para búsqueda ANN en Postgres.
+    # En SQLite/dev queda NULL y se usa el fallback coseno sobre `embedding` (JSON).
+    # La dimensión debe coincidir con AI_EMBED_DIM (por defecto 256); si cambias ese
+    # valor, regenera esta migración con la nueva dimensión.
+    embedding_vec = VectorField(dimensions=256, null=True, blank=True)
 
     # Enriquecimiento LLM (lector)
     context = models.TextField(blank=True)
@@ -73,6 +79,15 @@ class Article(models.Model):
         indexes = [
             models.Index(fields=["is_read"]),
             models.Index(fields=["is_saved"]),
+            # Índice ANN de pgvector (solo se materializa en Postgres; ver
+            # articles/migrations/0007 — el DDL va guardado por vendor).
+            HnswIndex(
+                name="article_embedding_vec_hnsw",
+                fields=["embedding_vec"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            ),
         ]
 
     def __str__(self):
