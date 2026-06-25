@@ -1,0 +1,8 @@
+{# Select de modelos. Se renderiza inicial (solo el actual) y como respuesta htmx. #}
+{% if error %}<p class="muted ai-err">No se pudieron recuperar los modelos: {{ error }}</p>{% endif %}
+<select name="{{ name }}">
+  <option value="">(por defecto)</option>
+  {% for m in models %}<option value="{{ m }}" {% if m == current %}selected{% endif %}>{{ m }}</option>{% endfor %}
+  {% if current and current not in models %}<option value="{{ current }}" selected>{{ current }}</option>{% endif %}
+</select>
+{% if models %}<span class="muted ai-count">{{ models|length }} modelos disponibles</span>{% endif %}

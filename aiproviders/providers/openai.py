@@ -15,7 +15,23 @@ def _auth_headers(api_key):
     return {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
 
 
+def _openai_models(api_key, base_url, timeout):
+    resp = requests.get(f"{base_url}/models", headers=_auth_headers(api_key), timeout=timeout)
+    if resp.status_code >= 400:
+        raise AIError(f"OpenAI {resp.status_code}: {resp.text[:300]}")
+    return [m["id"] for m in resp.json().get("data", [])]
+
+
 class OpenAIChatProvider(BaseChatProvider):
+    def list_models(self):
+        ids = _openai_models(self.config.get("api_key"),
+                             self.config.get("base_url") or "https://api.openai.com/v1",
+                             self.config.get("timeout", 30))
+        # Modelos de chat (descarta embeddings, audio, imagen, moderación…).
+        chat = [m for m in ids if any(t in m for t in ("gpt", "o1", "o3", "o4", "chat"))
+                and "embedding" not in m]
+        return sorted(chat or ids)
+
     def chat(self, messages, *, json: bool = False):
         api_key = self.config.get("api_key")
         base_url = self.config.get("base_url") or "https://api.openai.com/v1"
@@ -40,6 +56,12 @@ class OpenAIChatProvider(BaseChatProvider):
 
 
 class OpenAIEmbedProvider(BaseEmbedProvider):
+    def list_models(self):
+        ids = _openai_models(self.config.get("api_key"),
+                             self.config.get("base_url") or "https://api.openai.com/v1",
+                             self.config.get("timeout", 30))
+        return sorted(m for m in ids if "embedding" in m)
+
     def embed(self, texts):
         api_key = self.config.get("api_key")
         base_url = self.config.get("base_url") or "https://api.openai.com/v1"

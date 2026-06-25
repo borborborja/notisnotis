@@ -6,7 +6,18 @@ import requests
 from ..base import AIError, BaseChatProvider, BaseEmbedProvider
 
 
+def _ollama_tags(base_url, timeout, headers=None):
+    """Modelos instalados en el servidor Ollama (GET /api/tags)."""
+    resp = requests.get(f"{base_url.rstrip('/')}/api/tags", headers=headers or {}, timeout=timeout)
+    if resp.status_code >= 400:
+        raise AIError(f"Ollama {resp.status_code}: {resp.text[:300]}")
+    return sorted(m["name"] for m in resp.json().get("models", []))
+
+
 class OllamaChatProvider(BaseChatProvider):
+    def list_models(self):
+        return _ollama_tags(self.config.get("base_url", ""), self.config.get("timeout", 30))
+
     def chat(self, messages, *, json: bool = False):
         base_url = self.config.get("base_url", "").rstrip("/")
         payload = {
@@ -28,6 +39,9 @@ class OllamaChatProvider(BaseChatProvider):
 
 
 class OllamaEmbedProvider(BaseEmbedProvider):
+    def list_models(self):
+        return _ollama_tags(self.config.get("base_url", ""), self.config.get("timeout", 30))
+
     def embed(self, texts):
         base_url = self.config.get("base_url", "").rstrip("/")
         out = []

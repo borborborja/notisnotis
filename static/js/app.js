@@ -289,10 +289,24 @@
     }
   }
 
+  // Ajustes de IA: mostrar solo la conexión del proveedor seleccionado.
+  function initAiProvider() {
+    document.querySelectorAll("[data-ai-provider]").forEach(function (sel) {
+      var kind = sel.getAttribute("data-ai-provider");
+      function sync() {
+        document.querySelectorAll("[data-conn='" + kind + "']").forEach(function (box) {
+          box.hidden = box.getAttribute("data-provider") !== sel.value;
+        });
+      }
+      sel.addEventListener("change", sync);
+      sync();
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     // Cada init aislado: que un fallo no impida el resto.
     [initGroups, initSections, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
-     initResizers, initTypeControls, initPush, initPWA].forEach(function (fn) {
+     initResizers, initTypeControls, initPush, initPWA, initAiProvider].forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });
     var h = document.querySelector("[data-help-close]");

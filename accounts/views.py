@@ -3,6 +3,7 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
 
 from aiproviders.config import editable_fields, locked_fields
 from feeds.models import Feed
@@ -125,8 +126,14 @@ def settings_view(request, tab="general"):
 
         ctx["webpush_enabled"] = WEBPUSH.enabled() and bool(WEBPUSH.resolve(request.user)["vapid_public"])
     if tab == "ai":
-        ctx["editable"] = editable_fields(request.user)
-        ctx["locked"] = locked_fields()
+        from aiproviders.config import fields_state
+
+        st = fields_state(request.user)
+        ctx["chat"] = _ai_section(st, "chat", "chat_provider", "chat_model")
+        ctx["embed"] = _ai_section(st, "embed", "embed_provider", "embed_model")
+        ctx["ai_options"] = [st[k] for k in
+                             ("enrich_mode", "cluster_threshold", "cluster_window_days",
+                              "embed_dim", "fulltext_enabled")]
     elif tab == "updates":
         cfg = getattr(request.user, "config", None)
         data = cfg.data if cfg else {}
@@ -148,6 +155,63 @@ def settings_view(request, tab="general"):
 
         ctx["twofa_enabled"] = TOTPDevice.objects.filter(user=request.user, confirmed=True).exists()
     return render(request, f"settings/{tab}.html", ctx)
+
+
+# Campos de conexión por proveedor (para mostrar solo los del proveedor elegido).
+_PROVIDER_CONN = {
+    "mock": [],
+    "ollama": ["ollama_base_url"],
+    "ollama_cloud": ["ollama_cloud_api_key", "ollama_cloud_base_url"],
+    "openai": ["openai_api_key", "openai_base_url"],
+    "openrouter": ["openrouter_api_key", "openrouter_base_url"],
+    "jina": ["jina_api_key", "jina_base_url"],
+}
+_CONN_KEYS = sorted({k for ks in _PROVIDER_CONN.values() for k in ks})
+
+
+def _ai_section(st, kind, prov_key, model_key):
+    """Datos para pintar una sección (chat o embeddings) agrupada por proveedor."""
+    pf = st[prov_key]
+    conn = [
+        {"provider": prov, "fields": [st[k] for k in keys]}
+        for prov, keys in _PROVIDER_CONN.items() if prov in (pf["choices"] or [])
+    ]
+    return {
+        "kind": kind,
+        "provider_field": pf,
+        "current_provider": pf["effective"] or pf["default"],
+        "model_field": st[model_key],
+        "current_model": st[model_key]["effective"] or st[model_key]["default"],
+        "conn": conn,
+    }
+
+
+@login_required
+@require_POST
+def ai_models(request):
+    """htmx: recupera los modelos del proveedor (con la config del formulario sin guardar)."""
+    from aiproviders.client import build_chat_client, build_embed_client
+    from aiproviders.config import effective_config
+
+    kind = request.POST.get("kind", "chat")
+    cfg = dict(effective_config(request.user))
+    prov_key = "chat_provider" if kind == "chat" else "embed_provider"
+    submitted_provider = request.POST.get(prov_key, "").strip()
+    if submitted_provider:
+        cfg[prov_key] = submitted_provider
+    for k in _CONN_KEYS:
+        v = request.POST.get(k, "").strip()
+        if v:
+            cfg[k] = v
+    models, error = [], ""
+    try:
+        client = build_chat_client(cfg) if kind == "chat" else build_embed_client(cfg)
+        models = client.list_models()
+    except Exception as exc:  # noqa: BLE001
+        error = str(exc)[:200]
+    name = "chat_model" if kind == "chat" else "embed_model"
+    return render(request, "settings/_model_options.html",
+                  {"name": name, "models": models, "current": request.POST.get("current", ""), "error": error})
 
 
 def _save_ai_config(request):

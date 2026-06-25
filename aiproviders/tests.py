@@ -74,6 +74,10 @@ class MockProviderTests(TestCase):
         enrich = c.chat([{"role": "user", "content": "enriquece este articulo"}], json=True)
         self.assertIn("claims", enrich)
 
+    def test_list_models(self):
+        self.assertEqual(MockChatProvider().list_models(), ["mock-small", "mock-large"])
+        self.assertEqual(MockEmbedProvider().list_models(), ["mock-embed"])
+
     def test_embed_dim_and_normalized(self):
         e = MockEmbedProvider(dim=16)
         vecs = e.embed(["uno dos tres", "uno dos tres"])

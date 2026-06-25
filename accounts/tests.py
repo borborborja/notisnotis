@@ -155,6 +155,42 @@ class TwoFactorTests(TestCase):
         self.assertEqual(self.client.get("/articles/", **H).status_code, 200)
 
 
+class AiSettingsUiTests(TestCase):
+    def setUp(self):
+        get_user_model().objects.create_user("ai", "ai@x.com", "pw-initial-1")
+        self.client.login(username="ai", password="pw-initial-1")
+
+    def test_ai_tab_renders_provider_ui(self):
+        r = self.client.get("/accounts/settings/ai/", **H)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Recuperar modelos")
+        self.assertContains(r, 'data-ai-provider="chat"')
+        self.assertContains(r, 'data-ai-provider="embed"')
+
+    def test_fetch_models_endpoint_mock(self):
+        # Proveedor mock por defecto: el endpoint devuelve los modelos en un <select>.
+        r = self.client.post("/accounts/settings/ai/models/",
+                             {"kind": "chat", "chat_provider": "mock", "current": ""}, **H)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "mock-small")
+        self.assertContains(r, '<select name="chat_model"')
+
+    def test_fetch_models_endpoint_error_is_graceful(self):
+        # openai sin clave válida → error capturado, no excepción (sin red: requests mockeado).
+        from unittest import mock
+
+        class _Resp:
+            status_code = 401
+            text = "Unauthorized"
+
+        with mock.patch("aiproviders.providers.openai.requests.get", return_value=_Resp()):
+            r = self.client.post("/accounts/settings/ai/models/",
+                                 {"kind": "embed", "embed_provider": "openai",
+                                  "openai_api_key": "x", "current": ""}, **H)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "No se pudieron recuperar los modelos")
+
+
 class S3StorageConfigTests(TestCase):
     """Selección del backend de media según el entorno (patrón de operador)."""
 

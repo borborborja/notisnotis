@@ -1,44 +1,43 @@
 {% extends "settings/base.html" %}
 {% block tab %}
 <h1>Análisis con IA</h1>
+<p class="muted">Elige el proveedor, pon tu conexión y recupera los modelos disponibles.
+  Lo que el operador fije en <code>.env</code> aparece bloqueado.</p>
 
-{% if locked %}
-<div class="card">
-  <h3>Fijado por el operador (.env)</h3>
-  <p class="muted">Estos valores los fija quien aloja la instancia y no se pueden cambiar aquí.</p>
-  <table>
-    {% for f in locked %}<tr><td>{{ f.label }}</td><td><code>{{ f.value }}</code></td></tr>{% endfor %}
-  </table>
-</div>
-{% endif %}
+<form method="post" action="{% url 'account_settings_tab' 'ai' %}">{% csrf_token %}
+  <input type="hidden" name="action" value="save_config">
 
-<div class="card">
-  <h3>Tu configuración</h3>
-  {% if editable %}
-  <p class="muted">Campos que el operador dejó libres: aquí pones tu propia configuración (solo para ti).
-    Vacío = valor por defecto.</p>
-  <form method="post" action="{% url 'account_settings_tab' 'ai' %}">{% csrf_token %}
-    <input type="hidden" name="action" value="save_config">
-    {% for f in editable %}
-      <p>
-        <label><strong>{{ f.label }}</strong></label><br>
-        {% if f.choices %}
+  {% include "settings/_ai_section.html" with s=chat %}
+  {% include "settings/_ai_section.html" with s=embed %}
+
+  {# Comportamiento #}
+  <div class="card">
+    <h3>Comportamiento</h3>
+    {% for f in ai_options %}
+      <div class="form-row">
+        <label>{{ f.label }}</label>
+        {% if f.locked %}
+          <p class="locked-val"><code>{{ f.effective }}</code> <span class="muted">· fijado por el operador</span></p>
+        {% elif f.type == 'bool' %}
+          <label class="switch">
+            <input type="checkbox" name="{{ f.key }}" value="1" {% if f.effective %}checked{% endif %}>
+            <span class="muted">{% if f.key == 'fulltext_enabled' %}Descargar el texto completo de los artículos (respeta copyright/ToS){% else %}Activado{% endif %}</span>
+          </label>
+        {% elif f.choices %}
           <select name="{{ f.key }}">
-            <option value="">(por defecto: {{ f.default }})</option>
-            {% for c in f.choices %}<option value="{{ c }}" {% if f.value == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+            {% for c in f.choices %}<option value="{{ c }}" {% if c == f.effective %}selected{% endif %}>{{ c }}</option>{% endfor %}
           </select>
-        {% elif f.secret %}
-          <input type="password" name="{{ f.key }}"
-                 placeholder="{% if f.value %}•••••• (guardado — vacío para mantener){% else %}sin definir{% endif %}">
         {% else %}
-          <input type="text" name="{{ f.key }}" value="{{ f.value }}" placeholder="por defecto: {{ f.default }}">
+          <input type="number" step="any" name="{{ f.key }}" value="{{ f.effective }}" placeholder="{{ f.default }}">
         {% endif %}
-      </p>
+        <p class="field-help muted">{% if f.key == 'enrich_mode' %}Cuándo enriquecer con IA: al abrir el artículo (on_demand) o en lote por el scheduler (batch).
+          {% elif f.key == 'cluster_threshold' %}Cuánto se deben parecer dos noticias (0–1) para agruparlas en la misma historia. Más alto = grupos más estrictos.
+          {% elif f.key == 'cluster_window_days' %}Días hacia atrás que se consideran al agrupar noticias.
+          {% elif f.key == 'embed_dim' %}Dimensión de los vectores de embeddings (debe coincidir con el modelo).{% endif %}</p>
+      </div>
     {% endfor %}
-    <button class="btn" type="submit">Guardar</button>
-  </form>
-  {% else %}
-    <p class="muted">El operador ha fijado toda la configuración de IA en <code>.env</code>.</p>
-  {% endif %}
-</div>
+  </div>
+
+  <button class="btn" type="submit">Guardar configuración</button>
+</form>
 {% endblock %}

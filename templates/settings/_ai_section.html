@@ -1,0 +1,56 @@
+{# context: s = sección (chat|embed). Proveedor → conexión del elegido → modelos. #}
+<div class="card" data-ai-section="{{ s.kind }}">
+  <h3>{% if s.kind == 'chat' %}Chat <span class="muted">— resúmenes, sesgo, enriquecimiento, traducir</span>
+      {% else %}Embeddings <span class="muted">— agrupación de noticias y búsqueda semántica</span>{% endif %}</h3>
+
+  {# 1) Proveedor #}
+  {% with pf=s.provider_field %}
+  <div class="form-row">
+    <label>Proveedor</label>
+    {% if pf.locked %}
+      <p class="locked-val"><code>{{ pf.effective }}</code> <span class="muted">· fijado por el operador (.env)</span></p>
+    {% else %}
+      <select name="{{ pf.key }}" data-ai-provider="{{ s.kind }}">
+        {% for c in pf.choices %}<option value="{{ c }}" {% if c == s.current_provider %}selected{% endif %}>{{ c }}</option>{% endfor %}
+      </select>
+    {% endif %}
+  </div>
+  {% endwith %}
+
+  {# 2) Conexión: se muestra solo la del proveedor seleccionado (JS) #}
+  {% for c in s.conn %}
+    <div class="ai-conn" data-conn="{{ s.kind }}" data-provider="{{ c.provider }}"
+         {% if c.provider != s.current_provider %}hidden{% endif %}>
+      {% for f in c.fields %}
+        <div class="form-row">
+          <label>{{ f.label }}</label>
+          {% if f.locked %}
+            <p class="locked-val">{% if f.secret %}••••••{% else %}<code>{{ f.env_value }}</code>{% endif %} <span class="muted">· operador</span></p>
+          {% elif f.secret %}
+            <input type="password" name="{{ f.key }}" autocomplete="off"
+                   placeholder="{% if f.has_value %}•••••• (guardada — deja vacío para mantener){% else %}pega tu API key{% endif %}">
+          {% else %}
+            <input type="text" name="{{ f.key }}" value="{{ f.value }}" placeholder="{{ f.default }}">
+          {% endif %}
+        </div>
+      {% endfor %}
+      {% if not c.fields %}<p class="muted">No necesita configuración: funciona sin claves.</p>{% endif %}
+    </div>
+  {% endfor %}
+
+  {# 3) Modelo: recuperar del proveedor y elegir de la lista #}
+  <div class="form-row">
+    <label>Modelo</label>
+    <div class="ai-model" id="ai-model-{{ s.kind }}">
+      {% include "settings/_model_options.html" with name=s.model_field.key current=s.current_model models='' error='' %}
+    </div>
+    <button type="button" class="btn btn-ghost"
+            hx-post="{% url 'ai_models' %}"
+            hx-include="[data-ai-section='{{ s.kind }}']"
+            hx-vals='{"kind": "{{ s.kind }}", "current": "{{ s.current_model }}"}'
+            hx-target="#ai-model-{{ s.kind }}"
+            hx-swap="innerHTML">
+      <svg class="ic"><use href="#i-refresh"/></svg> Recuperar modelos del proveedor
+    </button>
+  </div>
+</div>

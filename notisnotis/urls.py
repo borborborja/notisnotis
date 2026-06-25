@@ -16,6 +16,7 @@ urlpatterns = [
     path("accounts/2fa/verify/", twofa_views.verify, name="twofa_verify"),
     path("accounts/2fa/disable/", twofa_views.disable, name="twofa_disable"),
     path("accounts/2fa/recovery/", twofa_views.regenerate_recovery, name="twofa_recovery"),
+    path("accounts/settings/ai/models/", account_views.ai_models, name="ai_models"),
     path("accounts/settings/", account_views.settings_view, name="account_settings"),
     path("accounts/export.json", account_views.export_data, name="account_export"),
     path("accounts/import/", account_views.import_data, name="account_import"),

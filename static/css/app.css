@@ -371,3 +371,15 @@ body.resizing iframe { pointer-events: none; }
 .recovery-codes { list-style: none; padding: 0; columns: 2; gap: 1rem; margin: 1rem 0; }
 .recovery-codes li { margin: .25rem 0; }
 .recovery-codes code { font-size: 1.05rem; letter-spacing: .05em; }
+
+/* ---------- Ajustes de IA (proveedor + modelos) ---------- */
+.form-row select, .form-row input[type="number"] { padding: .45rem .6rem; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--input-bg); color: var(--text); font: inherit; min-width: 16rem; max-width: 100%; }
+.ai-conn { border-left: 2px solid var(--border); padding-left: .8rem; margin: .4rem 0 .6rem; }
+.ai-model { margin-bottom: .4rem; }
+.ai-count { margin-left: .5rem; font-size: .85rem; }
+.ai-err { color: var(--right); }
+.locked-val { margin: .2rem 0; }
+.field-help { font-size: .82rem; margin: .25rem 0 0; }
+.switch { display: inline-flex; align-items: center; gap: .5rem; font-weight: 400; cursor: pointer; }
+.switch input { width: 1.1rem; height: 1.1rem; }

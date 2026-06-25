@@ -26,6 +26,10 @@ class BaseChatProvider:
     def chat(self, messages, *, json: bool = False):  # pragma: no cover - interface
         raise NotImplementedError
 
+    def list_models(self):
+        """Lista de ids de modelos disponibles en el proveedor (vacío si no aplica)."""
+        return []
+
     @staticmethod
     def parse_json(text: str):
         """Extrae el primer objeto JSON de una respuesta de chat, tolerante a ```json fences."""
@@ -49,3 +53,7 @@ class BaseEmbedProvider:
 
     def embed(self, texts):  # pragma: no cover - interface
         raise NotImplementedError
+
+    def list_models(self):
+        """Lista de ids de modelos de embeddings disponibles (vacío si no aplica)."""
+        return []

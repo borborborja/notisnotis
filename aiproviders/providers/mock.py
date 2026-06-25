@@ -9,6 +9,9 @@ from ..base import BaseChatProvider, BaseEmbedProvider
 
 
 class MockChatProvider(BaseChatProvider):
+    def list_models(self):
+        return ["mock-small", "mock-large"]
+
     def chat(self, messages, *, json: bool = False):
         user_text = "\n".join(m.get("content", "") for m in messages if m.get("role") == "user")
         if json:
@@ -49,6 +52,9 @@ class MockChatProvider(BaseChatProvider):
 
 
 class MockEmbedProvider(BaseEmbedProvider):
+    def list_models(self):
+        return ["mock-embed"]
+
     def embed(self, texts):
         return [self._embed_one(t) for t in texts]
 

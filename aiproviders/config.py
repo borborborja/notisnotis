@@ -50,6 +50,35 @@ def effective_config(user=None) -> dict:
     return optconfig.resolve(FIELDS, user)
 
 
+def fields_state(user=None) -> dict:
+    """Estado por campo para pintar la UI agrupada por proveedor.
+
+    Devuelve dict key -> {key,label,type,secret,choices,default,locked,value,
+    has_value,env_value,effective}. `value` es lo editable (vacío en secretos);
+    `effective` es el valor resuelto (cascada) para preseleccionar.
+    """
+    data = optconfig.user_data(user)
+    resolved = optconfig.resolve(FIELDS, user)
+    out = {}
+    for f in FIELDS:
+        key, secret = f[optconfig.KEY], f[optconfig.SECRET]
+        locked = optconfig.is_locked(f)
+        out[key] = {
+            "key": key,
+            "label": f[optconfig.LABEL],
+            "type": f[optconfig.TYPE],
+            "secret": secret,
+            "choices": f[optconfig.CHOICES],
+            "default": f[optconfig.DEFAULT],
+            "locked": locked,
+            "value": "" if secret else (optconfig.env_raw(f) if locked else data.get(key, "")),
+            "has_value": str(resolved.get(key, "")).strip() != "",
+            "env_value": optconfig.env_raw(f) if locked else "",
+            "effective": resolved.get(key, ""),
+        }
+    return out
+
+
 def editable_fields(user=None):
     return optconfig.editable(FIELDS, user)
 

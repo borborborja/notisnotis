@@ -7,6 +7,14 @@ from ..base import AIError, BaseChatProvider, BaseEmbedProvider, EmbeddingNotSup
 
 
 class OpenRouterChatProvider(BaseChatProvider):
+    def list_models(self):
+        base_url = self.config.get("base_url") or ""
+        models_url = base_url.replace("/chat/completions", "/models")
+        resp = requests.get(models_url, timeout=self.config.get("timeout", 30))
+        if resp.status_code >= 400:
+            raise AIError(f"OpenRouter {resp.status_code}: {resp.text[:300]}")
+        return sorted(m["id"] for m in resp.json().get("data", []))
+
     def chat(self, messages, *, json: bool = False):
         api_key = self.config.get("api_key")
         base_url = self.config.get("base_url")

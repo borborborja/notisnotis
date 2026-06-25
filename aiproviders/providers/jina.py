@@ -12,6 +12,18 @@ from ..base import AIError, BaseEmbedProvider
 
 
 class JinaEmbedProvider(BaseEmbedProvider):
+    # Jina no expone un endpoint de listado; lista curada de modelos de embeddings.
+    KNOWN_MODELS = [
+        "jina-embeddings-v3",
+        "jina-embeddings-v2-base-en",
+        "jina-embeddings-v2-base-es",
+        "jina-embeddings-v2-base-code",
+        "jina-clip-v2",
+    ]
+
+    def list_models(self):
+        return list(self.KNOWN_MODELS)
+
     def embed(self, texts):
         api_key = self.config.get("api_key")
         base_url = self.config.get("base_url") or "https://api.jina.ai/v1"

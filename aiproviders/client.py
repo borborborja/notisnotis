@@ -39,8 +39,8 @@ def _provider_kwargs(provider, cfg):
     }.get(provider, {})
 
 
-def get_chat_client(user=None):
-    cfg = effective_config(user)
+def build_chat_client(cfg):
+    """Construye el cliente de chat a partir de un cfg ya resuelto (dict)."""
     provider = cfg["chat_provider"]
     cls = _CHAT.get(provider)
     if cls is None:
@@ -50,8 +50,8 @@ def get_chat_client(user=None):
     return cls(model=cfg["chat_model"], **kwargs)
 
 
-def get_embed_client(user=None):
-    cfg = effective_config(user)
+def build_embed_client(cfg):
+    """Construye el cliente de embeddings a partir de un cfg ya resuelto (dict)."""
     provider = cfg["embed_provider"]
     cls = _EMBED.get(provider)
     if cls is None:
@@ -59,3 +59,11 @@ def get_embed_client(user=None):
     kwargs = _provider_kwargs(provider, cfg)
     kwargs["timeout"] = settings.AI["TIMEOUT"]
     return cls(model=cfg["embed_model"], dim=cfg["embed_dim"], **kwargs)
+
+
+def get_chat_client(user=None):
+    return build_chat_client(effective_config(user))
+
+
+def get_embed_client(user=None):
+    return build_embed_client(effective_config(user))
