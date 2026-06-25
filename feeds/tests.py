@@ -153,3 +153,27 @@ class NestedOpmlTests(TestCase):
         self.assertEqual(cat.feeds.count(), 2)
         # El feed fuera de carpeta queda sin categoría.
         self.assertEqual(Feed.objects.filter(user=self.user, category__isnull=True).count(), 1)
+
+
+class CrawlNewFeedsTests(TestCase):
+    def test_opml_import_sets_crawler_when_pref_on(self):
+        from accounts.models import UserConfig
+        from feeds.models import Feed
+        from feeds.opml import import_opml_for_user
+
+        user = get_user_model().objects.create_user("cr", "", "pw")
+        UserConfig.objects.create(user=user, data={"crawl_new_feeds": "1"})
+        opml = '<?xml version="1.0"?><opml><body>' \
+               '<outline type="rss" text="X" xmlUrl="http://x.com/rss"/></body></opml>'
+        import_opml_for_user(user, opml)
+        self.assertTrue(Feed.objects.get(user=user, url="http://x.com/rss").crawler)
+
+    def test_opml_import_no_crawler_by_default(self):
+        from feeds.models import Feed
+        from feeds.opml import import_opml_for_user
+
+        user = get_user_model().objects.create_user("cr2", "", "pw")
+        opml = '<?xml version="1.0"?><opml><body>' \
+               '<outline type="rss" text="Y" xmlUrl="http://y.com/rss"/></body></opml>'
+        import_opml_for_user(user, opml)
+        self.assertFalse(Feed.objects.get(user=user, url="http://y.com/rss").crawler)

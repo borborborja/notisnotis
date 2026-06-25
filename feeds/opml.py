@@ -49,10 +49,17 @@ def _domain(url: str) -> str:
     return netloc[4:] if netloc.startswith("www.") else netloc
 
 
+def crawl_new_feeds(user) -> bool:
+    """Preferencia del usuario: activar el crawler de texto completo en feeds nuevos."""
+    cfg = getattr(user, "config", None)
+    return bool(cfg and cfg.data.get("crawl_new_feeds") == "1")
+
+
 def import_opml_for_user(user, content: str):
     """Crea/actualiza Category, Source y Feed para el usuario. Devuelve (creados, omitidos)."""
     created, skipped = 0, 0
     cat_cache = {}
+    want_crawl = crawl_new_feeds(user)
     for entry in parse_opml(content):
         url = entry["url"]
         ref_url = entry["html_url"] or url
@@ -75,7 +82,8 @@ def import_opml_for_user(user, content: str):
         feed, was_created = Feed.objects.get_or_create(
             user=user,
             url=url,
-            defaults={"source": source, "title": entry["title"], "category": category},
+            defaults={"source": source, "title": entry["title"], "category": category,
+                      "crawler": want_crawl},
         )
         if was_created:
             created += 1

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -182,6 +183,8 @@ def settings_view(request, tab="general"):
         ctx["cadence_choices"] = CADENCE_CHOICES
         ctx["smart_mode"] = data.get("smart_mode", "1") == "1"
         ctx["default_minutes"] = int(data.get("fetch_default_minutes", 60))
+        ctx["crawl_new_feeds"] = data.get("crawl_new_feeds", "0") == "1"
+        ctx["fulltext_enabled"] = settings.FULLTEXT_ENABLED
         ctx["feeds"] = Feed.objects.filter(user=request.user).select_related("source").order_by(
             "fetch_interval_minutes"
         )
@@ -282,6 +285,7 @@ def _save_updates(request):
         minutes = 60
     config.data["smart_mode"] = "1" if smart else "0"
     config.data["fetch_default_minutes"] = minutes
+    config.data["crawl_new_feeds"] = "1" if request.POST.get("crawl_new_feeds") == "1" else "0"
     config.save(update_fields=["data"])
 
     feeds = Feed.objects.filter(user=request.user)

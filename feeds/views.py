@@ -7,14 +7,16 @@ from django.views.decorators.http import require_POST
 
 from .discovery import discover_feeds, feed_title
 from .models import Category, Feed, Rule, Source
-from .opml import _domain, import_opml_for_user
+from .opml import _domain, crawl_new_feeds, import_opml_for_user
 
 
 def _create_feed(user, url, title, category=None):
     domain = _domain(url) or "unknown"
     source, _ = Source.objects.get_or_create(domain=domain, defaults={"name": title or domain})
     feed, created = Feed.objects.get_or_create(
-        user=user, url=url, defaults={"source": source, "title": title or "", "category": category}
+        user=user, url=url,
+        defaults={"source": source, "title": title or "", "category": category,
+                  "crawler": crawl_new_feeds(user)},
     )
     return feed, created
 

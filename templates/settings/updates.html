@@ -25,6 +25,17 @@
       <p class="field-help muted">Se usa para las fuentes cuando el modo inteligente está desactivado.</p>
     </div>
 
+    <hr>
+    <div class="form-row">
+      <label class="switch"><input type="checkbox" name="crawl_new_feeds" value="1" {% if crawl_new_feeds %}checked{% endif %}>
+        <span>Archivar texto completo de los feeds nuevos</span></label>
+      <p class="field-help muted">Activa el crawler en cada feed que importes o añadas, para
+        guardar el artículo completo al descargarlo (y conservarlo aunque la fuente lo borre).
+        {% if not fulltext_enabled %}<strong>Requiere que el operador active el texto completo global
+        (FULLTEXT_ENABLED), ahora desactivado.</strong>{% endif %}
+        En los feeds que ya tienes, actívalo desde Feeds → editar feed.</p>
+    </div>
+
     <button class="btn" type="submit">Guardar</button>
   </form>
 </div>
