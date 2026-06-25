@@ -20,6 +20,7 @@
     {% include "partials/sidebar.html" %}
     <div class="col-resizer" data-resize="sidebar"></div>
   </aside>
+  <div class="sidebar-backdrop" data-sidebar-close></div>
   <main class="main">
     <div class="messages">
       {% for message in messages %}<div class="msg msg-{{ message.tags }}">{{ message }}</div>{% endfor %}

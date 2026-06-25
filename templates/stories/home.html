@@ -27,7 +27,15 @@
           </div>
         </article>
       {% empty %}
-        <div class="reading-empty"><p>Aún no hay historias. Importa tu OPML y ejecuta <code>run_pipeline</code>.</p></div>
+        <div class="reading-empty empty-cta">
+          <p><strong>Aún no tienes noticias.</strong></p>
+          <p class="muted">Importa tus suscripciones (archivo OPML) o añade una fuente.
+            NotisNotis descargará y agrupará las noticias por ti automáticamente cada pocos minutos.</p>
+          <p class="empty-actions">
+            <a class="btn" href="{% url 'feeds:upload_opml' %}"><svg class="ic"><use href="#i-upload"/></svg> Importar OPML</a>
+            <a class="btn btn-ghost" href="{% url 'feeds:feed_list' %}">Gestionar fuentes</a>
+          </p>
+        </div>
       {% endfor %}
     </div>
     <div class="col-resizer" data-resize="list"></div>

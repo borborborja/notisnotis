@@ -54,7 +54,14 @@
   // Sidebar off-canvas en móvil.
   function initSidebarToggle() {
     var btn = document.querySelector("[data-sidebar-toggle]");
+    function close() { document.body.classList.remove("sidebar-open"); }
     if (btn) btn.addEventListener("click", function () { document.body.classList.toggle("sidebar-open"); });
+    // Cerrar al tocar el fondo oscuro.
+    var backdrop = document.querySelector("[data-sidebar-close]");
+    if (backdrop) backdrop.addEventListener("click", close);
+    // Cerrar al navegar desde el sidebar (en móvil el menú es overlay).
+    var sb = document.querySelector("[data-sidebar]");
+    if (sb) sb.addEventListener("click", function (e) { if (e.target.closest("a")) close(); });
   }
 
   // Resalta el ítem abierto en la lista.
