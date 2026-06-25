@@ -42,10 +42,12 @@ Detalle de cada ítem en [`docs/PHASES.md`](PHASES.md).
 - [x] **D1 · PWA + offline** — `manifest.webmanifest`, SW en `/sw.js` (caché shell + push),
   icono, registro en `app.js`. *Instalación real: verificar en despliegue HTTPS.*
 - [x] **D2 · Gestión de cuenta** — cambiar email/contraseña, borrar cuenta (pestaña Cuenta).
-  *2FA TOTP: pendiente (requiere `django-otp`).*
+  **2FA TOTP** activo: alta con QR + códigos de recuperación + reto en login
+  (`accounts/twofa.py`, `accounts/middleware.py`, gateado por la función `twofa`).
 - [x] **D3 · Salud de feeds** — estado/fallos en Feeds + reactivar.
-- [~] **D4 · pgvector** — **NN desacoplado** en `stories/nn.py` (related/búsqueda/MCP lo usan);
-  falta activar VectorField+ANN en Postgres real (punto de extensión marcado). Ver PHASES D4.
+- [x] **D4 · pgvector** — NN desacoplado en `stories/nn.py` con rama ANN en Postgres
+  (`Article.embedding_vec` VectorField + índice HNSW; extensión por migración guardada).
+  En SQLite/dev sigue el fallback coseno en Python. Imagen `pgvector/pgvector:pg16`.
 - [x] **D5 · Backup/restore** — export/import JSON + import Pocket/Instapaper (pestaña Cuenta).
 
 ## Reglas al avanzar

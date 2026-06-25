@@ -93,16 +93,19 @@ Estáticos en `static/` (`css/app.css`, `js/app.js`, `js/htmx.min.js`).
   `DOMContentLoaded` para que un fallo no tumbe el resto. Mantén ese aislamiento.
 
 ## 5. Metas futuras (tenlas en cuenta AL programar ahora)
-- **pgvector NO está implementado todavía.** El clustering y la búsqueda semántica usan
-  **coseno en Python O(n)** (`stories/similarity.py`, `articles/ai_actions.related_articles`).
-  Funciona pero no escala a decenas de miles de artículos. Al tocar embeddings/clustering:
-  deja el camino abierto a sustituir por `pgvector` (VectorField + ANN) sin reescribir las
-  vistas. El campo `Article.embedding` es `JSONField` a propósito (portable). NO acoples
-  lógica a que sea JSON.
+- **pgvector ya está implementado (solo Postgres).** La búsqueda NN vive desacoplada en
+  `stories/nn.py`: en Postgres usa `Article.embedding_vec` (VectorField) + índice HNSW vía
+  `CosineDistance`; en SQLite/dev cae al **coseno en Python** sobre `Article.embedding`
+  (JSON portable). Mantén AMBOS caminos: el JSON es el fallback y la fuente de verdad
+  portable; `embedding_vec` se puebla en paralelo solo en Postgres (`embed_articles`). Si
+  tocas embeddings/clustering, hazlo a través de `top_k_articles` y no acoples lógica a que
+  el embedding sea JSON ni a que exista pgvector.
 - **Web push** pendiente (Fase B): necesitará `WEBPUSH_ENABLED` + claves VAPID por
   cascade, modelo `PushSubscription`, service worker y `pywebpush`. Diséñalo como capacidad.
-- **PWA/offline, gestión de cuenta, 2FA, salud de feeds con backoff avanzado, backup/restore**:
-  ver `docs/ROADMAP.md`. No cierres puertas a esto (p.ej. mantén el shell servible offline).
+- **PWA/offline, gestión de cuenta, 2FA, salud de feeds, backup/restore**: ya implementados
+  (ver `docs/ROADMAP.md`). El 2FA (TOTP) vive en `accounts/twofa.py` + `accounts/middleware.py`,
+  gateado por la función `twofa`. Backoff avanzado de feeds sigue abierto: no cierres puertas
+  (p.ej. mantén el shell servible offline).
 - **Búsqueda**: ya usa `SearchVector` en Postgres y fallback `icontains` en SQLite; al
   escalar, considera un índice GIN persistente (migración aparte).
 
@@ -146,10 +149,11 @@ Usuario de pruebas: **`demo` / `demo12345`** (tiene datos reales cargados). Sirv
   no lo aplica salvo `enforce_csrf_checks`).
 - `ManifestStaticFilesStorage` exige `collectstatic`; por eso el storage es condicional a
   `DEBUG` en `settings.py`. No lo quites.
-- `mcp` (servidor MCP) y `pywebpush` (futuro) requieren **Python ≥3.10**; el dev local usa
-  3.9. El núcleo funciona en 3.9; esas piezas corren en Docker (3.12).
+- `mcp` (servidor MCP) requiere **Python ≥3.10**; el dev local usa 3.9. El núcleo
+  (incl. `pywebpush`, `django-otp`, `pgvector`) funciona en 3.9; el MCP corre en Docker (3.12).
 - No nombres módulos/apps como paquetes pip (`mcp` → app se llama `mcpserver`).
-- `Article.embedding` es JSON; la similitud es en Python. No asumas pgvector.
+- `Article.embedding` (JSON) es el fallback portable y la similitud va en Python en SQLite;
+  en Postgres además existe `embedding_vec` (pgvector). Accede SIEMPRE vía `stories/nn.py`.
 
 ## 9. Estado y tareas planificadas
 Estado en [`docs/ROADMAP.md`](docs/ROADMAP.md); **specs ejecutables autocontenidas** de
@@ -157,8 +161,10 @@ todo lo pendiente en [`docs/PHASES.md`](docs/PHASES.md) (objetivo, modelos, endp
 ficheros, aceptación y verificación por tarea — no necesitas nada fuera del repo).
 Hecho: agregador, lector enriquecido, UI Feedly, fetch concurrente+ETag, búsqueda,
 suscripción/descubrimiento, categorías, filtros/reglas, tags, sync Fever+GReader, MCP,
-digest email. Pendiente: web push (Fase B), Fase C (dieta de sesgo, temas, tendencias),
-Fase D (PWA, cuenta/2FA, **pgvector**, backup).
+digest email, web push (Fase B), Fase C (dieta de sesgo, temas, tendencias) y Fase D
+(PWA, cuenta + **2FA TOTP**, **pgvector**, backup). Hardening de prod: cookies seguras,
+HSTS/SSL, logging, Docker no-root (ver `settings.py` y `docs/DEPLOY.md`). Abierto:
+backoff avanzado de feeds y verificación real en HTTPS de PWA/push.
 
 ## 10. Deploy
 Ver [`docs/DEPLOY.md`](docs/DEPLOY.md). Resumen: `docker compose up` (web + db + scheduler;
