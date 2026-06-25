@@ -18,6 +18,18 @@
     {% csrf_token %}<input type="hidden" name="action" value="gen_sync_password">
     <button class="btn btn-ghost" type="submit"><svg class="ic"><use href="#i-rotate"/></svg> Regenerar credencial</button>
   </form>
+
+  <form method="post" action="{% url 'account_settings_tab' 'tokens' %}" style="margin-top:1rem">{% csrf_token %}
+    <input type="hidden" name="action" value="save_sync">
+    <div class="form-row">
+      <label class="switch"><input type="checkbox" name="sync_curation" value="1" {% if sync_curation %}checked{% endif %}>
+        <span>Enriquecer los artículos con la curación de NotisNotis</span></label>
+      <p class="field-help muted">Al sincronizar por Fever/Google Reader, añade al final de cada
+        artículo el contexto, las afirmaciones señaladas, el sesgo, la noticia contrastada y las
+        otras fuentes de su historia. Así la curación se ve en cualquier lector externo.</p>
+    </div>
+    <button class="btn btn-ghost" type="submit">Guardar</button>
+  </form>
 </div>
 
 <div class="card">

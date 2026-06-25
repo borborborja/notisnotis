@@ -36,6 +36,8 @@ class Command(BaseCommand):
         )
 
     def _cluster_user(self, user, since, threshold):
+        from django.db import connection
+
         # Artículos del usuario, con embedding, no asignados todavía.
         unassigned = list(
             Article.objects.filter(
@@ -44,12 +46,49 @@ class Command(BaseCommand):
         )
         if not unassigned:
             return 0, 0
+        # En Postgres usamos pgvector (vecino más cercano por ANN, en C) en vez del coseno
+        # en Python O(n²): mucho más rápido para reagrupar miles de artículos.
+        if connection.vendor == "postgresql":
+            return self._cluster_pgvector(user, unassigned, threshold)
+        return self._cluster_python(user, unassigned, since, threshold)
 
-        # Historias candidatas (recientes) del usuario, con su centroide.
+    def _new_story(self, user, article):
+        story = Story.objects.create(
+            user=user, headline=article.title[:500], centroid=article.embedding, dirty=True
+        )
+        StoryArticle.objects.create(story=story, article=article, similarity=1.0)
+        return story
+
+    def _cluster_pgvector(self, user, unassigned, threshold):
+        """Por cada artículo, busca el YA asignado más cercano (pgvector). Único toque a vistas."""
+        from pgvector.django import CosineDistance
+
+        assigned, new_stories = 0, 0
+        for article in unassigned:
+            nearest = (
+                Article.objects.filter(
+                    feed__user=user, stories__isnull=False, embedding_vec__isnull=False
+                )
+                .annotate(_d=CosineDistance("embedding_vec", article.embedding))
+                .order_by("_d").values("id", "_d").first()
+            )
+            if nearest is not None and (1 - nearest["_d"]) >= threshold:
+                sa = (StoryArticle.objects.filter(article_id=nearest["id"], story__user=user)
+                      .select_related("story").first())
+                StoryArticle.objects.create(story=sa.story, article=article, similarity=1 - nearest["_d"])
+                sa.story.dirty = True
+                sa.story.save(update_fields=["dirty", "last_updated"])
+            else:
+                self._new_story(user, article)
+                new_stories += 1
+            assigned += 1
+        return assigned, new_stories
+
+    def _cluster_python(self, user, unassigned, since, threshold):
+        """Fallback (SQLite/dev): coseno en Python contra los centroides de las historias."""
         candidates = list(
             Story.objects.filter(user=user, last_updated__gte=since).exclude(centroid__isnull=True)
         )
-
         # Una historia agrupa por TEMA (mismo suceso a lo largo del tiempo), permitiendo
         # varios artículos de la misma fuente: así el timeline muestra la evolución completa.
         assigned, new_stories = 0, 0
@@ -66,11 +105,7 @@ class Command(BaseCommand):
                 best_story.dirty = True
                 best_story.save(update_fields=["dirty", "centroid", "last_updated"])
             else:
-                story = Story.objects.create(
-                    user=user, headline=article.title[:500], centroid=article.embedding, dirty=True
-                )
-                StoryArticle.objects.create(story=story, article=article, similarity=1.0)
-                candidates.append(story)
+                candidates.append(self._new_story(user, article))
                 new_stories += 1
             assigned += 1
         return assigned, new_stories

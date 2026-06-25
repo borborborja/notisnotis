@@ -69,3 +69,35 @@ class GReaderTests(SyncBase):
                {"i": str(self.art.id), "a": "user/-/label/lectura"}, **auth)
         self.assertTrue(Tag.objects.filter(user=self.user, name="lectura").exists())
         self.assertIn("lectura", [t.name for t in self.art.tags.all()])
+
+
+class CurationTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from feeds.models import Feed, Source
+        from articles.models import Article
+
+        self.U = get_user_model()
+        self.u = self.U.objects.create_user("cu", "", "pw")
+        src = Source.objects.create(name="S", domain="s.com", bias="left")
+        feed = Feed.objects.create(user=self.u, source=src, url="http://s/rss")
+        self.a = Article.objects.create(feed=feed, source=src, guid="a", title="T",
+                                        body="cuerpo", context="contexto IA",
+                                        claims=[{"text": "afirmación X"}])
+
+    def test_disabled_returns_base(self):
+        from syncapi.curation import enriched_html
+
+        out = enriched_html(self.a, self.u)
+        self.assertNotIn("Curación", out)
+        self.assertIn("cuerpo", out)
+
+    def test_enabled_appends_curation(self):
+        from accounts.models import UserConfig
+        from syncapi.curation import enriched_html
+
+        UserConfig.objects.create(user=self.u, data={"sync_curation": "1"})
+        out = enriched_html(self.a, self.u)
+        self.assertIn("Curación", out)
+        self.assertIn("contexto IA", out)
+        self.assertIn("afirmación X", out)

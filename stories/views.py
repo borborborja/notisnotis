@@ -134,9 +134,15 @@ def _story_context(request, pk):
     if view not in ("bias", "timeline"):
         view = "bias"
     n_sources = len({sa.article.source_id for sa in sas_bias})
+    # Fuentes citadas para la noticia contrastada: una por fuente distinta, con enlace.
+    cited, seen = [], set()
+    for sa in sas_bias:
+        if sa.article.source_id not in seen:
+            seen.add(sa.article.source_id)
+            cited.append(sa.article)
     from .synthesis import render_markdown
     return {"story": story, "grouped": grouped, "bars": _bias_bars(story.bias_distribution),
-            "timeline": timeline, "view": view, "n_sources": n_sources,
+            "timeline": timeline, "view": view, "n_sources": n_sources, "cited": cited,
             "synthesis_html": render_markdown(story.synthesis)}
 
 

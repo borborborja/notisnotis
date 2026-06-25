@@ -17,6 +17,16 @@
         </form>
       </div>
       <div class="synthesis-body">{{ synthesis_html|safe }}</div>
+      <div class="synthesis-sources">
+        <h4>Fuentes</h4>
+        <ul class="related-list">
+          {% for a in cited %}
+            <li><a href="{{ a.url }}" target="_blank" rel="noopener">
+              <span class="rel-source">{{ a.source.name }}</span><span class="rel-title">{{ a.title }}</span>
+              <svg class="ic"><use href="#i-external"/></svg></a></li>
+          {% endfor %}
+        </ul>
+      </div>
       {% if story.synthesized_at %}<p class="item-meta">Redactada por IA a partir de {{ n_sources }} fuentes · {{ story.synthesized_at|date:"d M H:i" }}. Verifica los datos.</p>{% endif %}
     {% else %}
       <form method="post" action="{% url 'stories:synthesize' story.pk %}"

@@ -104,10 +104,12 @@ def _items(request, user):
     else:
         since = int(_param(request, "since_id", 0))
         qs = qs.filter(id__gt=since).order_by("id")[:PAGE]
+    from .curation import enriched_html
+
     items = [
         {
             "id": a.id, "feed_id": a.feed_id, "title": a.title, "author": "",
-            "html": a.best_text, "url": a.url,
+            "html": enriched_html(a, user), "url": a.url,
             "is_saved": 1 if a.is_saved else 0, "is_read": 1 if a.is_read else 0,
             "created_on_time": _epoch(a.published_at or a.fetched_at),
         }

@@ -175,7 +175,7 @@ def stream_items_contents(request):
     pks = [parse_item_id(x) for x in raw_ids]
     pks = [p for p in pks if p is not None]
     arts = Article.objects.filter(feed__user=user, id__in=pks).select_related("source", "feed")
-    items = [_content_item(a) for a in arts]
+    items = [_content_item(a, user) for a in arts]
     return JsonResponse({"id": "user/-/state/com.google/reading-list", "items": items})
 
 
@@ -184,10 +184,12 @@ def stream_contents(request, stream=""):
     if not user:
         return HttpResponseForbidden("")
     qs = _articles_for_stream(user, stream or request.GET.get("s", READING_LIST)).order_by("-id")[:50]
-    return JsonResponse({"items": [_content_item(a) for a in qs]})
+    return JsonResponse({"items": [_content_item(a, user) for a in qs]})
 
 
-def _content_item(a):
+def _content_item(a, user=None):
+    from .curation import enriched_html
+
     cats = [READING_LIST]
     if a.is_read:
         cats.append(READ)
@@ -202,7 +204,7 @@ def _content_item(a):
         "alternate": [{"href": a.url, "type": "text/html"}],
         "categories": cats,
         "origin": {"streamId": f"feed/{a.feed_id}", "title": a.source.name},
-        "summary": {"content": a.best_text},
+        "summary": {"content": enriched_html(a, user) if user else a.best_text},
         "author": "",
     }
 

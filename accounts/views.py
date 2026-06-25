@@ -122,6 +122,12 @@ def settings_view(request, tab="general"):
                              f"Dimensión ajustada a {n}. Se han invalidado todos los embeddings y "
                              f"se recalcularán.{extra} Pon también AI_EMBED_DIM={n} en tu .env.")
             return redirect("account_settings_tab", tab="ai")
+        elif action == "save_sync":
+            cfg, _ = UserConfig.objects.get_or_create(user=request.user)
+            cfg.data["sync_curation"] = "1" if request.POST.get("sync_curation") == "1" else "0"
+            cfg.save(update_fields=["data"])
+            messages.success(request, "Preferencia de sincronización guardada.")
+            return redirect("account_settings_tab", tab="tokens")
         elif action == "save_email":
             request.user.email = request.POST.get("email", "").strip()
             request.user.save(update_fields=["email"])
@@ -204,6 +210,8 @@ def settings_view(request, tab="general"):
         ctx["sync"] = SyncCredential.get_or_create_for(request.user)
         ctx["fever_url"] = request.build_absolute_uri("/api/fever/")
         ctx["greader_url"] = request.build_absolute_uri("/api/greader/")
+        cfg = getattr(request.user, "config", None)
+        ctx["sync_curation"] = bool(cfg and cfg.data.get("sync_curation") == "1")
     elif tab == "account":
         from django_otp.plugins.otp_totp.models import TOTPDevice
 
