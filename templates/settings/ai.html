@@ -23,6 +23,13 @@
             <input type="checkbox" name="{{ f.key }}" value="1" {% if f.effective %}checked{% endif %}>
             <span class="muted">{% if f.key == 'fulltext_enabled' %}Descargar el texto completo de los artículos (respeta copyright/ToS){% else %}Activado{% endif %}</span>
           </label>
+        {% elif f.key == 'cluster_threshold' %}
+          <div class="slider-row">
+            <span class="slider-end">amplio</span>
+            <input type="range" min="0.5" max="0.95" step="0.01" name="{{ f.key }}" value="{{ f.effective }}" data-output="thr-out">
+            <span class="slider-end">estricto</span>
+            <output id="thr-out">{{ f.effective }}</output>
+          </div>
         {% elif f.choices %}
           <select name="{{ f.key }}">
             {% for c in f.choices %}<option value="{{ c }}" {% if c == f.effective %}selected{% endif %}>{{ c }}</option>{% endfor %}
@@ -31,7 +38,7 @@
           <input type="number" step="any" name="{{ f.key }}" value="{{ f.effective }}" placeholder="{{ f.default }}">
         {% endif %}
         <p class="field-help muted">{% if f.key == 'enrich_mode' %}Cuándo enriquecer con IA: al abrir el artículo (on_demand) o en lote por el scheduler (batch).
-          {% elif f.key == 'cluster_threshold' %}Cuánto se deben parecer dos noticias (0–1) para agruparlas en la misma historia. Más alto = grupos más estrictos.
+          {% elif f.key == 'cluster_threshold' %}Cuánto se deben parecer dos noticias para ir en la misma historia. <strong>Amplio</strong> = agrupa más temas (historias grandes); <strong>estricto</strong> = temas más cerrados. Tras cambiarlo, reconstruye las historias para aplicarlo a lo ya existente.
           {% elif f.key == 'cluster_window_days' %}Días hacia atrás que se consideran al agrupar noticias.
           {% elif f.key == 'embed_dim' %}Dimensión de los vectores de embeddings (debe coincidir con el modelo).{% endif %}</p>
       </div>

@@ -289,6 +289,17 @@
     }
   }
 
+  // Sliders con valor visible (p.ej. umbral de agrupación).
+  function initRangeOutputs() {
+    document.querySelectorAll("input[type=range][data-output]").forEach(function (r) {
+      var out = document.getElementById(r.getAttribute("data-output"));
+      if (!out) return;
+      function upd() { out.textContent = r.value; }
+      r.addEventListener("input", upd);
+      upd();
+    });
+  }
+
   // Ajustes de IA: mostrar solo la conexión del proveedor seleccionado.
   function initAiProvider() {
     document.querySelectorAll("[data-ai-provider]").forEach(function (sel) {
@@ -306,7 +317,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     // Cada init aislado: que un fallo no impida el resto.
     [initGroups, initSections, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
-     initResizers, initTypeControls, initPush, initPWA, initAiProvider].forEach(function (fn) {
+     initResizers, initTypeControls, initPush, initPWA, initAiProvider, initRangeOutputs].forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });
     var h = document.querySelector("[data-help-close]");

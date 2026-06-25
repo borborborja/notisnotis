@@ -404,3 +404,9 @@ body.resizing iframe { pointer-events: none; }
 .related-list a:hover { background: var(--hover); }
 .rel-source { color: var(--accent); font-weight: 600; font-size: .8rem; white-space: nowrap; }
 .rel-title { color: var(--item-text); font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Slider de umbral ---------- */
+.slider-row { display: flex; align-items: center; gap: .6rem; max-width: 28rem; }
+.slider-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+.slider-end { font-size: .78rem; color: var(--muted); }
+.slider-row output { font-weight: 600; min-width: 2.5em; text-align: right; }
