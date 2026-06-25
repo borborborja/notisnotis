@@ -6,6 +6,31 @@
   {% endif %}
   {% include "partials/biasbar.html" with bars=bars %}
 
+  {% if n_sources >= 2 %}
+  <div class="synthesis">
+    {% if synthesis_html %}
+      <div class="synthesis-head">
+        <h3><svg class="ic"><use href="#i-sparkles"/></svg> Noticia contrastada</h3>
+        <form method="post" action="{% url 'stories:synthesize' story.pk %}"
+              hx-post="{% url 'stories:synthesize' story.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">
+          {% csrf_token %}<button class="tbtn" type="submit"><svg class="ic"><use href="#i-refresh"/></svg> Regenerar</button>
+        </form>
+      </div>
+      <div class="synthesis-body">{{ synthesis_html|safe }}</div>
+      {% if story.synthesized_at %}<p class="item-meta">Redactada por IA a partir de {{ n_sources }} fuentes · {{ story.synthesized_at|date:"d M H:i" }}. Verifica los datos.</p>{% endif %}
+    {% else %}
+      <form method="post" action="{% url 'stories:synthesize' story.pk %}"
+            hx-post="{% url 'stories:synthesize' story.pk %}" hx-target="#reading-pane" hx-swap="innerHTML"
+            hx-disabled-elt="find button" hx-indicator="find .syn-load">
+        {% csrf_token %}
+        <button class="btn" type="submit"><svg class="ic"><use href="#i-sparkles"/></svg> Redactar noticia contrastada</button>
+        <span class="syn-load muted htmx-indicator">· redactando con IA…</span>
+        <p class="field-help muted">Genera una noticia única y neutral a partir de las {{ n_sources }} fuentes, con las ideas clave en negrita. Sin juicios de valor.</p>
+      </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
   {% if story.neutral_summary %}
     <h3>Resumen neutral</h3><p>{{ story.neutral_summary }}</p>
   {% endif %}

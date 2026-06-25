@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Count
@@ -132,13 +133,34 @@ def _story_context(request, pk):
     view = request.GET.get("view") or request.POST.get("view") or "bias"
     if view not in ("bias", "timeline"):
         view = "bias"
+    n_sources = len({sa.article.source_id for sa in sas_bias})
+    from .synthesis import render_markdown
     return {"story": story, "grouped": grouped, "bars": _bias_bars(story.bias_distribution),
-            "timeline": timeline, "view": view}
+            "timeline": timeline, "view": view, "n_sources": n_sources,
+            "synthesis_html": render_markdown(story.synthesis)}
 
 
 @login_required
 def story_reading(request, pk):
     """Panel de lectura de una historia (parcial htmx)."""
+    return render(request, "stories/_story_reading.html", _story_context(request, pk))
+
+
+@login_required
+@require_POST
+def story_synthesize(request, pk):
+    """Redacta (o regenera) la noticia contrastada de una historia multi-fuente (htmx)."""
+    story = get_object_or_404(Story, pk=pk, user=request.user)
+    n_sources = story.story_articles.values("article__source").distinct().count()
+    if n_sources < 2:
+        messages.error(request, "La noticia contrastada necesita al menos 2 fuentes.")
+        return render(request, "stories/_story_reading.html", _story_context(request, pk))
+    from .synthesis import generate_synthesis
+
+    try:
+        generate_synthesis(story)
+    except Exception as exc:  # noqa: BLE001
+        messages.error(request, f"No se pudo redactar: {exc}")
     return render(request, "stories/_story_reading.html", _story_context(request, pk))
 
 

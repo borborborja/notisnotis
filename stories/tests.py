@@ -170,3 +170,42 @@ class ClusteringSourceTests(TestCase):
         call_command("cluster_stories", "--user", "cl2")
         # Dos fuentes distintas, mismo suceso → una sola historia con 2 fuentes.
         self.assertEqual(Story.objects.filter(user=u).count(), 1)
+
+
+class SynthesisTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from feeds.models import Feed, Source
+        from articles.models import Article
+        from stories.models import Story, StoryArticle
+
+        self.U = get_user_model()
+        self.U.objects.create_user("sy", "", "pw-initial-1")
+        self.client.login(username="sy", password="pw-initial-1")
+        u = self.U.objects.get(username="sy")
+        s1 = Source.objects.create(name="A", domain="a.com", bias="left")
+        s2 = Source.objects.create(name="B", domain="b.com", bias="right")
+        f1 = Feed.objects.create(user=u, source=s1, url="http://a/rss")
+        f2 = Feed.objects.create(user=u, source=s2, url="http://b/rss")
+        a1 = Article.objects.create(feed=f1, source=s1, guid="a1", title="X según A", body="cuerpo A")
+        a2 = Article.objects.create(feed=f2, source=s2, guid="a2", title="X según B", body="cuerpo B")
+        self.story = Story.objects.create(user=u, headline="X")
+        StoryArticle.objects.create(story=self.story, article=a1, similarity=1.0)
+        StoryArticle.objects.create(story=self.story, article=a2, similarity=0.9)
+
+    def test_synthesize_multi_source(self):
+        from stories.models import Story
+
+        r = self.client.post(f"/story/{self.story.pk}/synthesize/", **self.H if hasattr(self, 'H') else {"HTTP_HOST": "localhost"})
+        self.assertEqual(r.status_code, 200)
+        self.story.refresh_from_db()
+        self.assertTrue(self.story.synthesis)            # el mock devuelve texto
+        self.assertIsNotNone(self.story.synthesized_at)
+
+    def test_render_markdown_escapes_and_formats(self):
+        from stories.synthesis import render_markdown
+
+        out = render_markdown("## Título\n\nIdea **clave** y <script>")
+        self.assertIn("<h3>Título</h3>", out)
+        self.assertIn("<strong>clave</strong>", out)
+        self.assertIn("&lt;script&gt;", out)            # HTML escapado (seguro)

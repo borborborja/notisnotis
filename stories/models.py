@@ -13,6 +13,9 @@ class Story(models.Model):
 
     neutral_summary = models.TextField(blank=True)
     perspectives = models.JSONField(default=dict, blank=True)  # {left, center, right}
+    # Noticia contrastada redactada por IA a partir de varias fuentes (markdown).
+    synthesis = models.TextField(blank=True)
+    synthesized_at = models.DateTimeField(null=True, blank=True)
     bias_distribution = models.JSONField(default=dict, blank=True)  # {bucket: count}
     is_blindspot = models.BooleanField(default=False)
     blindspot_side = models.CharField(max_length=8, blank=True)  # left|right

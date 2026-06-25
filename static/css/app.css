@@ -410,3 +410,12 @@ body.resizing iframe { pointer-events: none; }
 .slider-row input[type="range"] { flex: 1; accent-color: var(--accent); }
 .slider-end { font-size: .78rem; color: var(--muted); }
 .slider-row output { font-weight: 600; min-width: 2.5em; text-align: right; }
+
+/* ---------- Noticia contrastada (síntesis) ---------- */
+.synthesis { border: 1px solid var(--border); border-radius: 10px; padding: .8rem 1rem; margin: .8rem 0; background: var(--panel); }
+.synthesis-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.synthesis-head h3 { margin: 0; }
+.synthesis-body { line-height: 1.6; }
+.synthesis-body h2, .synthesis-body h3, .synthesis-body h4 { margin: .8rem 0 .3rem; }
+.synthesis-body p { margin: .5rem 0; }
+.synthesis-body strong { color: var(--text); }
