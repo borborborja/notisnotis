@@ -20,8 +20,21 @@
     <div class="form-row"><label>Repite la nueva</label><input type="password" name="new_password2" required></div>
     <button class="btn" type="submit">Cambiar contraseña</button>
   </form>
-  <p class="muted">2FA (TOTP) está planificado — ver <code>docs/PHASES.md</code> (D2).</p>
 </div>
+
+{% if 'twofa' in features %}
+<div class="card">
+  <h3>Verificación en dos pasos (2FA)</h3>
+  {% if twofa_enabled %}
+    <p class="muted">El 2FA está <strong>activado</strong>. Te pediremos un código al entrar.</p>
+    <a class="btn btn-ghost" href="{% url 'twofa_setup' %}"><svg class="ic"><use href="#i-settings"/></svg> Gestionar 2FA</a>
+  {% else %}
+    <p class="muted">Añade una capa extra de seguridad con una app de autenticación (TOTP)
+      y códigos de recuperación.</p>
+    <a class="btn" href="{% url 'twofa_setup' %}">Activar 2FA</a>
+  {% endif %}
+</div>
+{% endif %}
 
 <div class="card">
   <h3>Datos</h3>

@@ -1,0 +1,15 @@
+{% extends "base_plain.html" %}
+{% block title %}Verificación · NotisNotis{% endblock %}
+{% block content %}
+<h2>Verificación en dos pasos</h2>
+<p class="item-meta">Introduce el código de tu app de autenticación. Si no tienes acceso,
+  puedes usar uno de tus códigos de recuperación.</p>
+<form method="post">{% csrf_token %}
+  <div class="form-row">
+    <label>Código</label>
+    <input type="text" name="token" inputmode="numeric" autocomplete="one-time-code" required autofocus>
+  </div>
+  <button class="btn" type="submit">Verificar</button>
+</form>
+<p class="item-meta"><a href="{% url 'logout' %}">Salir</a></p>
+{% endblock %}

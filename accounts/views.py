@@ -143,6 +143,10 @@ def settings_view(request, tab="general"):
         ctx["sync"] = SyncCredential.get_or_create_for(request.user)
         ctx["fever_url"] = request.build_absolute_uri("/api/fever/")
         ctx["greader_url"] = request.build_absolute_uri("/api/greader/")
+    elif tab == "account":
+        from django_otp.plugins.otp_totp.models import TOTPDevice
+
+        ctx["twofa_enabled"] = TOTPDevice.objects.filter(user=request.user, confirmed=True).exists()
     return render(request, f"settings/{tab}.html", ctx)
 
 

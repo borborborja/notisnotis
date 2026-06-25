@@ -1,0 +1,17 @@
+{% extends "base_plain.html" %}
+{% block title %}2FA · NotisNotis{% endblock %}
+{% block content %}
+<h2>Verificación en dos pasos</h2>
+<p class="item-meta">El 2FA está <strong>activado</strong> en tu cuenta.</p>
+
+<form method="post" action="{% url 'twofa_recovery' %}">{% csrf_token %}
+  <button class="btn btn-ghost" type="submit">Regenerar códigos de recuperación</button>
+</form>
+
+<form method="post" action="{% url 'twofa_disable' %}" style="margin-top:1rem"
+      onsubmit="return confirm('¿Desactivar el 2FA? Tu cuenta quedará protegida solo por contraseña.')">{% csrf_token %}
+  <button class="btn" style="background:var(--right);border-color:var(--right)" type="submit">Desactivar 2FA</button>
+</form>
+
+<p class="item-meta" style="margin-top:1rem"><a href="{% url 'account_settings_tab' 'account' %}">Volver a Ajustes</a></p>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base_plain.html" %}
+{% block title %}Activar 2FA · NotisNotis{% endblock %}
+{% block content %}
+<h2>Activar verificación en dos pasos</h2>
+<p class="item-meta">Escanea el código con tu app de autenticación (Google Authenticator,
+  Aegis, 1Password…) y escribe el código de 6 dígitos para confirmar.</p>
+
+<div class="qr">{{ qr_svg|safe }}</div>
+
+<p class="item-meta">¿No puedes escanear? Introduce esta clave manualmente:
+  <code>{{ secret }}</code></p>
+
+<form method="post" action="{% url 'twofa_setup' %}">{% csrf_token %}
+  <div class="form-row">
+    <label>Código de verificación</label>
+    <input type="text" name="token" inputmode="numeric" autocomplete="one-time-code" required autofocus>
+  </div>
+  <button class="btn" type="submit">Confirmar y activar</button>
+  <a class="btn btn-ghost" href="{% url 'account_settings_tab' 'account' %}">Cancelar</a>
+</form>
+{% endblock %}

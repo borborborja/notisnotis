@@ -1,0 +1,14 @@
+{% extends "base_plain.html" %}
+{% block title %}Códigos de recuperación · NotisNotis{% endblock %}
+{% block content %}
+{% if fresh %}<h2>2FA activado</h2>{% else %}<h2>Nuevos códigos de recuperación</h2>{% endif %}
+<p class="item-meta"><strong>Guarda estos códigos en un lugar seguro.</strong> Cada uno sirve
+  una sola vez para entrar si pierdes el acceso a tu app de autenticación.
+  No volverán a mostrarse.</p>
+
+<ul class="recovery-codes">
+  {% for code in codes %}<li><code>{{ code }}</code></li>{% endfor %}
+</ul>
+
+<a class="btn" href="{% url 'account_settings_tab' 'account' %}">He guardado mis códigos</a>
+{% endblock %}

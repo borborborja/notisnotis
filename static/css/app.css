@@ -356,3 +356,10 @@ body.resizing iframe { pointer-events: none; }
 .tl-source { color: var(--muted); font-size: .85rem; }
 .tl-ext { color: var(--muted); }
 .tl-ext:hover { color: var(--accent); }
+
+/* 2FA: QR de alta y lista de códigos de recuperación */
+.qr { max-width: 220px; margin: 1rem 0; }
+.qr svg { width: 100%; height: auto; background: #fff; padding: .5rem; border-radius: 8px; }
+.recovery-codes { list-style: none; padding: 0; columns: 2; gap: 1rem; margin: 1rem 0; }
+.recovery-codes li { margin: .25rem 0; }
+.recovery-codes code { font-size: 1.05rem; letter-spacing: .05em; }
