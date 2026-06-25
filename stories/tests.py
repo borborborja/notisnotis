@@ -136,7 +136,7 @@ class NNBackendTests(TestCase):
 
 
 class ClusteringSourceTests(TestCase):
-    def test_same_source_not_clustered(self):
+    def test_same_topic_clusters_even_same_source(self):
         from django.contrib.auth import get_user_model
         from feeds.models import Feed, Source
         from articles.models import Article
@@ -146,12 +146,12 @@ class ClusteringSourceTests(TestCase):
         u = get_user_model().objects.create_user("cl", "", "pw")
         src = Source.objects.create(name="Blog", domain="blog.com")
         feed = Feed.objects.create(user=u, source=src, url="http://blog/rss")
-        # Dos entradas de la MISMA fuente con embeddings idénticos (títulos casi iguales).
-        Article.objects.create(feed=feed, source=src, guid="c1", title="Cap 73", embedding=[1.0, 0.0])
-        Article.objects.create(feed=feed, source=src, guid="c2", title="Cap 75", embedding=[1.0, 0.0])
+        # Mismo tema (embeddings idénticos), misma fuente: deben ir en UNA historia
+        # (timeline de evolución del tema, aunque sea el mismo medio).
+        Article.objects.create(feed=feed, source=src, guid="c1", title="SpaceX posible salida", embedding=[1.0, 0.0])
+        Article.objects.create(feed=feed, source=src, guid="c2", title="SpaceX sale a bolsa", embedding=[1.0, 0.0])
         call_command("cluster_stories", "--user", "cl")
-        # No deben acabar en la misma historia (cada fuente aporta una sola perspectiva).
-        self.assertEqual(Story.objects.filter(user=u).count(), 2)
+        self.assertEqual(Story.objects.filter(user=u).count(), 1)
 
     def test_different_sources_cluster(self):
         from django.contrib.auth import get_user_model

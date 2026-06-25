@@ -49,26 +49,19 @@ class Command(BaseCommand):
         candidates = list(
             Story.objects.filter(user=user, last_updated__gte=since).exclude(centroid__isnull=True)
         )
-        # Fuentes ya presentes en cada historia: una historia agrupa fuentes DISTINTAS
-        # (mismo suceso visto por varios medios), no entradas repetidas de un mismo blog.
-        story_sources = {
-            s.id: set(s.story_articles.values_list("article__source_id", flat=True))
-            for s in candidates
-        }
 
+        # Una historia agrupa por TEMA (mismo suceso a lo largo del tiempo), permitiendo
+        # varios artículos de la misma fuente: así el timeline muestra la evolución completa.
         assigned, new_stories = 0, 0
         for article in unassigned:
             best_story, best_sim = None, 0.0
             for story in candidates:
-                if article.source_id in story_sources.get(story.id, ()):
-                    continue  # esa fuente ya está en la historia → no aporta otra perspectiva
                 sim = cosine(article.embedding, story.centroid)
                 if sim > best_sim:
                     best_story, best_sim = story, sim
 
             if best_story is not None and best_sim >= threshold:
                 StoryArticle.objects.create(story=best_story, article=article, similarity=best_sim)
-                story_sources[best_story.id].add(article.source_id)
                 self._recompute_centroid(best_story)
                 best_story.dirty = True
                 best_story.save(update_fields=["dirty", "centroid", "last_updated"])
@@ -78,7 +71,6 @@ class Command(BaseCommand):
                 )
                 StoryArticle.objects.create(story=story, article=article, similarity=1.0)
                 candidates.append(story)
-                story_sources[story.id] = {article.source_id}
                 new_stories += 1
             assigned += 1
         return assigned, new_stories
