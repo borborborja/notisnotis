@@ -12,8 +12,9 @@ def sidebar(request):
         return {}
 
     # En peticiones htmx (navegación hx-boost, parciales) el sidebar persistente NO se
-    # re-renderiza, así que evitamos sus ~12 queries por completo.
-    if request.headers.get("HX-Request"):
+    # re-renderiza, así que evitamos sus ~12 queries por completo. Igual en Ajustes, que usa
+    # su propio shell (settings/base.html) sin sidebar: nos ahorramos los conteos caros.
+    if request.headers.get("HX-Request") or getattr(request, "path", "").startswith("/accounts/settings"):
         return {}
 
     feeds = (

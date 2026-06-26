@@ -93,6 +93,9 @@ class Article(models.Model):
         indexes = [
             models.Index(fields=["is_read"]),
             models.Index(fields=["is_saved"]),
+            # Conteos del sidebar (no-leídos/guardados por feed y por usuario): O(log n).
+            models.Index(fields=["feed", "is_read"]),
+            models.Index(fields=["feed", "is_saved"]),
             # El índice ANN de pgvector existe SOLO en Postgres (lo crea articles/0007 con DDL
             # guardado por vendor). NO se declara aquí en Meta: si estuviera, cualquier cambio
             # de campo rehace la tabla en SQLite e intenta recrearlo (SQL incompatible).

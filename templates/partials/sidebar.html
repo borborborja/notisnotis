@@ -131,7 +131,7 @@
 
 <div class="sb-footer">
   <a href="{% url 'feeds:feed_list' %}" class="sb-item"><span><svg class="ic"><use href="#i-rss"/></svg> Feeds</span></a>
-  <a href="{% url 'account_settings' %}" class="sb-item"><span><svg class="ic"><use href="#i-settings"/></svg> Ajustes</span></a>
+  <a href="{% url 'account_settings' %}" class="sb-item" hx-boost="false"><span><svg class="ic"><use href="#i-settings"/></svg> Ajustes</span></a>
   <button type="button" class="sb-item linkbtn" data-theme-toggle><span><svg class="ic"><use href="#i-moon"/></svg> Tema</span></button>
   <form method="post" action="{% url 'logout' %}" hx-boost="false">{% csrf_token %}
     <button type="submit" class="sb-item linkbtn"><span><svg class="ic"><use href="#i-logout"/></svg> Salir ({{ user.username }})</span></button>

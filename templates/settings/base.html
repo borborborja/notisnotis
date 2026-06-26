@@ -13,7 +13,7 @@
 <body class="settings" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   {% include "partials/icons.html" %}
   <header class="set-top">
-    <a class="back" href="{% url 'articles:list' %}"><svg class="ic"><use href="#i-arrow-left"/></svg> Volver</a>
+    <a class="back" href="{% url 'articles:list' %}" hx-boost="false"><svg class="ic"><use href="#i-arrow-left"/></svg> Volver</a>
     <span class="brand"><svg class="ic"><use href="#i-settings"/></svg> Ajustes</span>
   </header>
   <div class="set-shell">

@@ -80,12 +80,12 @@ body.app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; height: 1
 .reader.single { grid-template-columns: 1fr; }
 .list-col { border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: .5rem;
-  padding: .5rem .8rem; border-bottom: 1px solid var(--border); background: var(--panel); }
+  padding: .5rem .8rem; border-bottom: 1px solid var(--border); background: var(--panel); flex-wrap: wrap; }
 .toolbar-title { font-size: 1rem; font-weight: 700; margin: 0; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; }
 .toolbar-count { font-size: .72rem; font-weight: 600; color: var(--muted);
   background: var(--border-2); border-radius: 999px; padding: .05rem .45rem; vertical-align: middle; }
-.toolbar-actions { display: flex; align-items: center; gap: .35rem; }
+.toolbar-actions { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
 .tbtn { display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .55rem; font-size: .8rem;
   border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--item-text); cursor: pointer; }
 .tbtn:hover { background: var(--hover); }
@@ -112,7 +112,7 @@ body.app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; height: 1
 .item-meta { color: var(--muted); font-size: .78rem; }
 .item-excerpt { color: var(--muted); font-size: .85rem; margin: .25rem 0; }
 .item-top { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
-.item-flags { display: flex; gap: .4rem; margin-top: .2rem; }
+.item-flags { display: flex; gap: .4rem; margin-top: .2rem; flex-wrap: wrap; }
 .mini-badge { font-size: .72rem; color: var(--muted); }
 
 /* Títulos (denso) */
@@ -574,10 +574,23 @@ body.resizing iframe { pointer-events: none; }
 .np-time { font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .np-extra { display: flex; align-items: center; gap: .2rem; }
 .np-speed { font-weight: 600; font-size: .85rem; min-width: 2.4rem; }
-@media (max-width: 720px) {
+@media (max-width: 760px) {
   .np-meta { width: auto; flex: 1 1 auto; }
   .np-progress { order: 5; flex-basis: 100%; }
   .nn-player { flex-wrap: wrap; left: 0; }
+  /* Evita que el reproductor fijo tape el último contenido cuando suena algo. */
+  body.player-playing .main, body.player-paused .main { padding-bottom: 5.5rem; }
+}
+
+/* Pantallas pequeñas: que las barras y rejillas no se desborden. */
+@media (max-width: 520px) {
+  .toolbar-title { flex-basis: 100%; }
+  .toolbar-actions { flex-basis: 100%; justify-content: flex-start; }
+  .tbtn { padding: .25rem .45rem; font-size: .75rem; }
+  .pod-nav { gap: .25rem; }
+  .pod-nav .btn { padding: .3rem .5rem; font-size: .78rem; }
+  .pod-grid { grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: .7rem; }
+  .pod-head h1 { font-size: 1.2rem; }
 }
 
 /* Gestor de feeds: filtro y buscador de podcasts */
