@@ -6,7 +6,15 @@
 <p class="muted"><a href="{% url 'podcasts:home' %}">← Podcasts</a></p>
 <div class="pod-head">
   <h1><svg class="ic"><use href="#i-queue"/></svg> Up Next</h1>
-  {% if items %}<button class="btn" id="play-queue"><svg class="ic"><use href="#i-play"/></svg> Reproducir cola</button>{% endif %}
+  {% if items %}
+  <div class="pod-nav">
+    <button class="btn" id="play-queue"><svg class="ic"><use href="#i-play"/></svg> Reproducir cola</button>
+    <form method="post" action="{% url 'podcasts:queue_clear' %}" class="inline"
+          onsubmit="return confirm('¿Vaciar la cola?')">{% csrf_token %}
+      <button class="btn btn-ghost"><svg class="ic"><use href="#i-x"/></svg> Vaciar cola</button>
+    </form>
+  </div>
+  {% endif %}
 </div>
 <div class="card" id="queue-list" data-queue-reorder>
   {% for qi in items %}

@@ -20,6 +20,12 @@
         data-ep-speed="{{ feed.playback_speed }}"><svg class="ic"><use href="#i-play"/></svg> Reproducir último</button>
       {% endwith %}
     {% endif %}
+    {% if n_unplayed %}
+      <form method="post" action="{% url 'podcasts:mark_feed_played' feed.pk %}" class="inline"
+            onsubmit="return confirm('¿Marcar los {{ n_unplayed }} episodios sin escuchar como escuchados?')">{% csrf_token %}
+        <button class="btn btn-ghost"><svg class="ic"><use href="#i-check"/></svg> Marcar todo escuchado</button>
+      </form>
+    {% endif %}
   </div>
 </div>
 <div class="card">

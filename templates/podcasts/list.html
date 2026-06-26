@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page">
 <p class="muted"><a href="{% url 'podcasts:home' %}">← Podcasts</a></p>
-<h1>{{ title }}</h1>
+<h1>{{ title }}{% if n %} <span class="muted">({{ n }})</span>{% endif %}</h1>
 <div class="card">
   {% for ep in episodes %}
     {% include "podcasts/_episode_row.html" with ep=ep queued=queued %}

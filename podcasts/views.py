@@ -70,8 +70,9 @@ def filtered(request, kind):
         qs = qs.filter(is_read=False).order_by("-published_at")
         title = "Nuevos episodios"
     queued = set(QueueItem.objects.filter(user=request.user).values_list("article_id", flat=True))
+    episodes = list(qs[:200])
     return render(request, "podcasts/list.html", {
-        "title": title, "episodes": qs[:200], "queued": queued, "active": "podcasts",
+        "title": title, "episodes": episodes, "n": qs.count(), "queued": queued, "active": "podcasts",
     })
 
 
@@ -92,7 +93,31 @@ def up_next(request):
     })
 
 
+# ---------------- Acciones por podcast ----------------
+
+@login_required
+@module_required("podcasts")
+@require_POST
+def mark_feed_played(request, pk):
+    """Marca todos los episodios de un podcast como escuchados."""
+    from django.contrib import messages
+    from django.utils import timezone
+
+    feed = get_object_or_404(Feed, pk=pk, user=request.user)
+    n = feed.articles.filter(is_read=False).update(is_read=True, read_at=timezone.now())
+    messages.success(request, f"{n} episodio{'s' if n != 1 else ''} marcados como escuchados.")
+    return redirect("podcasts:detail", pk=pk)
+
+
 # ---------------- Cola ----------------
+
+@login_required
+@module_required("podcasts")
+@require_POST
+def queue_clear(request):
+    QueueItem.objects.filter(user=request.user).delete()
+    return redirect("podcasts:up_next")
+
 
 @login_required
 @module_required("podcasts")

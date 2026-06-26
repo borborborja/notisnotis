@@ -168,3 +168,26 @@ class DetailCountsAndQueueBadgeTests(TestCase):
         QueueItem.objects.create(user=self.u, article=ep, position=0)
         r = self.client.get("/podcasts/")
         self.assertEqual(r.context["sidebar_queue_n"], 1)
+
+
+class FeedActionsTests(TestCase):
+    def setUp(self):
+        self.u = get_user_model().objects.create_user("fa", "", "pw-fa-12345")
+        self.client.login(username="fa", password="pw-fa-12345")
+        src = Source.objects.create(name="FA", domain="fa.com")
+        self.feed = Feed.objects.create(user=self.u, source=src, url="http://fa/rss", kind="podcast")
+        for i in range(3):
+            Article.objects.create(feed=self.feed, source=src, guid=f"f{i}", title=f"E{i}",
+                                   enclosure_url=f"http://fa/{i}.mp3", enclosure_type="audio/mpeg")
+
+    def test_mark_feed_played(self):
+        r = self.client.post(f"/podcasts/{self.feed.pk}/mark-played/")
+        self.assertEqual(r.status_code, 302)
+        self.assertEqual(self.feed.articles.filter(is_read=False).count(), 0)
+
+    def test_queue_clear(self):
+        from podcasts.models import QueueItem
+        for a in self.feed.articles.all():
+            QueueItem.objects.create(user=self.u, article=a, position=0)
+        self.client.post("/podcasts/queue/clear/")
+        self.assertEqual(QueueItem.objects.filter(user=self.u).count(), 0)

@@ -176,12 +176,21 @@
       els.toggle.querySelector("use").setAttribute("href", playing ? "#i-pause" : "#i-play");
     }
 
+    function syncRowIcon() {
+      document.querySelectorAll(".ep-row.ep-playing [data-ep-play] use").forEach(function (u) {
+        u.setAttribute("href", audio.paused ? "#i-play" : "#i-pause");
+      });
+    }
     function markNowPlaying(id) {
+      document.querySelectorAll(".ep-row [data-ep-play] use").forEach(function (u) {
+        u.setAttribute("href", "#i-play");  // restablecer iconos de filas previas
+      });
       document.querySelectorAll(".ep-playing").forEach(function (el) { el.classList.remove("ep-playing"); });
       if (!id) return;
       document.querySelectorAll('.ep-row [data-ep-id="' + id + '"]').forEach(function (b) {
         var row = b.closest(".ep-row"); if (row) row.classList.add("ep-playing");
       });
+      syncRowIcon();
     }
 
     function load(ep, autoplay) {
@@ -278,11 +287,11 @@
     });
 
     audio.addEventListener("play", function () {
-      setPlayIcon(true);
+      setPlayIcon(true); syncRowIcon();
       document.body.classList.add("player-playing"); document.body.classList.remove("player-paused");
     });
     audio.addEventListener("pause", function () {
-      setPlayIcon(false); saveProgress(false);
+      setPlayIcon(false); saveProgress(false); syncRowIcon();
       document.body.classList.add("player-paused"); document.body.classList.remove("player-playing");
     });
     audio.addEventListener("timeupdate", function () {
@@ -299,6 +308,13 @@
     });
     audio.addEventListener("error", function () {
       if (cur && audio.src) els.feed.textContent = "No se pudo reproducir el audio.";
+    });
+    // Buffering: pulso en el botón de play mientras carga.
+    ["waiting", "stalled", "seeking"].forEach(function (ev) {
+      audio.addEventListener(ev, function () { els.toggle.classList.add("loading"); });
+    });
+    ["playing", "canplay", "seeked", "pause"].forEach(function (ev) {
+      audio.addEventListener(ev, function () { els.toggle.classList.remove("loading"); });
     });
     window.addEventListener("pagehide", function () { saveProgress(true); });
     document.addEventListener("visibilitychange", function () {
