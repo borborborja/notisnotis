@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load podcast_extras %}
+{% block title %}{{ title }} · Podcasts{% endblock %}
+{% block content %}
+<p class="muted"><a href="{% url 'podcasts:home' %}">← Podcasts</a></p>
+<h1>{{ title }}</h1>
+<div class="card">
+  {% for ep in episodes %}
+    {% include "podcasts/_episode_row.html" with ep=ep queued=queued %}
+  {% empty %}
+    <p class="muted">Nada por aquí.</p>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -302,6 +302,16 @@ def feed_edit(request, pk):
             feed.fetch_interval_minutes = max(5, int(request.POST.get("interval", feed.fetch_interval_minutes)))
         except (TypeError, ValueError):
             pass
+        # Ajustes de podcast (velocidad y skip intro/outro).
+        try:
+            feed.playback_speed = min(3.0, max(0.5, float(request.POST.get("playback_speed", feed.playback_speed))))
+        except (TypeError, ValueError):
+            pass
+        for f in ("skip_intro", "skip_outro"):
+            try:
+                setattr(feed, f, max(0, int(request.POST.get(f, getattr(feed, f)))))
+            except (TypeError, ValueError):
+                pass
         feed.save()
         messages.success(request, "Feed actualizado.")
         return redirect("feeds:feed_list")

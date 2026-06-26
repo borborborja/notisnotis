@@ -1,16 +1,123 @@
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Q
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from articles.models import Article
+from feeds.models import Feed
 from features.decorators import module_required
+
+from .models import QueueItem
 
 
 def _episode(request, pk):
     return get_object_or_404(Article.objects.select_related("feed", "source"),
                              pk=pk, feed__user=request.user)
+
+
+def _episodes(request):
+    """Episodios de podcasts del usuario (audio)."""
+    return (Article.objects.filter(feed__user=request.user, feed__kind__in=["podcast", "youtube"])
+            .select_related("feed", "source"))
+
+
+# ---------------- Vistas (Pocket Casts) ----------------
+
+@login_required
+@module_required("podcasts")
+def home(request):
+    """Grid de podcasts suscritos + accesos a cola/en curso/favoritos."""
+    feeds = (Feed.objects.filter(user=request.user, kind__in=["podcast", "youtube"])
+             .select_related("source")
+             .annotate(unplayed=Count("articles", filter=Q(articles__is_read=False)))
+             .order_by("title"))
+    queue_n = QueueItem.objects.filter(user=request.user).count()
+    in_progress_n = _episodes(request).filter(play_position__gt=0, is_read=False).count()
+    return render(request, "podcasts/home.html", {
+        "feeds": feeds, "queue_n": queue_n, "in_progress_n": in_progress_n,
+        "active": "podcasts",
+    })
+
+
+@login_required
+@module_required("podcasts")
+def podcast_detail(request, pk):
+    feed = get_object_or_404(Feed.objects.select_related("source"), pk=pk, user=request.user)
+    episodes = feed.articles.select_related("feed", "source").order_by("-published_at")[:200]
+    queued = set(QueueItem.objects.filter(user=request.user).values_list("article_id", flat=True))
+    return render(request, "podcasts/detail.html", {
+        "feed": feed, "episodes": episodes, "queued": queued, "active": "podcasts",
+    })
+
+
+@login_required
+@module_required("podcasts")
+def filtered(request, kind):
+    """Listas: en curso / nuevos / favoritos."""
+    qs = _episodes(request)
+    if kind == "in_progress":
+        qs = qs.filter(play_position__gt=0, is_read=False).order_by("-play_updated_at")
+        title = "En curso"
+    elif kind == "favorites":
+        qs = qs.filter(is_saved=True).order_by("-published_at")
+        title = "Favoritos"
+    else:
+        qs = qs.filter(is_read=False).order_by("-published_at")
+        title = "Nuevos episodios"
+    queued = set(QueueItem.objects.filter(user=request.user).values_list("article_id", flat=True))
+    return render(request, "podcasts/list.html", {
+        "title": title, "episodes": qs[:200], "queued": queued, "active": "podcasts",
+    })
+
+
+@login_required
+@module_required("podcasts")
+def up_next(request):
+    items = (QueueItem.objects.filter(user=request.user)
+             .select_related("article", "article__feed", "article__source"))
+    return render(request, "podcasts/up_next.html", {
+        "items": items, "active": "podcasts",
+    })
+
+
+# ---------------- Cola ----------------
+
+@login_required
+@module_required("podcasts")
+@require_POST
+def queue_add(request, pk):
+    ep = _episode(request, pk)
+    last = QueueItem.objects.filter(user=request.user).order_by("-position").first()
+    pos = (last.position + 1) if last else 0
+    QueueItem.objects.get_or_create(user=request.user, article=ep, defaults={"position": pos})
+    return JsonResponse({"ok": True, "queued": True})
+
+
+@login_required
+@module_required("podcasts")
+@require_POST
+def queue_remove(request, pk):
+    QueueItem.objects.filter(user=request.user, article_id=pk).delete()
+    if request.headers.get("X-Requested-With") == "fetch":
+        return JsonResponse({"ok": True, "queued": False})
+    return redirect("podcasts:up_next")
+
+
+@login_required
+@module_required("podcasts")
+@require_POST
+def queue_reorder(request):
+    order = request.POST.getlist("order[]") or request.POST.getlist("order")
+    items = {str(qi.article_id): qi
+             for qi in QueueItem.objects.filter(user=request.user)}
+    for i, aid in enumerate(order):
+        qi = items.get(str(aid))
+        if qi and qi.position != i:
+            qi.position = i
+            qi.save(update_fields=["position"])
+    return JsonResponse({"ok": True})
 
 
 @login_required

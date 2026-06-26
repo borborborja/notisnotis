@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Podcasts · NotisNotis{% endblock %}
+{% block content %}
+<div class="pod-head">
+  <h1><svg class="ic"><use href="#i-headphones"/></svg> Podcasts</h1>
+  <nav class="pod-nav">
+    <a class="btn btn-ghost" href="{% url 'podcasts:up_next' %}"><svg class="ic"><use href="#i-queue"/></svg> Up Next{% if queue_n %} ({{ queue_n }}){% endif %}</a>
+    <a class="btn btn-ghost" href="{% url 'podcasts:filtered' 'in_progress' %}"><svg class="ic"><use href="#i-clock"/></svg> En curso{% if in_progress_n %} ({{ in_progress_n }}){% endif %}</a>
+    <a class="btn btn-ghost" href="{% url 'podcasts:filtered' 'new' %}"><svg class="ic"><use href="#i-sparkles"/></svg> Nuevos</a>
+    <a class="btn btn-ghost" href="{% url 'podcasts:filtered' 'favorites' %}"><svg class="ic"><use href="#i-star"/></svg> Favoritos</a>
+    <a class="btn btn-ghost" href="{% url 'feeds:feed_list' %}?tab=podcasts"><svg class="ic"><use href="#i-settings"/></svg> Gestionar</a>
+  </nav>
+</div>
+
+{% if feeds %}
+<div class="pod-grid">
+  {% for f in feeds %}
+    <a class="pod-card" href="{% url 'podcasts:detail' f.pk %}" title="{{ f.title|default:f.source.name }}">
+      <div class="pod-cover">
+        {% if f.image_url %}<img src="{{ f.image_url }}" alt="" loading="lazy">
+        {% else %}<div class="pod-cover-ph"><svg class="ic"><use href="#i-mic"/></svg></div>{% endif %}
+        {% if f.unplayed %}<span class="pod-badge">{{ f.unplayed }}</span>{% endif %}
+      </div>
+      <div class="pod-name">{{ f.title|default:f.source.name }}</div>
+    </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><p class="muted">Aún no tienes podcasts. Añádelos o búscalos desde
+  <a href="{% url 'feeds:feed_list' %}?tab=podcasts">Gestionar podcasts</a>.</p></div>
+{% endif %}
+{% endblock %}

@@ -44,3 +44,28 @@ class PlayerEndpointTests(TestCase):
         self.u.refresh_from_db()
         r = self.client.post(f"/podcasts/ep/{self.ep.pk}/played/")
         self.assertEqual(r.status_code, 302)  # módulo off → redirige
+
+
+class PodcastUITests(TestCase):
+    def setUp(self):
+        self.u = get_user_model().objects.create_user("pu", "", "pw-pod-67890")
+        self.client.login(username="pu", password="pw-pod-67890")
+        src = Source.objects.create(name="P2", domain="p2.com")
+        self.feed = Feed.objects.create(user=self.u, source=src, url="http://p2/rss", kind="podcast",
+                                        title="Mi Pod", image_url="http://p2/cover.jpg")
+        self.ep = Article.objects.create(feed=self.feed, source=src, guid="x1", title="Ep X",
+                                         enclosure_url="http://p2/x1.mp3", enclosure_type="audio/mpeg",
+                                         duration=1800, play_position=300)
+
+    def test_home_and_detail_render(self):
+        self.assertEqual(self.client.get("/podcasts/").status_code, 200)
+        self.assertContains(self.client.get(f"/podcasts/{self.feed.pk}/"), "Ep X")
+        self.assertEqual(self.client.get("/podcasts/list/in_progress/").status_code, 200)
+
+    def test_queue_add_and_up_next(self):
+        from podcasts.models import QueueItem
+        self.client.post(f"/podcasts/ep/{self.ep.pk}/queue/")
+        self.assertEqual(QueueItem.objects.filter(user=self.u).count(), 1)
+        self.assertContains(self.client.get("/podcasts/up-next/"), "Ep X")
+        self.client.post(f"/podcasts/ep/{self.ep.pk}/unqueue/")
+        self.assertEqual(QueueItem.objects.filter(user=self.u).count(), 0)

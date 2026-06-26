@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load podcast_extras %}
+{% block title %}{{ feed.title|default:feed.source.name }} · Podcasts{% endblock %}
+{% block content %}
+<p class="muted"><a href="{% url 'podcasts:home' %}">← Podcasts</a></p>
+<div class="pod-detail-head">
+  {% if feed.image_url %}<img class="pod-detail-cover" src="{{ feed.image_url }}" alt="">{% endif %}
+  <div>
+    <h1>{{ feed.title|default:feed.source.name }}</h1>
+    {% if feed.description %}<p class="muted pod-detail-desc">{{ feed.description }}</p>{% endif %}
+    <p class="muted">Velocidad {{ feed.playback_speed }}× ·
+      <a href="{% url 'feeds:feed_edit' feed.pk %}">Ajustes</a></p>
+  </div>
+</div>
+<div class="card">
+  {% for ep in episodes %}
+    {% include "podcasts/_episode_row.html" with ep=ep queued=queued %}
+  {% empty %}
+    <p class="muted">Sin episodios todavía.</p>
+  {% endfor %}
+</div>
+{% endblock %}

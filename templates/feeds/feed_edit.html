@@ -21,8 +21,22 @@
       <select name="kind">
         {% for value, label in feed.KIND_CHOICES %}<option value="{{ value }}" {% if feed.kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
-      <p class="field-help muted">Podcast/YouTube aparecen en “Fuentes audio” y pueden transcribirse.</p>
+      <p class="field-help muted">Podcast/YouTube aparecen en “Podcasts” y pueden transcribirse.</p>
     </div>
+    {% if feed.kind == 'podcast' or feed.kind == 'youtube' %}
+    <div class="form-row">
+      <label>Velocidad de reproducción</label>
+      <input type="number" name="playback_speed" min="0.5" max="3" step="0.1" value="{{ feed.playback_speed }}">
+    </div>
+    <div class="form-row">
+      <label>Saltar intro (segundos)</label>
+      <input type="number" name="skip_intro" min="0" value="{{ feed.skip_intro }}">
+    </div>
+    <div class="form-row">
+      <label>Saltar outro (segundos)</label>
+      <input type="number" name="skip_outro" min="0" value="{{ feed.skip_outro }}">
+    </div>
+    {% endif %}
     <div class="form-row">
       <label><input type="checkbox" name="enabled" value="1" {% if feed.enabled %}checked{% endif %}> Activo</label>
     </div>

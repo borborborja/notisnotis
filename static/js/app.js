@@ -211,6 +211,20 @@
       audio.playbackRate = next;
       els.speed.textContent = (next % 1 ? next : next + "") + "×";
     });
+    // Sleep timer: off → 5 → 10 → 15 → 30 → 45 → 60 min.
+    var SLEEPS = [0, 5, 10, 15, 30, 45, 60], sleepIdx = 0, sleepTO = null;
+    var sleepBtn = document.getElementById("np-sleep"), sleepLbl = document.getElementById("np-sleep-lbl");
+    if (sleepBtn) sleepBtn.addEventListener("click", function () {
+      sleepIdx = (sleepIdx + 1) % SLEEPS.length;
+      var mins = SLEEPS[sleepIdx];
+      if (sleepTO) { clearTimeout(sleepTO); sleepTO = null; }
+      sleepLbl.textContent = mins ? mins + "m" : "";
+      sleepBtn.classList.toggle("active", !!mins);
+      if (mins) sleepTO = setTimeout(function () {
+        audio.pause(); sleepIdx = 0; sleepLbl.textContent = ""; sleepBtn.classList.remove("active");
+      }, mins * 60000);
+    });
+
     els.seek.addEventListener("input", function () { seeking = true; });
     els.seek.addEventListener("change", function () {
       if (audio.duration) audio.currentTime = (els.seek.value / 1000) * audio.duration;
@@ -235,6 +249,73 @@
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") saveProgress(true);
     });
+  }
+
+  // ---- Listas de podcasts: cola, escuchado, reproducir-cola, reordenar ----
+  function epData(el) {
+    return {
+      id: el.getAttribute("data-ep-id"), src: el.getAttribute("data-ep-src"),
+      title: el.getAttribute("data-ep-title"), feed: el.getAttribute("data-ep-feed"),
+      art: el.getAttribute("data-ep-art"), pos: el.getAttribute("data-ep-pos"),
+      speed: el.getAttribute("data-ep-speed"),
+    };
+  }
+  function initPodcasts() {
+    document.addEventListener("click", function (e) {
+      var q = e.target.closest("[data-queue-toggle]");
+      if (q) {
+        e.preventDefault();
+        var on = q.getAttribute("data-queued") === "1";
+        var pk = q.getAttribute("data-ep");
+        post("/podcasts/ep/" + pk + "/" + (on ? "unqueue" : "queue") + "/");
+        q.setAttribute("data-queued", on ? "0" : "1");
+        q.classList.toggle("active", !on);
+        return;
+      }
+      var p = e.target.closest("[data-played-toggle]");
+      if (p) {
+        e.preventDefault();
+        post("/podcasts/ep/" + p.getAttribute("data-ep") + "/played/");
+        var row = p.closest(".ep-row");
+        if (row) row.classList.toggle("ep-played");
+        return;
+      }
+    });
+
+    // Reproducir cola con auto-avance.
+    var playQueue = document.getElementById("play-queue");
+    var list = document.querySelector("[data-queue-reorder]");
+    if (playQueue && list) {
+      playQueue.addEventListener("click", function () {
+        window.nnQueue = Array.prototype.map.call(list.querySelectorAll(".ep-row[data-ep-id]"), epData);
+        if (window.nnQueue.length && window.nnPlay) window.nnPlay(window.nnQueue.shift());
+      });
+    }
+    window.nnQueueNext = function () {
+      if (window.nnQueue && window.nnQueue.length && window.nnPlay) window.nnPlay(window.nnQueue.shift());
+    };
+
+    // Reordenar la cola por drag & drop.
+    if (list) {
+      var dragged = null;
+      list.addEventListener("dragstart", function (e) { dragged = e.target.closest(".ep-row"); });
+      list.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        var over = e.target.closest(".ep-row");
+        if (over && dragged && over !== dragged) {
+          var rect = over.getBoundingClientRect();
+          var after = (e.clientY - rect.top) > rect.height / 2;
+          list.insertBefore(dragged, after ? over.nextSibling : over);
+        }
+      });
+      list.addEventListener("drop", function () {
+        var body = new FormData();
+        list.querySelectorAll(".ep-row[data-ep]").forEach(function (r) {
+          body.append("order[]", r.getAttribute("data-ep"));
+        });
+        fetch("/podcasts/queue/reorder/", { method: "POST", headers: { "X-CSRFToken": getCookie("csrftoken") }, body: body });
+      });
+    }
   }
 
   // ---- Atajos de teclado (estilo miniflux / ReactFlux) ----
@@ -462,7 +543,7 @@
     // Cada init aislado: que un fallo no impida el resto.
     [initGroups, initSections, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
      initResizers, initTypeControls, initPush, initPWA, initAiProvider, initRangeOutputs,
-     initSubtabs, initFeedFilter, initPlayer].forEach(function (fn) {
+     initSubtabs, initFeedFilter, initPlayer, initPodcasts].forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });
     var h = document.querySelector("[data-help-close]");

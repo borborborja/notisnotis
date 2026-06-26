@@ -103,8 +103,10 @@
 <button class="sb-section-head" type="button" data-section-toggle><span class="caret">▸</span> Podcasts</button>
 <div class="sb-section-body">
 <nav class="sb-nav">
+  <a href="{% url 'podcasts:home' %}" class="sb-item"><span><svg class="ic"><use href="#i-headphones"/></svg> Todos los podcasts</span></a>
+  <a href="{% url 'podcasts:up_next' %}" class="sb-item"><span><svg class="ic"><use href="#i-queue"/></svg> Up Next</span></a>
   {% for f in sidebar_audio %}
-    <a href="{% url 'articles:list' %}?feed={{ f.id }}" class="sb-item">
+    <a href="{% url 'podcasts:detail' f.id %}" class="sb-item">
       <span><svg class="ic"><use href="#i-{% if f.kind == 'youtube' %}video{% else %}mic{% endif %}"/></svg> <span class="sb-feed-name">{{ f.title|default:f.source.name }}</span></span>
       {% if f.unread %}<span class="sb-count">{{ f.unread }}</span>{% endif %}
     </a>

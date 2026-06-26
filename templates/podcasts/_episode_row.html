@@ -1,0 +1,29 @@
+{% load podcast_extras %}
+{# Fila de episodio. Espera: ep, queued (set de article_id en cola). #}
+<div class="ep-row{% if ep.is_read %} ep-played{% endif %}">
+  <img class="ep-art" src="{{ ep.image_url|default:ep.feed.image_url }}" alt="" loading="lazy">
+  <div class="ep-body">
+    <a href="{% url 'articles:detail' ep.pk %}" class="ep-title">{{ ep.title }}</a>
+    <div class="ep-meta muted">
+      {{ ep.published_at|date:"d M Y" }}
+      {% if ep.duration %}· {{ ep.duration|duration_hm }}{% endif %}
+      {% if ep.is_read %}· <span class="tag">escuchado</span>{% endif %}
+    </div>
+    {% if ep.play_position and ep.duration and not ep.is_read %}
+      <div class="ep-progress"><span style="width:{% widthratio ep.play_position ep.duration 100 %}%"></span></div>
+    {% endif %}
+  </div>
+  <div class="ep-actions">
+    {% if ep.enclosure_url and 'audio' in ep.enclosure_type %}
+      <button class="np-btn" title="Reproducir" data-ep-play data-ep-id="{{ ep.pk }}"
+        data-ep-src="{{ ep.enclosure_url }}" data-ep-title="{{ ep.title }}"
+        data-ep-feed="{{ ep.feed.title|default:ep.source.name }}"
+        data-ep-art="{{ ep.image_url|default:ep.feed.image_url }}" data-ep-pos="{{ ep.play_position }}"
+        data-ep-speed="{{ ep.feed.playback_speed }}"><svg class="ic"><use href="#i-play"/></svg></button>
+      <button class="np-btn" title="{% if ep.pk in queued %}En la cola{% else %}Añadir a la cola{% endif %}"
+        data-queue-toggle data-ep="{{ ep.pk }}" data-queued="{% if ep.pk in queued %}1{% else %}0{% endif %}">
+        <svg class="ic"><use href="#i-queue"/></svg></button>
+    {% endif %}
+    <button class="np-btn" title="Escuchado" data-played-toggle data-ep="{{ ep.pk }}"><svg class="ic"><use href="#i-check"/></svg></button>
+  </div>
+</div>

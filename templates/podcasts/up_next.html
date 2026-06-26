@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load podcast_extras %}
+{% block title %}Up Next · Podcasts{% endblock %}
+{% block content %}
+<p class="muted"><a href="{% url 'podcasts:home' %}">← Podcasts</a></p>
+<div class="pod-head">
+  <h1><svg class="ic"><use href="#i-queue"/></svg> Up Next</h1>
+  {% if items %}<button class="btn" id="play-queue"><svg class="ic"><use href="#i-play"/></svg> Reproducir cola</button>{% endif %}
+</div>
+<div class="card" id="queue-list" data-queue-reorder>
+  {% for qi in items %}
+    {% with ep=qi.article %}
+    <div class="ep-row" data-ep="{{ ep.pk }}" draggable="true"
+         data-ep-id="{{ ep.pk }}" data-ep-src="{{ ep.enclosure_url }}" data-ep-title="{{ ep.title }}"
+         data-ep-feed="{{ ep.feed.title|default:ep.source.name }}"
+         data-ep-art="{{ ep.image_url|default:ep.feed.image_url }}" data-ep-pos="{{ ep.play_position }}"
+         data-ep-speed="{{ ep.feed.playback_speed }}">
+      <span class="drag-handle" title="Arrastrar">⋮⋮</span>
+      <img class="ep-art" src="{{ ep.image_url|default:ep.feed.image_url }}" alt="" loading="lazy">
+      <div class="ep-body">
+        <a href="{% url 'articles:detail' ep.pk %}" class="ep-title">{{ ep.title }}</a>
+        <div class="ep-meta muted">{{ ep.feed.title|default:ep.source.name }}{% if ep.duration %} · {{ ep.duration|duration_hm }}{% endif %}</div>
+      </div>
+      <div class="ep-actions">
+        <button class="np-btn" title="Reproducir" data-ep-play data-ep-id="{{ ep.pk }}"
+          data-ep-src="{{ ep.enclosure_url }}" data-ep-title="{{ ep.title }}"
+          data-ep-feed="{{ ep.feed.title|default:ep.source.name }}"
+          data-ep-art="{{ ep.image_url|default:ep.feed.image_url }}" data-ep-pos="{{ ep.play_position }}"
+          data-ep-speed="{{ ep.feed.playback_speed }}"><svg class="ic"><use href="#i-play"/></svg></button>
+        <form method="post" action="{% url 'podcasts:queue_remove' ep.pk %}">{% csrf_token %}
+          <button class="np-btn" title="Quitar de la cola"><svg class="ic"><use href="#i-x"/></svg></button>
+        </form>
+      </div>
+    </div>
+    {% endwith %}
+  {% empty %}
+    <p class="muted">La cola está vacía. Añade episodios con el icono de cola.</p>
+  {% endfor %}
+</div>
+{% endblock %}
