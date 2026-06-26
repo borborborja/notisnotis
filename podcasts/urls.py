@@ -14,4 +14,5 @@ urlpatterns = [
     path("ep/<int:pk>/queue/", views.queue_add, name="queue_add"),
     path("ep/<int:pk>/unqueue/", views.queue_remove, name="queue_remove"),
     path("queue/reorder/", views.queue_reorder, name="queue_reorder"),
+    path("import/antennapod/", views.import_antennapod, name="import_antennapod"),
 ]

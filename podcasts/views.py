@@ -108,6 +108,43 @@ def queue_remove(request, pk):
 @login_required
 @module_required("podcasts")
 @require_POST
+def import_antennapod(request):
+    """Sube un backup .db de AntennaPod y lo importa (streamea a disco temporal)."""
+    import os
+    import tempfile
+
+    from .antennapod import import_backup
+
+    upload = request.FILES.get("db")
+    if not upload:
+        from django.contrib import messages
+        messages.error(request, "Selecciona el fichero .db de AntennaPod.")
+        return redirect("podcasts:home")
+
+    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    try:
+        for chunk in upload.chunks():
+            tmp.write(chunk)
+        tmp.close()
+        counts = import_backup(request.user, tmp.name)
+    except Exception as exc:  # noqa: BLE001 - feedback al usuario
+        from django.contrib import messages
+        messages.error(request, f"No se pudo importar el backup: {exc}")
+        return redirect("podcasts:home")
+    finally:
+        try:
+            os.unlink(tmp.name)
+        except OSError:
+            pass
+    from django.contrib import messages
+    messages.success(request, "Backup AntennaPod importado: " + ", ".join(
+        f"{v} {k}" for k, v in counts.items() if v))
+    return redirect("podcasts:home")
+
+
+@login_required
+@module_required("podcasts")
+@require_POST
 def queue_reorder(request):
     order = request.POST.getlist("order[]") or request.POST.getlist("order")
     items = {str(qi.article_id): qi

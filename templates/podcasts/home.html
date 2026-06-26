@@ -29,4 +29,16 @@
 <div class="card"><p class="muted">Aún no tienes podcasts. Añádelos o búscalos desde
   <a href="{% url 'feeds:feed_list' %}?tab=podcasts">Gestionar podcasts</a>.</p></div>
 {% endif %}
+
+<details class="card pod-import">
+  <summary><strong>Importar desde AntennaPod</strong></summary>
+  <p class="muted">Sube el backup de base de datos (.db) de AntennaPod (Ajustes → Importar/Exportar
+    → Exportar base de datos). Reconstruye suscripciones, escuchados, posición, favoritos, cola,
+    velocidades, skip y capítulos. Para backups muy grandes (cientos de MB) usa el comando del
+    servidor.</p>
+  <form method="post" action="{% url 'podcasts:import_antennapod' %}" enctype="multipart/form-data">{% csrf_token %}
+    <input type="file" name="db" accept=".db,.sqlite,application/octet-stream" required>
+    <button class="btn" type="submit"><svg class="ic"><use href="#i-upload"/></svg> Importar</button>
+  </form>
+</details>
 {% endblock %}
