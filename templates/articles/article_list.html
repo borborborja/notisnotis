@@ -4,7 +4,7 @@
 <div class="reader">
   <div class="list-col">
     <header class="toolbar">
-      <h1 class="toolbar-title">{{ list_title }}</h1>
+      <h1 class="toolbar-title">{{ list_title }}{% if page.paginator.count %} <span class="toolbar-count">{{ page.paginator.count }}</span>{% endif %}</h1>
       <div class="toolbar-actions">
         <div class="viewswitch">
           <a href="?{{ qparams }}&view=titles" class="{% if view == 'titles' %}active{% endif %}" title="Títulos"><svg class="ic"><use href="#i-list"/></svg></a>
@@ -22,7 +22,8 @@
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
           <button class="tbtn" type="submit" title="Refrescar ahora"><svg class="ic"><use href="#i-refresh"/></svg></button>
         </form>
-        <form method="post" action="{% url 'articles:mark_all_read' %}" class="inline">{% csrf_token %}
+        <form method="post" action="{% url 'articles:mark_all_read' %}" class="inline"
+              onsubmit="return confirm('¿Marcar como leídos todos los artículos de esta vista?')">{% csrf_token %}
           <input type="hidden" name="params" value="{{ all_params }}">
           <button class="tbtn" type="submit" title="Marcar todo como leído"><svg class="ic"><use href="#i-check"/></svg></button>
         </form>

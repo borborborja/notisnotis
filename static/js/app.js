@@ -737,11 +737,15 @@
   }
   // Tras la navegación boosteada (#content) o cargar un artículo (#reading-pane), re-vincular.
   document.body.addEventListener("htmx:afterSwap", function (e) {
-    if (e.target && (e.target.id === "content" || e.target.id === "reading-pane")) {
+    if (e.target && e.target.id === "content") {
       runPerswap();
       try { observeAutomark(); } catch (err) {}
       try { if (window.nnMarkPlaying) window.nnMarkPlaying(); } catch (err) {}
       try { updateSidebarActive(); } catch (err) {}
+      sel = -1;  // reinicia la navegación por teclado al cambiar de lista
+    } else if (e.target && e.target.id === "reading-pane") {
+      try { runPerswap(); } catch (err) {}
+      try { if (window.nnMarkPlaying) window.nnMarkPlaying(); } catch (err) {}
     }
   });
 

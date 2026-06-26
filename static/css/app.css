@@ -23,6 +23,8 @@
 html, body { height: 100%; }
 body { margin: 0; font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
   font-size: 14px; background: var(--bg); color: var(--text); line-height: 1.45; }
+/* Transición suave al cambiar de tema (solo superficies, no el hover de ítems). */
+body, .sidebar, .main, .reading, .list-col, .toolbar, .nn-player, .card { transition: background-color .18s ease, border-color .18s ease; }
 a { color: inherit; text-decoration: none; }
 h1, h2, h3, h4 { margin: .4rem 0; line-height: 1.25; }
 code { background: var(--border-2); padding: .1em .35em; border-radius: 4px; font-size: .85em; }
@@ -81,6 +83,8 @@ body.app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; height: 1
   padding: .5rem .8rem; border-bottom: 1px solid var(--border); background: var(--panel); }
 .toolbar-title { font-size: 1rem; font-weight: 700; margin: 0; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; }
+.toolbar-count { font-size: .72rem; font-weight: 600; color: var(--muted);
+  background: var(--border-2); border-radius: 999px; padding: .05rem .45rem; vertical-align: middle; }
 .toolbar-actions { display: flex; align-items: center; gap: .35rem; }
 .tbtn { display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .55rem; font-size: .8rem;
   border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--item-text); cursor: pointer; }
@@ -94,9 +98,13 @@ body.app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; height: 1
 
 /* ---------- Article items ---------- */
 .article-items { overflow-y: auto; flex: 1; }
-.item { cursor: pointer; border-bottom: 1px solid var(--border-2); }
+.item { cursor: pointer; border-bottom: 1px solid var(--border-2); border-left: 3px solid transparent; }
 .item:hover { background: var(--hover); }
-.item.is-read { opacity: .55; }
+.item.is-read { opacity: .5; }
+/* No leído: barra de acento a la izquierda (vistas lista/revista). */
+.view-titles .item:not(.is-read), .view-magazine .item:not(.is-read) { border-left-color: var(--accent); }
+.view-titles .item:not(.is-read) .item-headline, .view-magazine .item:not(.is-read) .item-headline { font-weight: 700; }
+.list-end { text-align: center; padding: 1rem; font-size: .82rem; }
 .item-headline { font-size: .95rem; font-weight: 650; margin: .15rem 0; }
 .item-source { font-weight: 600; font-size: .8rem; }
 .item-meta { color: var(--muted); font-size: .78rem; }
@@ -265,6 +273,8 @@ body.settings { background: var(--bg); }
 
 /* ---------- Selección por teclado ---------- */
 .item.kb-active { box-shadow: inset 3px 0 0 var(--accent); background: var(--hover); }
+.item.active { background: color-mix(in srgb, var(--accent) 9%, var(--hover)); }
+.item.active .item-headline { color: var(--accent); }
 
 /* ---------- Overlay de ayuda de atajos ---------- */
 .kb-help { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none;

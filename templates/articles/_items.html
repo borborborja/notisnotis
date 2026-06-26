@@ -4,4 +4,6 @@
      hx-trigger="revealed" hx-swap="outerHTML">Cargando…</div>
 {% elif not page.object_list %}
 <div class="reading-empty"><p>No hay artículos aquí.</p></div>
+{% elif page.number > 1 or page.paginator.count > 8 %}
+<div class="list-end muted">— No hay más artículos —</div>
 {% endif %}
