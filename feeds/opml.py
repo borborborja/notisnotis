@@ -94,9 +94,16 @@ def import_opml_for_user(user, content: str, kind="rss"):
         if was_created:
             created += 1
         else:
+            changed = []
             # Asigna categoría si el feed existía sin ella.
             if category and feed.category_id is None:
                 feed.category = category
-                feed.save(update_fields=["category"])
+                changed.append("category")
+            # Promueve el tipo si se reimporta como podcast/youtube (no degrada a rss).
+            if feed_kind != "rss" and feed.kind != feed_kind:
+                feed.kind = feed_kind
+                changed.append("kind")
+            if changed:
+                feed.save(update_fields=changed)
             skipped += 1
     return created, skipped

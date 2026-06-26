@@ -213,6 +213,17 @@ class FeedsManagerTests(TestCase):
         # YouTube siempre se detecta como youtube aunque importes como podcast.
         self.assertEqual(Feed.objects.get(user=self.u, url__contains="youtube").kind, "youtube")
 
+    def test_reimport_as_podcast_promotes_existing_rss(self):
+        from feeds.models import Feed
+        opml = ('<?xml version="1.0"?><opml><body>'
+                '<outline type="rss" text="P" xmlUrl="https://p.com/rss"/></body></opml>')
+        import_opml_for_user(self.u, opml, kind="rss")
+        self.assertEqual(Feed.objects.get(user=self.u, url="https://p.com/rss").kind, "rss")
+        # Reimportar como Podcasts promueve el feed existente (no se quedan como RSS).
+        created, skipped = import_opml_for_user(self.u, opml, kind="podcast")
+        self.assertEqual((created, skipped), (0, 1))
+        self.assertEqual(Feed.objects.get(user=self.u, url="https://p.com/rss").kind, "podcast")
+
     def test_search_podcasts_parses_itunes(self):
         from unittest import mock
         from feeds.podcastsearch import search_podcasts
