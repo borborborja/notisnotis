@@ -56,12 +56,15 @@ def sidebar(request):
         .select_related("source")
         .annotate(unread=Count("articles", filter=Q(articles__is_read=False)))
     )
+    from podcasts.models import QueueItem
+    queue_n = QueueItem.objects.filter(user=user).count() if audio_feeds else 0
 
     return {
         "sidebar_categories": categories,
         "sidebar_uncategorized": uncategorized,
         "sidebar_aifeeds": aifeeds,
         "sidebar_audio": audio_feeds,
+        "sidebar_queue_n": queue_n,
         "sidebar_tags": tags,
         "reading_ui": reading_prefs(user),
         "sidebar_counts": {

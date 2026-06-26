@@ -476,6 +476,23 @@ body.resizing iframe { pointer-events: none; }
 .ep-row.ep-played { opacity: .55; }
 .ep-row.ep-playing { background: color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 8px; }
 .ep-row.ep-playing .ep-title { color: var(--accent); }
+/* Equalizer animado sobre la carátula del episodio en reproducción */
+.ep-row.ep-playing .ep-art { position: relative; }
+.ep-row.ep-playing .ep-art::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 100%;
+  background:
+    linear-gradient(var(--accent), var(--accent)) 22% 100% / 14% 40% no-repeat,
+    linear-gradient(var(--accent), var(--accent)) 50% 100% / 14% 70% no-repeat,
+    linear-gradient(var(--accent), var(--accent)) 78% 100% / 14% 30% no-repeat;
+  background-color: rgba(0,0,0,.35); border-radius: 8px;
+  animation: nn-eq .9s steps(1) infinite alternate;
+}
+@keyframes nn-eq {
+  0%   { background-size: 14% 40%, 14% 70%, 14% 30%; }
+  50%  { background-size: 14% 75%, 14% 30%, 14% 65%; }
+  100% { background-size: 14% 30%, 14% 60%, 14% 80%; }
+}
+.app.player-paused .ep-row.ep-playing .ep-art::after { animation-play-state: paused; }
 .ep-art { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex: 0 0 auto; background: var(--border); }
 .ep-body { flex: 1 1 auto; min-width: 0; }
 .ep-title { font-weight: 600; text-decoration: none; color: inherit; display: block; }

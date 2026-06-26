@@ -143,3 +143,28 @@ class DownloadsViewTests(TestCase):
         r = self.client.get("/podcasts/downloads/")
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "downloads-list")
+
+
+class DetailCountsAndQueueBadgeTests(TestCase):
+    def setUp(self):
+        self.u = get_user_model().objects.create_user("dc", "", "pw-dc-12345")
+        self.client.login(username="dc", password="pw-dc-12345")
+        src = Source.objects.create(name="DC", domain="dc.com")
+        self.feed = Feed.objects.create(user=self.u, source=src, url="http://dc/rss", kind="podcast", title="DC")
+        for i in range(3):
+            Article.objects.create(feed=self.feed, source=src, guid=f"d{i}", title=f"E{i}",
+                                   enclosure_url=f"http://dc/{i}.mp3", enclosure_type="audio/mpeg",
+                                   is_read=(i == 0))
+
+    def test_detail_shows_counts(self):
+        r = self.client.get(f"/podcasts/{self.feed.pk}/")
+        self.assertEqual(r.context["n_episodes"], 3)
+        self.assertEqual(r.context["n_unplayed"], 2)
+        self.assertContains(r, "sin escuchar")
+
+    def test_sidebar_queue_count(self):
+        from podcasts.models import QueueItem
+        ep = self.feed.articles.first()
+        QueueItem.objects.create(user=self.u, article=ep, position=0)
+        r = self.client.get("/podcasts/")
+        self.assertEqual(r.context["sidebar_queue_n"], 1)

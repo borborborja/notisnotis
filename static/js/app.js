@@ -206,6 +206,8 @@
       });
       try { localStorage.setItem("nn_player", JSON.stringify(ep)); } catch (e) {}
       markNowPlaying(ep.id);
+      var qb = document.getElementById("np-queue");  // reset estado de "en cola" por episodio
+      if (qb) { qb.classList.remove("active"); qb.title = "Añadir a la cola"; }
       if (autoplay) audio.play().catch(function () {});
     }
 
@@ -242,6 +244,13 @@
     document.getElementById("np-played").addEventListener("click", function () {
       if (cur) post("/podcasts/ep/" + cur.id + "/played/");
     });
+    var qBtn = document.getElementById("np-queue");
+    if (qBtn) qBtn.addEventListener("click", function () {
+      if (!cur) return;
+      post("/podcasts/ep/" + cur.id + "/queue/");
+      qBtn.classList.add("active");
+      qBtn.title = "En la cola";
+    });
     els.speed.addEventListener("click", function () {
       var i = SPEEDS.indexOf(audio.playbackRate);
       var next = SPEEDS[(i + 1) % SPEEDS.length];
@@ -268,8 +277,14 @@
       seeking = false;
     });
 
-    audio.addEventListener("play", function () { setPlayIcon(true); });
-    audio.addEventListener("pause", function () { setPlayIcon(false); saveProgress(false); });
+    audio.addEventListener("play", function () {
+      setPlayIcon(true);
+      document.body.classList.add("player-playing"); document.body.classList.remove("player-paused");
+    });
+    audio.addEventListener("pause", function () {
+      setPlayIcon(false); saveProgress(false);
+      document.body.classList.add("player-paused"); document.body.classList.remove("player-playing");
+    });
     audio.addEventListener("timeupdate", function () {
       if (!audio.duration) return;
       if (!seeking) els.seek.value = (audio.currentTime / audio.duration) * 1000;

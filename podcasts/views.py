@@ -50,6 +50,8 @@ def podcast_detail(request, pk):
     queued = set(QueueItem.objects.filter(user=request.user).values_list("article_id", flat=True))
     return render(request, "podcasts/detail.html", {
         "feed": feed, "episodes": episodes, "queued": queued, "active": "podcasts",
+        "n_episodes": feed.articles.count(),
+        "n_unplayed": feed.articles.filter(is_read=False).count(),
     })
 
 
