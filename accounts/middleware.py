@@ -10,7 +10,7 @@ from __future__ import annotations
 from django.shortcuts import redirect
 
 # Rutas accesibles sin haber completado el 2FA (el propio reto, salir, estáticos).
-_ALLOWED_PREFIXES = ("/accounts/2fa/verify", "/accounts/logout", "/sw.js", "/static/")
+_ALLOWED_PREFIXES = ("/accounts/2fa/verify", "/accounts/logout", "/sw.js", "/static/", "/api/")
 
 
 class Require2FAMiddleware:

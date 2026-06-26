@@ -104,7 +104,8 @@ def mark_feed_played(request, pk):
     from django.utils import timezone
 
     feed = get_object_or_404(Feed, pk=pk, user=request.user)
-    n = feed.articles.filter(is_read=False).update(is_read=True, read_at=timezone.now())
+    now = timezone.now()
+    n = feed.articles.filter(is_read=False).update(is_read=True, read_at=now, updated_at=now)
     messages.success(request, f"{n} episodio{'s' if n != 1 else ''} marcados como escuchados.")
     return redirect("podcasts:detail", pk=pk)
 

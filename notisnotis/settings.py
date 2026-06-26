@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "stories",
     "mcpserver",
     "syncapi",
+    "api",
     "notifications",
     "features",
     "aifeeds",

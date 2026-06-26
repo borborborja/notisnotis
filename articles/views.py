@@ -318,7 +318,8 @@ def mark_read(request, pk):
 @require_POST
 def mark_all_read(request):
     qs, _ = _filtered_articles(request)
-    qs.filter(is_read=False).update(is_read=True, read_at=timezone.now())
+    now = timezone.now()
+    qs.filter(is_read=False).update(is_read=True, read_at=now, updated_at=now)
     messages.success(request, "Marcados como leídos.")
     return redirect(f"{request.path}?{request.POST.get('params', '')}")
 
@@ -347,8 +348,9 @@ def set_reading_pref(request):
 @require_POST
 def mark_seen(request, pk):
     """Marca leído de forma ligera (auto-marcar al hacer scroll). Devuelve 204."""
+    now = timezone.now()
     Article.objects.filter(pk=pk, feed__user=request.user, is_read=False).update(
-        is_read=True, read_at=timezone.now()
+        is_read=True, read_at=now, updated_at=now
     )
     return HttpResponse(status=204)
 
@@ -386,6 +388,7 @@ def tag_add(request, pk):
     if name:
         tag, _ = Tag.objects.get_or_create(user=request.user, name=name)
         article.tags.add(tag)
+        article.save(update_fields=["updated_at"])  # M2M no toca updated_at
     return render(request, "articles/_reading_pane.html", _reading_ctx(request, article))
 
 
@@ -394,6 +397,7 @@ def tag_add(request, pk):
 def tag_remove(request, pk):
     article = get_object_or_404(Article.objects.select_related("source", "feed"), pk=pk, feed__user=request.user)
     article.tags.remove(*Tag.objects.filter(user=request.user, id=request.POST.get("tag_id")))
+    article.save(update_fields=["updated_at"])  # M2M no toca updated_at
     return render(request, "articles/_reading_pane.html", _reading_ctx(request, article))
 
 

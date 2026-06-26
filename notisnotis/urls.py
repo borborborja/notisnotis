@@ -23,6 +23,7 @@ urlpatterns = [
     path("accounts/export.json", account_views.export_data, name="account_export"),
     path("accounts/import/", account_views.import_data, name="account_import"),
     path("accounts/settings/<str:tab>/", account_views.settings_view, name="account_settings_tab"),
+    path("api/v1/", include("api.urls")),
     path("api/", include("syncapi.urls")),
     # gpodder "simple API" (raíz, fuera de /api/): subida/descarga de suscripciones.
     re_path(r"^subscriptions/(?P<username>[^/]+)/(?P<deviceid>[^/]+)\.(?P<fmt>opml|json|txt)$",

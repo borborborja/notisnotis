@@ -81,6 +81,9 @@ class Article(models.Model):
     is_saved = models.BooleanField(default=False)
     read_at = models.DateTimeField(null=True, blank=True)
     tags = models.ManyToManyField(Tag, blank=True, related_name="articles")
+    # Cursor único de delta-sync (API): cambia con CUALQUIER modificación (estado o contenido).
+    # En mutaciones por queryset.update() y M2M de tags hay que setearlo a mano (ver views).
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
         ordering = ["-published_at", "-fetched_at"]
@@ -97,6 +100,14 @@ class Article(models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        # Garantiza que updated_at (cursor de delta-sync) se refresca también en los
+        # save(update_fields=[...]) parciales de toda la app (estado, enriquecimiento…).
+        uf = kwargs.get("update_fields")
+        if uf is not None:
+            kwargs["update_fields"] = set(uf) | {"updated_at"}
+        super().save(*args, **kwargs)
 
     @property
     def best_text(self):
