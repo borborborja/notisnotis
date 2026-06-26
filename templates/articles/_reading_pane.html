@@ -1,4 +1,4 @@
-{% load static %}
+{% load static podcast_extras %}
 <article class="reading-article">
   <div class="reading-head">
     <div class="reading-source">
@@ -92,10 +92,18 @@
   <div class="enclosure">
     {% if 'audio' in article.enclosure_type %}
       {% if 'podcasts' in modules %}
-        <button class="btn" data-ep-play data-ep-id="{{ article.pk }}" data-ep-src="{{ article.enclosure_url }}"
-                data-ep-title="{{ article.title }}" data-ep-feed="{{ article.feed.title|default:article.source.name }}"
-                data-ep-art="{{ article.image_url|default:article.feed.image_url }}" data-ep-pos="{{ article.play_position }}"
-                data-ep-speed="{{ article.feed.playback_speed }}"><svg class="ic"><use href="#i-play"/></svg> Reproducir</button>
+        <div class="ep-cta">
+          {% if article.image_url or article.feed.image_url or article.source.favicon %}
+            <img class="ep-cta-art" data-ph src="{{ article.image_url|default:article.feed.image_url|default:article.source.favicon }}" alt="">{% endif %}
+          <div class="ep-cta-body">
+            <button class="btn" data-ep-play data-ep-id="{{ article.pk }}" data-ep-src="{{ article.enclosure_url }}"
+                    data-ep-title="{{ article.title }}" data-ep-feed="{{ article.feed.title|default:article.source.name }}"
+                    data-ep-art="{{ article.image_url|default:article.feed.image_url }}" data-ep-pos="{{ article.play_position }}"
+                    data-ep-speed="{{ article.feed.playback_speed }}"><svg class="ic"><use href="#i-play"/></svg>
+              {% if article.play_position %}Reanudar{% else %}Reproducir{% endif %}</button>
+            {% if article.duration %}<span class="muted">{{ article.duration|duration_hm }}{% if article.play_position %} · empezado{% endif %}</span>{% endif %}
+          </div>
+        </div>
       {% else %}
         <audio controls preload="none" src="{{ article.enclosure_url }}"></audio>
       {% endif %}

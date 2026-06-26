@@ -153,6 +153,7 @@
     var audio = document.getElementById("np-audio");
     var els = {
       art: document.getElementById("np-art"), title: document.getElementById("np-title"),
+      artLink: document.getElementById("np-art-link"),
       feed: document.getElementById("np-feed"), toggle: document.getElementById("np-toggle"),
       seek: document.getElementById("np-seek"), cur: document.getElementById("np-cur"),
       dur: document.getElementById("np-dur"), speed: document.getElementById("np-speed"),
@@ -189,6 +190,9 @@
       document.body.classList.add("player-on");
       els.title.textContent = ep.title || "";
       els.feed.textContent = ep.feed || "";
+      var epHref = ep.id ? "/articles/" + ep.id + "/" : "#";
+      els.title.setAttribute("href", epHref);
+      if (els.artLink) els.artLink.setAttribute("href", epHref);
       if (ep.art) { els.art.src = ep.art; els.art.style.visibility = "visible"; }
       else { els.art.removeAttribute("src"); els.art.style.visibility = "hidden"; }
       audio.src = ep.src;
