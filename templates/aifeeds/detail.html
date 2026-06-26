@@ -17,6 +17,27 @@
     </form>
   </div>
 
+  <div class="card">
+    <h3>Aprendizaje y actualización</h3>
+    <p class="muted">{{ n_trained }} aprobada{{ n_trained|pluralize }} ·
+      {% if trained %}entrenado: las noticias de alta confianza se añaden solas{% else %}aún entrenando ({{ n_trained }}/{{ train_min }} para auto-añadir){% endif %}.
+      Busca automáticamente cada {{ search_minutes }} min.</p>
+    <form method="post" action="{% url 'aifeeds:settings' ai.pk %}">{% csrf_token %}
+      <div class="form-row">
+        <label>Proponer desde (0–10)</label>
+        <input type="number" name="min_score" min="0" max="10" value="{{ ai.min_score }}" class="narrow">
+        <p class="field-help muted">Por debajo de este umbral no se propone nada.</p>
+      </div>
+      <div class="form-row">
+        <label>Auto-añadir desde (0–10, 11 = nunca)</label>
+        <input type="number" name="auto_accept_score" min="0" max="11" value="{{ ai.auto_accept_score }}" class="narrow">
+        <p class="field-help muted">Una vez entrenado, las noticias con esta puntuación o más se
+          añaden al lector sin que tengas que aprobarlas.</p>
+      </div>
+      <button class="btn" type="submit">Guardar ajustes</button>
+    </form>
+  </div>
+
   <h3>Propuestas por revisar</h3>
   <p class="muted">Marca cuáles encajan: las que aceptes se añaden a tu lector y la app aprende
     de tus decisiones para afinar las siguientes.</p>

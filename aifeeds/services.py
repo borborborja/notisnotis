@@ -86,8 +86,13 @@ def score_candidates(ai_feed, client, candidates):
     return out
 
 
+# Nº mínimo de aprobaciones para considerar el feed "entrenado" (habilita auto-aceptar).
+TRAIN_MIN = 5
+
+
 def run_search(ai_feed, *, per_query=12):
-    """Busca, dedup y crea propuestas (AIFeedCandidate) que superen el umbral. Devuelve cuántas."""
+    """Busca, dedup, puntúa y: auto-añade los de alta confianza (si está entrenado) o crea
+    propuestas para revisar. Devuelve dict {proposed, auto}."""
     from articles.models import Article
 
     client = get_chat_client(ai_feed.user)
@@ -105,40 +110,64 @@ def run_search(ai_feed, *, per_query=12):
     existing |= set(ai_feed.candidates.values_list("url", flat=True))
     fresh = [r for r in results if r["url"] not in existing]
 
-    created = 0
+    proposed, auto = 0, 0
     if fresh:
+        trained = ai_feed.examples.filter(relevant=True).count() >= TRAIN_MIN
+        auto_on = trained and ai_feed.auto_accept_score <= 10
         scored = score_candidates(ai_feed, client, fresh)
         for r in fresh:
             sc = scored.get(r["url"], {})
-            if sc.get("score", 0) < ai_feed.min_score:
+            score = sc.get("score", 0)
+            if score < ai_feed.min_score:
                 continue
-            _, made = AIFeedCandidate.objects.get_or_create(
-                ai_feed=ai_feed, url=r["url"],
-                defaults={"title": r["title"], "snippet": r["snippet"],
-                          "score": sc.get("score", ai_feed.min_score), "reason": sc.get("reason", "")},
-            )
-            created += int(made)
+            if auto_on and score >= ai_feed.auto_accept_score:
+                _auto_accept(ai_feed, r, score, sc.get("reason", ""))
+                auto += 1
+            else:
+                _, made = AIFeedCandidate.objects.get_or_create(
+                    ai_feed=ai_feed, url=r["url"],
+                    defaults={"title": r["title"], "snippet": r["snippet"],
+                              "score": score or ai_feed.min_score, "reason": sc.get("reason", "")},
+                )
+                proposed += int(made)
     ai_feed.last_run = timezone.now()
     ai_feed.save(update_fields=["last_run"])
-    return created
+    return {"proposed": proposed, "auto": auto}
 
 
-def accept_candidate(candidate):
-    """Crea un Article real (fuente por dominio) en el feed sintético y guarda el ejemplo +."""
+def _materialize_article(ai_feed, url, title, snippet):
+    """Crea (o recupera) el Article real en el feed sintético a partir de una noticia."""
     from articles.models import Article
     from feeds.models import Source
     from feeds.opml import _domain
 
-    ai = candidate.ai_feed
-    feed = ensure_feed(ai)
-    domain = _domain(candidate.url) or "unknown"
+    feed = ensure_feed(ai_feed)
+    domain = _domain(url) or "unknown"
     source, _ = Source.objects.get_or_create(domain=domain, defaults={"name": domain})
-    guid = "ai-" + hashlib.sha1(candidate.url.encode()).hexdigest()[:24]
+    guid = "ai-" + hashlib.sha1(url.encode()).hexdigest()[:24]
     article, _ = Article.objects.get_or_create(
         feed=feed, guid=guid,
-        defaults={"source": source, "url": candidate.url, "title": candidate.title,
-                  "summary": candidate.snippet, "published_at": timezone.now()},
+        defaults={"source": source, "url": url, "title": title,
+                  "summary": snippet, "published_at": timezone.now()},
     )
+    return article
+
+
+def _auto_accept(ai_feed, r, score, reason):
+    """Añade automáticamente una noticia de alta confianza (sin crear ejemplo de entrenamiento)."""
+    article = _materialize_article(ai_feed, r["url"], r["title"], r["snippet"])
+    AIFeedCandidate.objects.get_or_create(
+        ai_feed=ai_feed, url=r["url"],
+        defaults={"title": r["title"], "snippet": r["snippet"], "score": score,
+                  "reason": reason, "status": AIFeedCandidate.ACCEPTED, "article": article},
+    )
+    return article
+
+
+def accept_candidate(candidate):
+    """Crea un Article real en el feed sintético y guarda el ejemplo + (entrena)."""
+    ai = candidate.ai_feed
+    article = _materialize_article(ai, candidate.url, candidate.title, candidate.snippet)
     candidate.article = article
     candidate.status = AIFeedCandidate.ACCEPTED
     candidate.save(update_fields=["article", "status"])

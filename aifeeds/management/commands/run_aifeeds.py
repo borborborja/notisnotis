@@ -37,10 +37,10 @@ class Command(BaseCommand):
                 if ai.last_run > now - timedelta(minutes=minutes):
                     continue  # aún no toca según la cadencia del usuario
             try:
-                n = run_search(ai)
+                res = run_search(ai)
             except Exception as exc:  # noqa: BLE001 - un feed que falle no aborta el resto
                 self.stderr.write(f"[error] {ai.name}: {exc}")
                 continue
-            total += n
-            self.stdout.write(f"{ai.name}: {n} propuestas nuevas")
-        self.stdout.write(self.style.SUCCESS(f"Propuestas creadas: {total}"))
+            total += res["proposed"] + res["auto"]
+            self.stdout.write(f"{ai.name}: {res['proposed']} propuestas, {res['auto']} auto-añadidas")
+        self.stdout.write(self.style.SUCCESS(f"Novedades totales: {total}"))

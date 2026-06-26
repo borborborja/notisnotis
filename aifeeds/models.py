@@ -17,7 +17,10 @@ class AIFeed(models.Model):
     # Feed sintético donde aterrizan los artículos aceptados (aifeed://<id>).
     feed = models.OneToOneField(Feed, on_delete=models.SET_NULL, null=True, blank=True, related_name="ai_feed")
     enabled = models.BooleanField(default=True)
-    min_score = models.PositiveSmallIntegerField(default=6)  # umbral de relevancia 0-10
+    min_score = models.PositiveSmallIntegerField(default=6)  # umbral para PROPONER (0-10)
+    # Umbral para AÑADIR automáticamente al feed (sin aprobación), una vez entrenado.
+    # 11 = desactivado (todo pasa por aprobación manual).
+    auto_accept_score = models.PositiveSmallIntegerField(default=9)
     last_run = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

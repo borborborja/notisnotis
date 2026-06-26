@@ -23,16 +23,16 @@ class AIFeedFlowTests(TestCase):
         # web_search mockeado (sin red); provider mock por defecto.
         with mock.patch("aifeeds.services.web_search", return_value=FAKE_RESULTS):
             from aifeeds.services import run_search
-            n = run_search(self.ai)
-        self.assertEqual(n, 2)
+            res = run_search(self.ai)
+        self.assertEqual(res["proposed"], 2)
         self.assertEqual(AIFeedCandidate.objects.filter(ai_feed=self.ai, status="pending").count(), 2)
 
     def test_run_search_dedupes(self):
         with mock.patch("aifeeds.services.web_search", return_value=FAKE_RESULTS):
             from aifeeds.services import run_search
             run_search(self.ai)
-            n2 = run_search(self.ai)  # segunda vez: mismas URLs → 0 nuevas
-        self.assertEqual(n2, 0)
+            res2 = run_search(self.ai)  # segunda vez: mismas URLs → 0 nuevas
+        self.assertEqual(res2["proposed"], 0)
 
     def test_accept_creates_article_and_positive_example(self):
         from aifeeds.services import accept_candidate
@@ -68,3 +68,48 @@ class AIFeedFlowTests(TestCase):
         self.assertEqual(r.status_code, 200)
         cand.refresh_from_db()
         self.assertEqual(cand.status, "accepted")
+
+
+class AutoAcceptTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from accounts.models import UserConfig
+        self.u = get_user_model().objects.create_user("aa", "", "pw-aa-12345")
+        UserConfig.objects.create(user=self.u, data={"chat_provider": "mock"})
+
+    def _feed(self, **kw):
+        from aifeeds.models import AIFeed
+        return AIFeed.objects.create(user=self.u, name="T", description="tema", **kw)
+
+    def test_untrained_only_proposes(self):
+        from unittest import mock
+        from aifeeds import services
+        from aifeeds.models import AIFeedCandidate
+        ai = self._feed(min_score=5, auto_accept_score=8)
+        results = [{"url": "https://x/1", "title": "N1", "snippet": "s"}]
+        with mock.patch("aifeeds.services.web_search", return_value=results), \
+             mock.patch("aifeeds.services.score_candidates", return_value={"https://x/1": {"score": 10, "reason": ""}}), \
+             mock.patch("aifeeds.services.generate_queries", return_value=["q"]):
+            res = services.run_search(ai)
+        self.assertEqual(res, {"proposed": 1, "auto": 0})  # sin entrenar → solo propone
+        self.assertEqual(AIFeedCandidate.objects.filter(ai_feed=ai, status="pending").count(), 1)
+
+    def test_trained_auto_accepts_high_score(self):
+        from unittest import mock
+        from aifeeds import services
+        from aifeeds.models import AIFeedCandidate, AIFeedExample
+        from articles.models import Article
+        ai = self._feed(min_score=5, auto_accept_score=8)
+        for i in range(services.TRAIN_MIN):  # entrenar
+            AIFeedExample.objects.create(ai_feed=ai, title=f"ok{i}", relevant=True)
+        results = [{"url": "https://x/hi", "title": "Alta", "snippet": "s"},
+                   {"url": "https://x/lo", "title": "Media", "snippet": "s"}]
+        scores = {"https://x/hi": {"score": 9, "reason": ""}, "https://x/lo": {"score": 6, "reason": ""}}
+        with mock.patch("aifeeds.services.web_search", side_effect=lambda q, k=12: results), \
+             mock.patch("aifeeds.services.score_candidates", return_value=scores), \
+             mock.patch("aifeeds.services.generate_queries", return_value=["q"]):
+            res = services.run_search(ai)
+        self.assertEqual(res["auto"], 1)       # la de 9 se auto-añade
+        self.assertEqual(res["proposed"], 1)   # la de 6 queda por revisar
+        self.assertTrue(Article.objects.filter(feed=ai.feed, title="Alta").exists())
+        self.assertEqual(AIFeedCandidate.objects.filter(ai_feed=ai, status="accepted").count(), 1)

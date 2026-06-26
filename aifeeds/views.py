@@ -40,8 +40,31 @@ def feed_detail(request, pk):
     ai = get_object_or_404(AIFeed, pk=pk, user=request.user)
     pending = ai.candidates.filter(status=AIFeedCandidate.PENDING)
     accepted = ai.candidates.filter(status=AIFeedCandidate.ACCEPTED).select_related("article")[:30]
-    return render(request, "aifeeds/detail.html",
-                  {"ai": ai, "pending": pending, "accepted": accepted})
+    from .services import TRAIN_MIN
+
+    n_trained = ai.examples.filter(relevant=True).count()
+    cfg = getattr(request.user, "config", None)
+    return render(request, "aifeeds/detail.html", {
+        "ai": ai, "pending": pending, "accepted": accepted,
+        "n_trained": n_trained, "train_min": TRAIN_MIN, "trained": n_trained >= TRAIN_MIN,
+        "search_minutes": int(cfg.data.get("ai_search_minutes", 720)) if cfg else 720,
+    })
+
+
+@login_required
+@require_POST
+@feature_required("aifeeds")
+@module_required("curation")
+def feed_settings(request, pk):
+    ai = get_object_or_404(AIFeed, pk=pk, user=request.user)
+    try:
+        ai.min_score = max(0, min(10, int(request.POST.get("min_score", ai.min_score))))
+        ai.auto_accept_score = max(0, min(11, int(request.POST.get("auto_accept_score", ai.auto_accept_score))))
+        ai.save(update_fields=["min_score", "auto_accept_score"])
+        messages.success(request, "Ajustes guardados.")
+    except (TypeError, ValueError):
+        messages.error(request, "Valores no válidos.")
+    return redirect("aifeeds:detail", pk=ai.pk)
 
 
 @login_required
@@ -53,8 +76,13 @@ def search_now(request, pk):
     from .services import run_search
 
     try:
-        n = run_search(ai)
-        messages.success(request, f"{n} propuestas nuevas." if n else "Sin propuestas nuevas por ahora.")
+        res = run_search(ai)
+        parts = []
+        if res["auto"]:
+            parts.append(f"{res['auto']} añadidas automáticamente")
+        if res["proposed"]:
+            parts.append(f"{res['proposed']} por revisar")
+        messages.success(request, " · ".join(parts) if parts else "Sin novedades por ahora.")
     except Exception as exc:  # noqa: BLE001
         messages.error(request, f"No se pudo buscar: {exc}")
     return redirect("aifeeds:detail", pk=ai.pk)
