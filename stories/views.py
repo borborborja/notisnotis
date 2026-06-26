@@ -76,15 +76,53 @@ def topic_delete(request, pk):
 @login_required
 @module_required("curation")
 def trending(request):
-    """Historias más cubiertas ahora (por nº de fuentes y recencia)."""
-    since = timezone.now() - timedelta(days=3)
+    """Tendencias GLOBALES (Google News + contraste SearXNG) del país elegido."""
+    from .trending import COUNTRIES, country_locked, resolve_country, trending_user
+
+    cc = resolve_country(request.user)
+    tu = trending_user(cc)
+    since = timezone.now() - timedelta(days=4)
     stories = list(
-        Story.objects.filter(user=request.user, last_updated__gte=since)
-        .annotate(n=Count("story_articles")).order_by("-n", "-last_updated")[:30]
+        Story.objects.filter(user=tu, last_updated__gte=since)
+        .annotate(n=Count("story_articles")).filter(n__gte=2)
+        .order_by("-n", "-last_updated")[:40]
     )
     for s in stories:
         s.bars = _bias_bars(s.bias_distribution)
-    return render(request, "stories/trending.html", {"page": stories, "list_title": "Tendencias"})
+    return render(request, "stories/trending.html", {
+        "page": stories, "list_title": "Tendencias", "countries": COUNTRIES,
+        "country": cc, "country_locked": country_locked(),
+    })
+
+
+@login_required
+@module_required("curation")
+def trending_detail(request, pk):
+    """Detalle de una historia de tendencia (contraste de fuentes + noticia contrastada)."""
+    from django.http import Http404
+
+    from .trending import is_trending_user
+
+    story = get_object_or_404(Story, pk=pk)
+    if not is_trending_user(story.user):
+        raise Http404
+    return render(request, "stories/trending_detail.html", _story_view(request, story))
+
+
+@login_required
+@module_required("curation")
+@require_POST
+def set_trending_country(request):
+    from accounts.models import UserConfig
+
+    from .trending import country_meta
+
+    cc = request.POST.get("country", "").upper()
+    if country_meta(cc)[0] == cc:  # válido
+        cfg, _ = UserConfig.objects.get_or_create(user=request.user)
+        cfg.data["trending_country"] = cc
+        cfg.save(update_fields=["data"])
+    return redirect("stories:trending")
 
 
 @login_required
@@ -113,9 +151,13 @@ def compare_sources(request):
 
 
 def _story_context(request, pk):
+    story = get_object_or_404(Story, pk=pk, user=request.user)
+    return _story_view(request, story)
+
+
+def _story_view(request, story):
     from itertools import groupby
 
-    story = get_object_or_404(Story, pk=pk, user=request.user)
     # Agrupado por sesgo (vista por defecto)
     sas_bias = story.story_articles.select_related("article", "article__source").order_by(
         "-article__published_at"

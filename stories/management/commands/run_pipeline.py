@@ -30,6 +30,11 @@ class Command(BaseCommand):
                     run("run_aifeeds", **user_args)  # busca por web y propone (feeds con IA)
                 except Exception as exc:  # noqa: BLE001 - el buscador no debe tumbar el pipeline
                     self.stderr.write(f"[aifeeds] {exc}")
+                if not user:  # tendencias globales (solo en la pasada general)
+                    try:
+                        run("fetch_trending")  # Google News + contraste SearXNG
+                    except Exception as exc:  # noqa: BLE001
+                        self.stderr.write(f"[trending] {exc}")
         if curation:
             run("embed_articles", **user_args)
             run("enrich_articles", **user_args)  # solo enriquece usuarios en modo batch
@@ -43,4 +48,9 @@ class Command(BaseCommand):
         run("fetch_favicons", limit=25)  # trickle: evita bloquear el pipeline
         if curation:
             run("analyze_stories")
+            if not user:  # noticia contrastada de las tendencias globales
+                try:
+                    run("synthesize_trending", limit=8)
+                except Exception as exc:  # noqa: BLE001
+                    self.stderr.write(f"[trending-syn] {exc}")
         self.stdout.write(self.style.SUCCESS("Pipeline completado."))

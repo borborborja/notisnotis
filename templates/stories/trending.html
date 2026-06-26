@@ -1,28 +1,37 @@
 {% extends "base.html" %}
 {% block title %}Tendencias · NotisNotis{% endblock %}
 {% block content %}
-<div class="reader">
-  <div class="list-col">
-    <header class="toolbar"><h1 class="toolbar-title">Tendencias</h1></header>
-    <div class="article-items view-magazine">
-      {% for story in page %}
-        <article class="item item-mag" hx-get="{% url 'stories:reading' story.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">
-          <div class="item-main">
-            <div class="item-top">
-              <span class="item-source">{{ story.n }} fuentes</span>
-              {% if story.is_blindspot %}<span class="tag badge-blindspot"><svg class="ic"><use href="#i-alert"/></svg> Blindspot</span>{% endif %}
-              <span class="item-meta">· {{ story.last_updated|date:"d M H:i" }}</span>
-            </div>
-            <h3 class="item-headline">{{ story.headline }}</h3>
-            {% include "partials/biasbar.html" with bars=story.bars %}
-          </div>
-        </article>
-      {% empty %}
-        <div class="reading-empty"><p>Nada destacado todavía.</p></div>
-      {% endfor %}
-    </div>
-    <div class="col-resizer" data-resize="list"></div>
+<div class="page">
+  <div class="pod-head">
+    <h1><svg class="ic"><use href="#i-arrow-up"/></svg> Tendencias</h1>
+    {% if country_locked %}
+      <span class="muted">País: {{ country }}</span>
+    {% else %}
+      <form method="post" action="{% url 'stories:set_trending_country' %}" hx-boost="false">{% csrf_token %}
+        <select name="country" onchange="this.form.submit()" aria-label="País">
+          {% for code, label, hl, gl, lang in countries %}
+            <option value="{{ code }}" {% if code == country %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    {% endif %}
   </div>
-  <aside class="reading" id="reading-pane"><div class="reading-empty"><p>Selecciona una historia.</p></div></aside>
+  <p class="muted">Lo más cubierto ahora en {{ country }}, con el contraste de fuentes (Google News
+    + búsqueda de fuentes alternativas).</p>
+
+  {% for story in page %}
+    <a class="trend-card" href="{% url 'stories:trending_detail' story.pk %}">
+      <div class="item-top">
+        <span class="item-source">{{ story.n }} fuentes</span>
+        {% if story.is_blindspot %}<span class="tag badge-blindspot"><svg class="ic"><use href="#i-alert"/></svg> Blindspot</span>{% endif %}
+        <span class="item-meta">· {{ story.last_updated|date:"d M H:i" }}</span>
+      </div>
+      <h3 class="item-headline">{{ story.headline }}</h3>
+      {% include "partials/biasbar.html" with bars=story.bars %}
+    </a>
+  {% empty %}
+    <div class="card"><p class="muted">Aún no hay tendencias para {{ country }}. Se generan en
+      segundo plano (Google News + SearXNG); vuelve en un rato.</p></div>
+  {% endfor %}
 </div>
 {% endblock %}

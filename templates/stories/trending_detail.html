@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ story.headline }} · Tendencias{% endblock %}
+{% block content %}
+<div class="page">
+  <p class="muted"><a href="{% url 'stories:trending' %}">← Tendencias</a></p>
+  <article class="reading-article">
+    <h1 class="reading-title">{{ story.headline }}</h1>
+    {% if story.is_blindspot %}
+      <p><span class="tag badge-blindspot"><svg class="ic"><use href="#i-alert"/></svg>
+        Blindspot: cobertura escasa {% if story.blindspot_side == 'left' %}de izquierda{% else %}de derecha{% endif %}</span></p>
+    {% endif %}
+    {% include "partials/biasbar.html" with bars=bars %}
+
+    {% if synthesis_html %}
+    <div class="synthesis">
+      <h3><svg class="ic"><use href="#i-sparkles"/></svg> Noticia contrastada</h3>
+      <div class="synthesis-body">{{ synthesis_html|safe }}</div>
+      <p class="item-meta">Redactada por IA a partir de {{ n_sources }} fuentes. Verifica los datos.</p>
+    </div>
+    {% elif story.neutral_summary %}
+      <h3>Resumen</h3><p>{{ story.neutral_summary }}</p>
+    {% endif %}
+
+    {% if story.perspectives %}
+      <h3>Perspectivas</h3>
+      {% if story.perspectives.left %}<p><strong style="color:var(--left)">Izquierda:</strong> {{ story.perspectives.left }}</p>{% endif %}
+      {% if story.perspectives.center %}<p><strong style="color:var(--center)">Centro:</strong> {{ story.perspectives.center }}</p>{% endif %}
+      {% if story.perspectives.right %}<p><strong style="color:var(--right)">Derecha:</strong> {{ story.perspectives.right }}</p>{% endif %}
+    {% endif %}
+
+    <h3>Cobertura por sesgo ({{ n_sources }} fuentes)</h3>
+    {% for bucket, group in grouped.items %}
+      <div class="cover-group">
+        <h4>{{ group.label }}</h4>
+        <ul class="related-list">
+          {% for a in group.articles %}
+            <li><a href="{{ a.url }}" target="_blank" rel="noopener">
+              <span class="rel-source">{{ a.source.name }}</span><span class="rel-title">{{ a.title }}</span>
+              <svg class="ic"><use href="#i-external"/></svg></a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
+  </article>
+</div>
+{% endblock %}

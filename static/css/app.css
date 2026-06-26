@@ -460,6 +460,14 @@ body.resizing iframe { pointer-events: none; }
 /* Podcasts: cabecera, grid y filas de episodio */
 .pod-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .pod-nav { display: flex; gap: .4rem; flex-wrap: wrap; }
+/* Tendencias: tarjetas */
+.trend-card { display: block; text-decoration: none; color: inherit; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 10px; padding: .7rem .9rem; margin-bottom: .7rem; }
+.trend-card:hover { border-color: var(--accent); }
+.trend-card .item-headline { margin: .2rem 0 .4rem; }
+.cover-group { margin: .6rem 0; }
+.cover-group h4 { margin: .3rem 0; }
+
 .pod-section-title { font-size: 1rem; margin: 1.2rem 0 .6rem; }
 .pod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; margin-top: .2rem; }
 .pod-rail { display: flex; gap: .9rem; overflow-x: auto; padding-bottom: .5rem; scroll-snap-type: x proximity; }

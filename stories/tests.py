@@ -209,3 +209,72 @@ class SynthesisTests(TestCase):
         self.assertIn("<h3>Título</h3>", out)
         self.assertIn("<strong>clave</strong>", out)
         self.assertIn("&lt;script&gt;", out)            # HTML escapado (seguro)
+
+
+class TrendingTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        self.U = get_user_model()
+        self.user = self.U.objects.create_user("tu_real", "", "pw-tr-12345")
+        self.client.login(username="tu_real", password="pw-tr-12345")
+
+    def test_top_headlines_cleans_source_suffix(self):
+        from unittest import mock
+        from stories import trending
+
+        class _P:
+            entries = [{"title": "Gran noticia - El País"}, {"title": "Otra cosa - RTVE"},
+                       {"title": "Gran noticia - El País"}]  # duplicado
+        with mock.patch("stories.trending.feedparser.parse", return_value=_P()):
+            heads = trending.top_headlines("ES", limit=10)
+        self.assertEqual(heads, ["Gran noticia", "Otra cosa"])
+
+    def test_fetch_trending_creates_articles_for_system_user(self):
+        from unittest import mock
+        from django.core.management import call_command
+        from articles.models import Article
+        from stories.trending import trending_user
+
+        results = [{"url": "https://a.com/1", "title": "T1", "snippet": "s"},
+                   {"url": "https://b.com/2", "title": "T2", "snippet": "s"}]
+        with mock.patch("stories.trending.top_headlines", return_value=["Titular"]), \
+             mock.patch("aifeeds.search.web_search", return_value=results):
+            call_command("fetch_trending", "--country", "ES", "--force")
+        tu = trending_user("ES")
+        self.assertEqual(Article.objects.filter(feed__user=tu).count(), 2)
+        # No aparecen en el lector del usuario real.
+        self.assertEqual(Article.objects.filter(feed__user=self.user).count(), 0)
+
+    def _trend_story(self, cc="ES", headline="Suceso"):
+        from stories.models import Story, StoryArticle
+        from stories.trending import trending_user, trending_feed
+        from feeds.models import Source
+        from articles.models import Article
+        tu = trending_user(cc); feed = trending_feed(cc)
+        st = Story.objects.create(user=tu, headline=headline,
+                                  bias_distribution={"left": 1, "center": 1})
+        for i, dom in enumerate(["l.com", "c.com"]):
+            src, _ = Source.objects.get_or_create(domain=dom, defaults={"name": dom, "bias": "left" if i == 0 else "center"})
+            a = Article.objects.create(feed=feed, source=src, guid=f"{cc}{i}", title=f"a{i}",
+                                       url=f"https://{dom}/{i}")
+            StoryArticle.objects.create(story=st, article=a, similarity=0.9)
+        return st
+
+    def test_trending_view_shows_country_only(self):
+        es = self._trend_story("ES", "Noticia ES")
+        self._trend_story("US", "News US")
+        r = self.client.get("/trending/")  # país por defecto ES
+        self.assertContains(r, "Noticia ES")
+        self.assertNotContains(r, "News US")
+
+    def test_trending_detail_rejects_user_story(self):
+        from stories.models import Story
+        mine = Story.objects.create(user=self.user, headline="Mía")
+        self.assertEqual(self.client.get(f"/trending/{mine.pk}/").status_code, 404)
+        es = self._trend_story("ES")
+        self.assertEqual(self.client.get(f"/trending/{es.pk}/").status_code, 200)
+
+    def test_set_country_saves_pref(self):
+        from accounts.models import UserConfig
+        self.client.post("/trending/country/", {"country": "US"})
+        self.assertEqual(UserConfig.objects.get(user=self.user).data["trending_country"], "US")
