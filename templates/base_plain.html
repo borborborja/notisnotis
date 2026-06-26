@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}NotisNotis{% endblock %}</title>
+  <title>{% block title %}facet.news{% endblock %}</title>
   <script>(function(){var t=localStorage.getItem('nn_theme')||'auto';var d=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');})();</script>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
@@ -12,7 +12,7 @@
   {% include "partials/icons.html" %}
   <main class="plain-main">
     <div class="plain-box">
-      <h1 class="brand"><svg class="ic ic-lg"><use href="#i-rss"/></svg> NotisNotis</h1>
+      <h1 class="brand"><svg class="ic ic-lg"><use href="#i-rss"/></svg> facet.news</h1>
       {% for message in messages %}<div class="msg msg-{{ message.tags }}">{{ message }}</div>{% endfor %}
       {% block content %}{% endblock %}
     </div>

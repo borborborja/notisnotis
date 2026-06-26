@@ -1,6 +1,6 @@
 {
-  "name": "NotisNotis",
-  "short_name": "NotisNotis",
+  "name": "facet.news",
+  "short_name": "facet.news",
   "description": "Lector RSS self-hosted + agregador con IA",
   "start_url": "/",
   "scope": "/",

@@ -124,7 +124,7 @@ def opml_export(request):
     from xml.sax.saxutils import escape
 
     lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<opml version="1.0">',
-             "<head><title>NotisNotis</title></head>", "<body>"]
+             "<head><title>facet.news</title></head>", "<body>"]
     for f in Feed.objects.filter(user=request.api_user).select_related("source"):
         title = escape(f.title or f.source.name)
         lines.append(f'<outline type="rss" text="{title}" title="{title}" '

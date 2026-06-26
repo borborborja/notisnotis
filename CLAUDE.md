@@ -1,4 +1,4 @@
-# NotisNotis — guía para agentes/LLM
+# facet.news — guía para agentes/LLM
 
 > **LÉEME ANTES DE TOCAR NADA.** Este archivo es el contrato de mantenimiento.
 > Si vas a cambiar algo, primero busca el patrón existente y replícalo. No inventes
@@ -6,7 +6,7 @@
 > [`docs/ROADMAP.md`](docs/ROADMAP.md), [`docs/DEPLOY.md`](docs/DEPLOY.md),
 > [`docs/REFERENCES.md`](docs/REFERENCES.md) (qué proyecto mirar ante cada duda).
 
-## 1. Qué es NotisNotis
+## 1. Qué es facet.news
 Lector de RSS **self-hosted** estilo Feedly + agregador estilo **Ground News**, con IA.
 Dos productos en uno:
 - **Agregador**: agrupa noticias de varias fuentes sobre un mismo suceso (embeddings +

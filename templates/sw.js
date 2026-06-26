@@ -1,4 +1,4 @@
-// Service worker de NotisNotis (servido en /sw.js → scope raíz). Caché offline + Web Push.
+// Service worker de facet.news (servido en /sw.js → scope raíz). Caché offline + Web Push.
 const CACHE = "notisnotis-v1";
 const AUDIO = "nn-audio";   // episodios descargados para escuchar sin conexión
 const SHELL = [
@@ -67,7 +67,7 @@ self.addEventListener("fetch", (e) => {
 self.addEventListener("push", (e) => {
   let data = {};
   try { data = e.data ? e.data.json() : {}; } catch (err) { data = {}; }
-  e.waitUntil(self.registration.showNotification(data.title || "NotisNotis", {
+  e.waitUntil(self.registration.showNotification(data.title || "facet.news", {
     body: data.body || "", data: { url: data.url || "/" }, icon: "/static/icons/icon.svg",
   }));
 });

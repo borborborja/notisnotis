@@ -1,4 +1,4 @@
-NotisNotis — resumen {% if days == 7 %}semanal{% else %}diario{% endif %}
+facet.news — resumen {% if days == 7 %}semanal{% else %}diario{% endif %}
 
 {% if blindspots %}== Blindspots =={% for s in blindspots %}
 - {{ s.headline }} ({{ s.article_count }} fuentes)
@@ -9,4 +9,4 @@ NotisNotis — resumen {% if days == 7 %}semanal{% else %}diario{% endif %}
   {{ a.url }}
 {% endfor %}
 
-— NotisNotis
+— facet.news

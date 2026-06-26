@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ list_title }} · NotisNotis{% endblock %}
+{% block title %}{{ list_title }} · facet.news{% endblock %}
 {% block content %}
 <div class="reader">
   <div class="list-col">
@@ -35,7 +35,7 @@
         <div class="reading-empty empty-cta">
           <p><strong>Aún no tienes noticias.</strong></p>
           <p class="muted">Importa tus suscripciones (archivo OPML) o añade una fuente.
-            NotisNotis descargará y agrupará las noticias por ti automáticamente cada pocos minutos.</p>
+            facet.news descargará y agrupará las noticias por ti automáticamente cada pocos minutos.</p>
           <p class="empty-actions">
             <a class="btn" href="{% url 'feeds:upload_opml' %}"><svg class="ic"><use href="#i-upload"/></svg> Importar OPML</a>
             <a class="btn btn-ghost" href="{% url 'feeds:feed_list' %}">Gestionar fuentes</a>

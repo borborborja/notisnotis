@@ -61,7 +61,7 @@ def send_digest_to(user, frequency, *, connection=None, dry_run=False):
 
     conn = connection or _connection(smtp)
     msg = EmailMultiAlternatives(
-        subject=f"NotisNotis · resumen {'semanal' if days == 7 else 'diario'}",
+        subject=f"facet.news · resumen {'semanal' if days == 7 else 'diario'}",
         body=text, from_email=smtp["smtp_from"], to=[to], connection=conn,
     )
     msg.attach_alternative(html, "text/html")

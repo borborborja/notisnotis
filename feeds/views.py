@@ -114,7 +114,7 @@ def export_opml(request):
         return f'      <outline text={title} title={title} type="rss" xmlUrl={quoteattr(f.url)} htmlUrl={quoteattr("https://" + f.source.domain)}/>'
 
     lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<opml version="2.0">',
-             "  <head><title>NotisNotis</title></head>", "  <body>"]
+             "  <head><title>facet.news</title></head>", "  <body>"]
     for cat, items in sorted(by_cat.items(), key=lambda kv: (kv[0] is None, kv[0] or "")):
         if cat:
             lines.append(f"    <outline text={quoteattr(cat)} title={quoteattr(cat)}>")

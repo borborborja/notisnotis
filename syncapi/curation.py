@@ -51,7 +51,7 @@ def enriched_html(article, user) -> str:
 
     from stories.synthesis import render_markdown
 
-    parts = [base, '<hr><p><strong>— Curación · NotisNotis —</strong></p>',
+    parts = [base, '<hr><p><strong>— Curación · facet.news —</strong></p>',
              f"<p><strong>Sesgo de la fuente:</strong> {_html.escape(article.source.get_bias_display())}</p>"]
     if article.context:
         parts.append(f"<h4>Contexto</h4><p>{_html.escape(article.context)}</p>")

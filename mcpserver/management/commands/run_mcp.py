@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
-    help = "Arranca el servidor MCP de NotisNotis (requiere Python >= 3.10 y el paquete mcp)."
+    help = "Arranca el servidor MCP de facet.news (requiere Python >= 3.10 y el paquete mcp)."
 
     def add_arguments(self, parser):
         parser.add_argument("--http", action="store_true", help="transporte HTTP/SSE en vez de stdio")

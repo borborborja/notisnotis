@@ -1,6 +1,6 @@
 # Módulos / sectores
 
-NotisNotis se divide en tres **sectores** que se pueden encender o apagar enteros:
+facet.news se divide en tres **sectores** que se pueden encender o apagar enteros:
 
 | Módulo | Qué incluye | Se puede apagar |
 |---|---|---|

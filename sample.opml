@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
-  <head><title>NotisNotis sample feeds</title></head>
+  <head><title>facet.news sample feeds</title></head>
   <body>
     <outline text="Generalistas" title="Generalistas">
       <outline text="BBC News" title="BBC News" type="rss"

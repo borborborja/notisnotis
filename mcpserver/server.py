@@ -1,4 +1,4 @@
-"""Servidor MCP de NotisNotis (FastMCP).
+"""Servidor MCP de facet.news (FastMCP).
 
 Requiere Python >= 3.10 (dependencia del SDK `mcp`). Reutiliza la ORM de Django.
 Autenticación por token de API: variable de entorno NOTISNOTIS_API_TOKEN → resuelve

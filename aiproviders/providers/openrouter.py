@@ -32,7 +32,7 @@ class OpenRouterChatProvider(BaseChatProvider):
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
                 "HTTP-Referer": "https://github.com/notisnotis",
-                "X-Title": "NotisNotis",
+                "X-Title": "facet.news",
             },
             json=payload,
             timeout=self.config.get("timeout", 120),

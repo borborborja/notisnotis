@@ -1,4 +1,4 @@
-"""Django settings for NotisNotis."""
+"""Django settings for facet.news."""
 from pathlib import Path
 
 import dj_database_url
@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # NotisNotis apps
+    # facet.news apps
     "accounts",
     "aiproviders",
     "feeds",
@@ -177,7 +177,7 @@ LOGIN_REDIRECT_URL = "stories:home"
 LOGOUT_REDIRECT_URL = "login"
 
 # ---------------------------------------------------------------------------
-# NotisNotis / IA
+# facet.news / IA
 # ---------------------------------------------------------------------------
 AI = {
     # Proveedor para chat (resúmenes, sesgo, enriquecimiento): mock|openrouter|ollama|ollama_cloud
@@ -204,7 +204,7 @@ AI = {
     "TRANSCRIBE_TIMEOUT": int(os.environ.get("AI_TRANSCRIBE_TIMEOUT", "1800")),
 }
 
-RSS_USER_AGENT = os.environ.get("RSS_USER_AGENT", "NotisNotis/0.1")
+RSS_USER_AGENT = os.environ.get("RSS_USER_AGENT", "facet.news/0.1")
 # Buscador web para los "feeds con IA" (SearXNG con salida JSON). Por defecto el del stack.
 SEARCH_URL = os.environ.get("SEARCH_URL", "http://searxng:8080")
 SEARCH_LANG = os.environ.get("SEARCH_LANG", "es")
@@ -231,7 +231,7 @@ LOGGING = {
     "root": {"handlers": ["console"], "level": LOG_LEVEL},
     "loggers": {
         "django": {"handlers": ["console"], "level": LOG_LEVEL, "propagate": False},
-        # Apps de NotisNotis: heredan del root, pero las dejamos explícitas para ajustarlas.
+        # Apps de facet.news: heredan del root, pero las dejamos explícitas para ajustarlas.
         "notisnotis": {"handlers": ["console"], "level": LOG_LEVEL, "propagate": False},
     },
 }

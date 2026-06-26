@@ -1,4 +1,4 @@
-# NotisNotis
+# facet.news
 
 Agregador de noticias self-hosted estilo **Ground News** + **lector RSS enriquecido**,
 con análisis por LLM. Tú aportas las API keys (OpenRouter / Ollama / Ollama-cloud);

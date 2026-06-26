@@ -41,7 +41,7 @@
   <p><a class="btn btn-ghost" href="{% url 'account_export' %}"><svg class="ic"><use href="#i-download"/></svg> Exportar mis datos (JSON)</a></p>
   <form method="post" action="{% url 'account_import' %}" enctype="multipart/form-data">{% csrf_token %}
     <div class="form-row">
-      <label>Importar (JSON de NotisNotis, o export de Pocket/Instapaper)</label>
+      <label>Importar (JSON de facet.news, o export de Pocket/Instapaper)</label>
       <input type="file" name="file" accept=".json,.html,.csv" required>
     </div>
     <button class="btn btn-ghost" type="submit"><svg class="ic"><use href="#i-upload"/></svg> Importar</button>

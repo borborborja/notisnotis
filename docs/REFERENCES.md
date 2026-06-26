@@ -2,9 +2,9 @@
 
 Cuando tengas dudas de **cómo implementar** algo, mira primero estos proyectos. Cuando
 la duda sea **cómo debería comportarse** (productos cerrados), mira las descripciones de
-comportamiento. Mapea siempre la feature de NotisNotis a su referencia antes de inventar.
+comportamiento. Mapea siempre la feature de facet.news a su referencia antes de inventar.
 
-> Nota: NotisNotis es Django/Python + htmx. Las referencias en Go/PHP/JS valen por su
+> Nota: facet.news es Django/Python + htmx. Las referencias en Go/PHP/JS valen por su
 > **diseño y comportamiento**, no para copiar código literal.
 
 ---
@@ -104,7 +104,7 @@ folder/feed/item claro.
 
 ---
 
-## D. Mapa rápido: feature de NotisNotis → dónde mirar
+## D. Mapa rápido: feature de facet.news → dónde mirar
 | Feature | Mira |
 |---|---|
 | Fever / Google Reader API | miniflux `internal/fever`, `internal/googlereader`; spec Fever; FreshRSS |

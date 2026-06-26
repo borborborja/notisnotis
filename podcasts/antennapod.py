@@ -1,6 +1,6 @@
 """Importador de backups de AntennaPod (export de base de datos `.db`, SQLite).
 
-Reconstruye en NotisNotis toda la información del backup y la expone como funciones del módulo
+Reconstruye en facet.news toda la información del backup y la expone como funciones del módulo
 de podcasts: suscripciones, estado escuchado, posición de reproducción (resumen), duración,
 favoritos, cola Up Next, velocidad y skip intro/outro por podcast, capítulos y carpetas.
 
