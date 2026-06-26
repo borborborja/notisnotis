@@ -1,0 +1,16 @@
+{# Tarjeta de propuesta. Al decidir, htmx la elimina (swap outerHTML con respuesta vacía). #}
+<div class="cand-card" id="cand-{{ c.pk }}">
+  <div class="cand-head">
+    <span class="cand-score" title="Relevancia estimada">{{ c.score }}/10</span>
+    <a class="cand-title" href="{{ c.url }}" target="_blank" rel="noopener">{{ c.title }}
+      <svg class="ic"><use href="#i-external"/></svg></a>
+  </div>
+  {% if c.snippet %}<p class="cand-snippet muted">{{ c.snippet|truncatewords:40 }}</p>{% endif %}
+  {% if c.reason %}<p class="item-meta">IA: {{ c.reason }}</p>{% endif %}
+  <div class="cand-actions">
+    <button class="btn" hx-post="{% url 'aifeeds:decide' c.pk %}" hx-vals='{"decision": "accept"}'
+            hx-target="#cand-{{ c.pk }}" hx-swap="outerHTML">Encaja</button>
+    <button class="btn btn-ghost" hx-post="{% url 'aifeeds:decide' c.pk %}" hx-vals='{"decision": "reject"}'
+            hx-target="#cand-{{ c.pk }}" hx-swap="outerHTML">No encaja</button>
+  </div>
+</div>

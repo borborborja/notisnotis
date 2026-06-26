@@ -14,6 +14,12 @@
   <a href="{% url 'articles:list' %}?filter=saved" class="sb-item">
     <span><svg class="ic"><use href="#i-star"/></svg> Guardados</span>{% if sidebar_counts.saved %}<span class="sb-count">{{ sidebar_counts.saved }}</span>{% endif %}
   </a>
+</nav>
+
+<div class="sb-section" data-section="curation">
+<button class="sb-section-head" type="button" data-section-toggle><span class="caret">▸</span> Curación IA</button>
+<div class="sb-section-body">
+<nav class="sb-nav">
   <a href="{% url 'stories:home' %}" class="sb-item">
     <span><svg class="ic"><use href="#i-layers"/></svg> Historias</span>{% if sidebar_counts.stories %}<span class="sb-count">{{ sidebar_counts.stories }}</span>{% endif %}
   </a>
@@ -24,7 +30,9 @@
   {% if 'bias_diet' in features %}<a href="{% url 'stories:bias_diet' %}" class="sb-item"><span><svg class="ic"><use href="#i-grid"/></svg> Mi dieta</span></a>{% endif %}
   {% if 'topics' in features %}<a href="{% url 'stories:topic_list' %}" class="sb-item"><span><svg class="ic"><use href="#i-search"/></svg> Temas</span></a>{% endif %}
   {% if 'compare' in features %}<a href="{% url 'stories:compare' %}" class="sb-item"><span><svg class="ic"><use href="#i-layers"/></svg> Comparar</span></a>{% endif %}
+  {% if 'aifeeds' in features %}<a href="{% url 'aifeeds:list' %}" class="sb-item"><span><svg class="ic"><use href="#i-sparkles"/></svg> Feeds con IA</span></a>{% endif %}
 </nav>
+</div></div>
 
 <hr class="sb-sep">
 <div class="sb-section" data-section="sources">

@@ -24,6 +24,7 @@ urlpatterns = [
     path("api/", include("syncapi.urls")),
     path("notifications/", include("notifications.urls")),
     path("feeds/", include("feeds.urls")),
+    path("aifeeds/", include("aifeeds.urls")),
     path("articles/", include("articles.urls")),
     path("", include("stories.urls")),
 ]

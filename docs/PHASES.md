@@ -157,3 +157,25 @@ CSV) e Instapaper (CSV) → crear artículos guardados / feeds. Botones en Ajust
 
 **Aceptación:** export produce JSON re-importable que reconstruye el estado; import de Pocket
 crea entradas guardadas. **Verificar:** test round-trip export→import; parseo de un CSV de muestra.
+
+---
+
+## Fase futura · Fuentes de PODCAST (y vídeo/YouTube)
+**Objetivo:** sección nueva en el menú lateral "Fuentes podcast". El usuario importa un OPML
+de podcasts (y canales de YouTube), la app muestra un **reproductor** y además la
+**transcripción automática** del episodio; trata cada episodio como un **artículo normal**
+(resumir, traducir, chat, contexto, tags, leído/guardado, embeddings/clustering).
+
+**Notas de diseño:**
+- Reutilizar `Article` (el feed de podcast ya guarda `enclosure_url`/`enclosure_type` audio).
+  Un episodio = Article con audio; añadir campo de transcripción (o reusar `full_text`).
+- Transcripción automática (Whisper local u OpenAI) como una tarea de IA más (rama en `mock`).
+- Reproductor de audio/vídeo en el lector (ya hay `<audio>/<video>` en `_reading_pane.html`).
+- YouTube: tratar el canal como feed (RSS de YouTube) + transcripción de subtítulos.
+- **Ajustes → API:** toggle para que las APIs de sync (Fever/GReader) muestren o no la
+  transcripción del podcast (igual que el modo curación actual `sync_curation`).
+
+## Fase futura · Servidor gpodder (sync de escuchados)
+Incorporar un servicio **gpodder** para sincronizar episodios reproducidos/no reproducidos
+con apgs de podcast (AntennaPod, etc.). Activable desde **Ajustes → API** (como servicio
+integrado, no solo como endpoint). Mapear "reproducido" ↔ `is_read`.

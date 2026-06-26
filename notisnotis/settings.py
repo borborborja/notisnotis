@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "syncapi",
     "notifications",
     "features",
+    "aifeeds",
     # 2FA (TOTP + códigos de recuperación)
     "django_otp",
     "django_otp.plugins.otp_totp",
@@ -192,6 +193,9 @@ AI = {
 }
 
 RSS_USER_AGENT = os.environ.get("RSS_USER_AGENT", "NotisNotis/0.1")
+# Buscador web para los "feeds con IA" (SearXNG con salida JSON). Por defecto el del stack.
+SEARCH_URL = os.environ.get("SEARCH_URL", "http://searxng:8080")
+SEARCH_LANG = os.environ.get("SEARCH_LANG", "es")
 # Recuperación de texto completo / muros de pago (off por defecto)
 FULLTEXT_ENABLED = env_bool("FULLTEXT_ENABLED", False)
 FULLTEXT_BOT_UA = os.environ.get(

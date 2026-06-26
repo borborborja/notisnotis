@@ -20,6 +20,10 @@ class Command(BaseCommand):
         if not opts["skip_fetch"]:
             run("compute_intervals", **user_args)  # modo inteligente: ajusta cadencias
             run("fetch_feeds", **user_args)         # solo descarga feeds vencidos
+            try:
+                run("run_aifeeds", **user_args)     # busca por web y propone (feeds con IA)
+            except Exception as exc:  # noqa: BLE001 - el buscador no debe tumbar el pipeline
+                self.stderr.write(f"[aifeeds] {exc}")
         run("embed_articles", **user_args)
         run("enrich_articles", **user_args)  # solo enriquece usuarios en modo batch
         run("cluster_stories", **user_args)

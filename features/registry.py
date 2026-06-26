@@ -37,6 +37,7 @@ _F = [
     Feature("import_export", "Importar/exportar y OPML", "free", False, "core"),
     Feature("bias_diet", "Dieta informativa", "free", False, "aggregator"),
     Feature("twofa", "Verificación en dos pasos (2FA)", "free", False, "account"),
+    Feature("aifeeds", "Feeds con IA (búsqueda web)", "pro", True, "ai"),
     # pro
     Feature("enrich", "Enriquecimiento IA (contexto/claims)", "pro", False, "ai"),
     Feature("translate", "Traducir artículos", "pro", False, "ai"),

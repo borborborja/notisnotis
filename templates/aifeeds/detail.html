@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ ai.name }} · Feeds con IA{% endblock %}
+{% block content %}
+<div class="page">
+  <p class="item-meta"><a href="{% url 'aifeeds:list' %}">← Feeds con IA</a></p>
+  <h1>{{ ai.name }}</h1>
+  <p class="muted">{{ ai.description }}</p>
+
+  <div class="page-actions">
+    <form method="post" action="{% url 'aifeeds:search' ai.pk %}" class="inline">{% csrf_token %}
+      <button class="btn" type="submit"><svg class="ic"><use href="#i-refresh"/></svg> Buscar ahora</button>
+    </form>
+    {% if ai.feed_id %}<a class="btn btn-ghost" href="{% url 'articles:list' %}?feed={{ ai.feed_id }}">Ver artículos del feed</a>{% endif %}
+    <form method="post" action="{% url 'aifeeds:delete' ai.pk %}" class="inline"
+          onsubmit="return confirm('¿Eliminar este feed con IA? (sus artículos aceptados se conservan)')">{% csrf_token %}
+      <button class="btn btn-ghost" type="submit">Eliminar</button>
+    </form>
+  </div>
+
+  <h3>Propuestas por revisar</h3>
+  <p class="muted">Marca cuáles encajan: las que aceptes se añaden a tu lector y la app aprende
+    de tus decisiones para afinar las siguientes.</p>
+  <div class="cand-list">
+    {% for c in pending %}
+      {% include "aifeeds/_candidate.html" with c=c %}
+    {% empty %}
+      <p class="muted">No hay propuestas pendientes. Pulsa “Buscar ahora”.</p>
+    {% endfor %}
+  </div>
+
+  {% if accepted %}
+  <h3>Aceptadas recientemente</h3>
+  <ul class="related-list">
+    {% for c in accepted %}
+      <li><a href="{% if c.article_id %}{% url 'articles:detail' c.article_id %}{% else %}{{ c.url }}{% endif %}">
+        <span class="rel-source">{{ c.score }}/10</span><span class="rel-title">{{ c.title }}</span></a></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endblock %}

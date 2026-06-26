@@ -31,6 +31,10 @@ class MockChatProvider(BaseChatProvider):
                 "factuality": "mixed",
                 "reasoning": "[mock] estimación determinista para desarrollo.",
             }
+        if "queries" in low or "consultas" in low:
+            return {"queries": ["[mock] noticias recientes", "[mock] novedades"]}
+        if "scores" in low or "relevancia" in low:
+            return {"scores": []}  # vacío → el servicio asigna min_score (deja pasar)
         if "perspectiv" in low or "headline" in low or "blindspot" in low:
             return {
                 "headline": "[mock] Titular agregado de la historia",

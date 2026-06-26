@@ -1,0 +1,21 @@
+# SearXNG para NotisNotis: motor de búsqueda self-hosted para los "feeds con IA".
+# Hereda los valores por defecto y solo cambia lo imprescindible: salida JSON (para
+# consumirla desde la app) y limiter off (las consultas vienen del servidor, no de un
+# navegador). El secret_key lo inyecta el entrypoint del image desde $SEARXNG_SECRET.
+use_default_settings: true
+
+general:
+  instance_name: "NotisNotis Search"
+  donation_url: false
+
+server:
+  secret_key: "ultrasecretkey"
+  limiter: false
+  image_proxy: false
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  formats:
+    - html
+    - json

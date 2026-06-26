@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Feeds con IA · NotisNotis{% endblock %}
+{% block content %}
+<div class="page">
+  <h1>Feeds con IA</h1>
+  <p class="muted">Describe un tema y la app busca noticias por internet, te propone y aprende de
+    lo que marcas como “encaja” o “no encaja”. No usa tus RSS.</p>
+
+  <div class="card">
+    <h3>Nuevo feed con IA</h3>
+    <form method="post" action="{% url 'aifeeds:list' %}">{% csrf_token %}
+      <div class="form-row"><label>Nombre</label>
+        <input type="text" name="name" placeholder="IA local y LLM" required></div>
+      <div class="form-row"><label>¿Qué noticias quieres?</label>
+        <textarea name="description" placeholder="Noticias sobre IA que corre en local, modelos open source, novedades en LLM…" required></textarea></div>
+      <button class="btn" type="submit"><svg class="ic"><use href="#i-sparkles"/></svg> Crear feed con IA</button>
+    </form>
+  </div>
+
+  {% for f in feeds %}
+    <div class="card">
+      <h3><a href="{% url 'aifeeds:detail' f.pk %}">{{ f.name }}</a></h3>
+      <p class="muted">{{ f.description|truncatewords:30 }}</p>
+      <p class="item-meta">
+        {% if f.n_pending %}<strong>{{ f.n_pending }} por revisar</strong> · {% endif %}
+        {{ f.n_accepted }} aceptadas{% if f.last_run %} · última búsqueda {{ f.last_run|date:"d M H:i" }}{% endif %}
+      </p>
+      <a class="btn btn-ghost" href="{% url 'aifeeds:detail' f.pk %}">Abrir</a>
+    </div>
+  {% empty %}
+    <p class="muted">Aún no tienes feeds con IA. Crea uno arriba.</p>
+  {% endfor %}
+</div>
+{% endblock %}
