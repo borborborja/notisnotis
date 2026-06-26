@@ -14,7 +14,28 @@
   </nav>
 </div>
 
+{% if in_progress %}
+<h2 class="pod-section-title">Continuar escuchando</h2>
+<div class="pod-rail">
+  {% for ep in in_progress %}
+    <div class="pod-rail-card">
+      <button class="pod-rail-cover" title="Reproducir" data-ep-play data-ep-id="{{ ep.pk }}"
+        data-ep-src="{{ ep.enclosure_url }}" data-ep-title="{{ ep.title }}"
+        data-ep-feed="{{ ep.feed.title|default:ep.source.name }}"
+        data-ep-art="{{ ep.image_url|default:ep.feed.image_url }}" data-ep-pos="{{ ep.play_position }}"
+        data-ep-speed="{{ ep.feed.playback_speed }}">
+        {% if ep.image_url or ep.feed.image_url or ep.source.favicon %}<img data-ph src="{{ ep.image_url|default:ep.feed.image_url|default:ep.source.favicon }}" alt="">{% else %}<span class="pod-cover-ph"><svg class="ic"><use href="#i-mic"/></svg></span>{% endif %}
+        <span class="pod-rail-play"><svg class="ic"><use href="#i-play"/></svg></span>
+      </button>
+      {% if ep.duration %}<div class="ep-progress"><span style="width:{% widthratio ep.play_position ep.duration 100 %}%"></span></div>{% endif %}
+      <a href="{% url 'articles:detail' ep.pk %}" class="pod-rail-title">{{ ep.title }}</a>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% if feeds %}
+<h2 class="pod-section-title">Tus podcasts</h2>
 <div class="pod-grid">
   {% for f in feeds %}
     <a class="pod-card" href="{% url 'podcasts:detail' f.pk %}" title="{{ f.title|default:f.source.name }}">

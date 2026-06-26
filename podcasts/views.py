@@ -34,10 +34,11 @@ def home(request):
              .annotate(unplayed=Count("articles", filter=Q(articles__is_read=False)))
              .order_by("title"))
     queue_n = QueueItem.objects.filter(user=request.user).count()
-    in_progress_n = _episodes(request).filter(play_position__gt=0, is_read=False).count()
+    in_progress_qs = _episodes(request).filter(play_position__gt=0, is_read=False).order_by("-play_updated_at")
+    in_progress = list(in_progress_qs[:10])
     return render(request, "podcasts/home.html", {
-        "feeds": feeds, "queue_n": queue_n, "in_progress_n": in_progress_n,
-        "active": "podcasts",
+        "feeds": feeds, "queue_n": queue_n, "in_progress": in_progress,
+        "in_progress_n": in_progress_qs.count(), "active": "podcasts",
     })
 
 

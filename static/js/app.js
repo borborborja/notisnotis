@@ -175,7 +175,15 @@
       els.toggle.querySelector("use").setAttribute("href", playing ? "#i-pause" : "#i-play");
     }
 
-    function play(ep) {
+    function markNowPlaying(id) {
+      document.querySelectorAll(".ep-playing").forEach(function (el) { el.classList.remove("ep-playing"); });
+      if (!id) return;
+      document.querySelectorAll('.ep-row [data-ep-id="' + id + '"]').forEach(function (b) {
+        var row = b.closest(".ep-row"); if (row) row.classList.add("ep-playing");
+      });
+    }
+
+    function load(ep, autoplay) {
       cur = ep;
       bar.hidden = false;
       document.body.classList.add("player-on");
@@ -193,9 +201,20 @@
         if (resume > 0 && resume < (audio.duration - 5)) audio.currentTime = resume;
       });
       try { localStorage.setItem("nn_player", JSON.stringify(ep)); } catch (e) {}
-      audio.play().catch(function () {});
+      markNowPlaying(ep.id);
+      if (autoplay) audio.play().catch(function () {});
+    }
+
+    function play(ep) {
+      // Si ya es el episodio cargado, alternar en vez de reiniciar.
+      if (cur && ep && String(cur.id) === String(ep.id) && audio.src) {
+        audio.paused ? audio.play() : audio.pause();
+        return;
+      }
+      load(ep, true);
     }
     window.nnPlay = play;   // otras partes (listas, cola) pueden invocarlo
+    window.nnMarkPlaying = function () { if (cur) markNowPlaying(cur.id); };
 
     document.addEventListener("click", function (e) {
       var btn = e.target.closest("[data-ep-play]");
@@ -263,6 +282,21 @@
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") saveProgress(true);
     });
+
+    // Barra espaciadora: play/pausa (si hay episodio cargado y no estás escribiendo).
+    document.addEventListener("keydown", function (e) {
+      if (e.code !== "Space" || !cur) return;
+      var t = e.target.tagName;
+      if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT" || e.target.isContentEditable) return;
+      e.preventDefault();
+      audio.paused ? audio.play() : audio.pause();
+    });
+
+    // Restaurar el último episodio al recargar (en pausa, en su posición guardada).
+    try {
+      var saved = JSON.parse(localStorage.getItem("nn_player") || "null");
+      if (saved && saved.src) load(saved, false);
+    } catch (e) {}
   }
 
   // ---- Listas de podcasts: cola, escuchado, reproducir-cola, reordenar ----
@@ -664,14 +698,32 @@
     if (e.target && (e.target.id === "content" || e.target.id === "reading-pane")) {
       runPerswap();
       try { observeAutomark(); } catch (err) {}
+      try { if (window.nnMarkPlaying) window.nnMarkPlaying(); } catch (err) {}
+      try { updateSidebarActive(); } catch (err) {}
     }
   });
+
+  // Barra de progreso superior durante la navegación htmx.
+  document.body.addEventListener("htmx:beforeRequest", function () {
+    var p = document.getElementById("nn-progress"); if (p) p.classList.add("on");
+  });
+  document.body.addEventListener("htmx:afterRequest", function () {
+    var p = document.getElementById("nn-progress"); if (p) p.classList.remove("on");
+  });
+
+  // Marca el enlace del sidebar que coincide con la URL actual.
+  function updateSidebarActive() {
+    var here = location.pathname + location.search;
+    document.querySelectorAll(".sidebar a.sb-item").forEach(function (a) {
+      a.classList.toggle("sb-active", (a.getAttribute("href") || "") === here);
+    });
+  }
 
   document.addEventListener("DOMContentLoaded", function () {
     // Una-vez (sidebar/reproductor/document, persistentes) + por-swap. Cada init aislado.
     [initGroups, initSections, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
-     initResizers, initPush, initPWA, initPlayer, initPodcasts, initDownloads, initImageFallback]
-      .concat(PERSWAP).forEach(function (fn) {
+     initResizers, initPush, initPWA, initPlayer, initPodcasts, initDownloads, initImageFallback,
+     updateSidebarActive].concat(PERSWAP).forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });
     var h = document.querySelector("[data-help-close]");

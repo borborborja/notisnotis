@@ -17,6 +17,7 @@
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
       hx-boost="true" hx-target="#content" hx-select="#content" hx-swap="outerHTML show:window:top">
   {% include "partials/icons.html" %}
+  <div id="nn-progress" aria-hidden="true"></div>
   <button class="sidebar-toggle" data-sidebar-toggle aria-label="Menú"><svg class="ic"><use href="#i-menu"/></svg></button>
   <aside class="sidebar" data-sidebar>
     {% include "partials/sidebar.html" %}
