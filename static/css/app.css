@@ -435,3 +435,10 @@ body.resizing iframe { pointer-events: none; }
 .cand-title { font-weight: 650; }
 .cand-snippet { margin: .35rem 0; font-size: .9rem; }
 .cand-actions { display: flex; gap: .5rem; margin-top: .5rem; }
+
+/* ---------- Subpestañas (Ajustes) ---------- */
+.subtabs { display: flex; gap: .3rem; border-bottom: 1px solid var(--border); margin: .4rem 0 1rem; }
+.subtab { background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted);
+  padding: .5rem .8rem; cursor: pointer; font: inherit; font-weight: 600; }
+.subtab:hover { color: var(--text); }
+.subtab.active { color: var(--accent); border-bottom-color: var(--accent); }

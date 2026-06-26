@@ -28,6 +28,12 @@
         artículo el contexto, las afirmaciones señaladas, el sesgo, la noticia contrastada y las
         otras fuentes de su historia. Así la curación se ve en cualquier lector externo.</p>
     </div>
+    <div class="form-row">
+      <label class="switch"><input type="checkbox" name="sync_aifeeds" value="1" {% if sync_aifeeds %}checked{% endif %}>
+        <span>Incluir las fuentes IA en la sincronización</span></label>
+      <p class="field-help muted">Si lo desactivas, los artículos de tus “Feeds con IA” no se
+        envían por Fever/Google Reader (tu lector externo queda solo con tus RSS).</p>
+    </div>
     <button class="btn btn-ghost" type="submit">Guardar</button>
   </form>
 </div>

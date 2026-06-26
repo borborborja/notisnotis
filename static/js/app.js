@@ -300,6 +300,21 @@
     });
   }
 
+  // Subpestañas (p.ej. Ajustes → Actualización: RSS / IA / Audio).
+  function initSubtabs() {
+    var tabs = document.querySelectorAll("[data-subtab]");
+    if (!tabs.length) return;
+    tabs.forEach(function (t) {
+      t.addEventListener("click", function () {
+        var key = t.getAttribute("data-subtab");
+        tabs.forEach(function (x) { x.classList.toggle("active", x === t); });
+        document.querySelectorAll("[data-subpane]").forEach(function (p) {
+          p.hidden = p.getAttribute("data-subpane") !== key;
+        });
+      });
+    });
+  }
+
   // Ajustes de IA: mostrar solo la conexión del proveedor seleccionado.
   function initAiProvider() {
     document.querySelectorAll("[data-ai-provider]").forEach(function (sel) {
@@ -317,7 +332,8 @@
   document.addEventListener("DOMContentLoaded", function () {
     // Cada init aislado: que un fallo no impida el resto.
     [initGroups, initSections, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
-     initResizers, initTypeControls, initPush, initPWA, initAiProvider, initRangeOutputs].forEach(function (fn) {
+     initResizers, initTypeControls, initPush, initPWA, initAiProvider, initRangeOutputs,
+     initSubtabs].forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });
     var h = document.querySelector("[data-help-close]");

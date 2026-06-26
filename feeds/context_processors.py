@@ -12,7 +12,7 @@ def sidebar(request):
         return {}
 
     feeds = (
-        Feed.objects.filter(user=user)
+        Feed.objects.filter(user=user, ai_feed__isnull=True)  # los feeds IA van en su sección
         .select_related("source", "category")
         .annotate(unread=Count("articles", filter=Q(articles__is_read=False)))
     )
@@ -35,9 +35,20 @@ def sidebar(request):
 
     tags = list(Tag.objects.filter(user=user).annotate(n=Count("articles")).filter(n__gt=0))
 
+    # Fuentes IA (feeds creados con IA): su feed sintético para leer + propuestas pendientes.
+    from aifeeds.models import AIFeed
+
+    aifeeds = []
+    for ai in (AIFeed.objects.filter(user=user)
+               .annotate(unread=Count("feed__articles", filter=Q(feed__articles__is_read=False)),
+                         pending=Count("candidates", filter=Q(candidates__status="pending")))):
+        aifeeds.append({"id": ai.id, "name": ai.name, "feed_id": ai.feed_id,
+                        "unread": ai.unread, "pending": ai.pending})
+
     return {
         "sidebar_categories": categories,
         "sidebar_uncategorized": uncategorized,
+        "sidebar_aifeeds": aifeeds,
         "sidebar_tags": tags,
         "reading_ui": reading_prefs(user),
         "sidebar_counts": {

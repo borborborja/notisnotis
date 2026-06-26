@@ -80,6 +80,22 @@
 </nav>
 </div></div>
 
+{% if sidebar_aifeeds %}
+<div class="sb-section" data-section="aifeeds">
+<button class="sb-section-head" type="button" data-section-toggle><span class="caret">▸</span> Fuentes IA</button>
+<div class="sb-section-body">
+<nav class="sb-nav">
+  {% for f in sidebar_aifeeds %}
+    <a href="{% if f.feed_id %}{% url 'articles:list' %}?feed={{ f.feed_id }}{% else %}{% url 'aifeeds:detail' f.id %}{% endif %}" class="sb-item">
+      <span><svg class="ic"><use href="#i-sparkles"/></svg> <span class="sb-feed-name">{{ f.name }}</span></span>
+      {% if f.pending %}<a href="{% url 'aifeeds:detail' f.id %}" class="sb-count alert" title="propuestas por revisar">{{ f.pending }}</a>{% elif f.unread %}<span class="sb-count">{{ f.unread }}</span>{% endif %}
+    </a>
+  {% endfor %}
+  <a href="{% url 'aifeeds:list' %}" class="sb-item"><span><svg class="ic"><use href="#i-plus"/></svg> Gestionar feeds IA</span></a>
+</nav>
+</div></div>
+{% endif %}
+
 {% if sidebar_tags %}
 <div class="sb-section-title">Etiquetas</div>
 <nav class="sb-nav">

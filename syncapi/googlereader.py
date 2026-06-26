@@ -44,7 +44,9 @@ def _require(request):
 
 
 def _articles_for_stream(user, stream):
-    qs = Article.objects.filter(feed__user=user).select_related("source", "feed")
+    from .curation import visible_articles
+
+    qs = visible_articles(user).select_related("source", "feed")
     if stream == STARRED:
         return qs.filter(is_saved=True)
     if stream == READ:

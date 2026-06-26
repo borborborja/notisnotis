@@ -15,6 +15,22 @@ def curation_enabled(user) -> bool:
     return bool(cfg and cfg.data.get("sync_curation") == "1")
 
 
+def sync_aifeeds_enabled(user) -> bool:
+    """¿Se exponen los artículos de las fuentes IA por Fever/GReader? (por defecto sí)."""
+    cfg = getattr(user, "config", None)
+    return not (cfg and cfg.data.get("sync_aifeeds") == "0")
+
+
+def visible_articles(user):
+    """Queryset base de artículos para las APIs de sync, respetando la preferencia de fuentes IA."""
+    from articles.models import Article
+
+    qs = Article.objects.filter(feed__user=user)
+    if not sync_aifeeds_enabled(user):
+        qs = qs.exclude(feed__ai_feed__isnull=False)
+    return qs
+
+
 def enriched_html(article, user) -> str:
     base = article.best_text or ""
     if not curation_enabled(user):

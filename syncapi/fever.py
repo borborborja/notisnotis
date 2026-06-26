@@ -93,7 +93,9 @@ def _feeds_groups(user):
 
 
 def _items(request, user):
-    qs = Article.objects.filter(feed__user=user).select_related("source")
+    from .curation import visible_articles
+
+    qs = visible_articles(user).select_related("source")
     with_ids = _param(request, "with_ids")
     if with_ids:
         ids = [int(x) for x in with_ids.split(",") if x.strip().isdigit()]

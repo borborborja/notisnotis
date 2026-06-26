@@ -101,3 +101,29 @@ class CurationTests(TestCase):
         self.assertIn("Curación", out)
         self.assertIn("contexto IA", out)
         self.assertIn("afirmación X", out)
+
+
+class SyncAifeedsFilterTests(TestCase):
+    def test_aifeeds_excluded_when_off(self):
+        from django.contrib.auth import get_user_model
+        from accounts.models import UserConfig
+        from feeds.models import Feed, Source
+        from articles.models import Article
+        from aifeeds.models import AIFeed
+        from syncapi.curation import visible_articles
+
+        u = get_user_model().objects.create_user("sa", "", "pw")
+        src = Source.objects.create(name="S", domain="s.com")
+        rss = Feed.objects.create(user=u, source=src, url="http://s/rss")
+        aifeed_feed = Feed.objects.create(user=u, source=src, url="aifeed://1", enabled=False)
+        AIFeed.objects.create(user=u, name="x", description="d", feed=aifeed_feed)
+        Article.objects.create(feed=rss, source=src, guid="r1", title="RSS")
+        Article.objects.create(feed=aifeed_feed, source=src, guid="a1", title="IA")
+
+        # Por defecto: ambos visibles.
+        self.assertEqual(visible_articles(u).count(), 2)
+        # Desactivado: solo el RSS.
+        UserConfig.objects.create(user=u, data={"sync_aifeeds": "0"})
+        u.refresh_from_db()
+        titles = list(visible_articles(u).values_list("title", flat=True))
+        self.assertEqual(titles, ["RSS"])

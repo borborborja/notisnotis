@@ -2,60 +2,111 @@
 {% block tab %}
 <h1>Actualización en background</h1>
 
-<div class="card">
-  <p class="muted">El servidor descarga tus feeds en segundo plano para que al entrar estén al día.
-    Aquí defines cada cuánto.</p>
-  <form method="post" action="{% url 'account_settings_tab' 'updates' %}">{% csrf_token %}
-    <input type="hidden" name="action" value="save_updates">
-
-    <div class="form-row">
-      <label class="switch"><input type="checkbox" name="smart_mode" value="1" {% if smart_mode %}checked{% endif %}>
-        <span>Modo inteligente</span></label>
-      <p class="field-help muted">Ajusta automáticamente cada cuánto se consulta cada fuente
-        según la frecuencia con la que publica. Recomendado.</p>
-    </div>
-
-    <div class="form-row">
-      <label>Cadencia por defecto</label>
-      <select name="default_minutes">
-        {% for m, label in cadence_choices %}
-          <option value="{{ m }}" {% if m == default_minutes %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-      <p class="field-help muted">Se usa para las fuentes cuando el modo inteligente está desactivado.</p>
-    </div>
-
-    <hr>
-    <div class="form-row">
-      <label class="switch"><input type="checkbox" name="crawl_new_feeds" value="1" {% if crawl_new_feeds %}checked{% endif %}>
-        <span>Archivar texto completo de los feeds nuevos</span></label>
-      <p class="field-help muted">Activa el crawler en cada feed que importes o añadas, para
-        guardar el artículo completo al descargarlo (y conservarlo aunque la fuente lo borre).
-        {% if not fulltext_enabled %}<strong>Requiere que el operador active el texto completo global
-        (FULLTEXT_ENABLED), ahora desactivado.</strong>{% endif %}
-        En los feeds que ya tienes, actívalo desde Feeds → editar feed.</p>
-    </div>
-
-    <button class="btn" type="submit">Guardar</button>
-  </form>
+<div class="subtabs" role="tablist">
+  <button class="subtab active" type="button" data-subtab="rss">Fuentes RSS</button>
+  <button class="subtab" type="button" data-subtab="ia">Fuentes IA</button>
+  <button class="subtab" type="button" data-subtab="audio">Fuentes audio</button>
 </div>
 
-<div class="card">
-  <h3>Cadencia actual por feed</h3>
-  <table>
-    <thead><tr><th>Feed</th><th>Modo</th><th>Cada</th><th>Última descarga</th></tr></thead>
-    <tbody>
-    {% for feed in feeds %}
-      <tr>
-        <td>{{ feed.title|default:feed.source.name }}</td>
-        <td>{% if feed.auto_interval %}<span class="tag">inteligente</span>{% else %}manual{% endif %}</td>
-        <td>{{ feed.fetch_interval_minutes }} min</td>
-        <td>{{ feed.last_fetched|date:"d M H:i"|default:"—" }}</td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="4" class="muted">Sin feeds todavía.</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
+{# ---------------- RSS ---------------- #}
+<div data-subpane="rss">
+  <div class="card">
+    <p class="muted">El servidor descarga tus feeds RSS en segundo plano. Aquí defines cada cuánto.</p>
+    <form method="post" action="{% url 'account_settings_tab' 'updates' %}">{% csrf_token %}
+      <input type="hidden" name="action" value="save_updates">
+      <div class="form-row">
+        <label class="switch"><input type="checkbox" name="smart_mode" value="1" {% if smart_mode %}checked{% endif %}>
+          <span>Modo inteligente</span></label>
+        <p class="field-help muted">Ajusta automáticamente cada cuánto se consulta cada fuente
+          según la frecuencia con la que publica. Recomendado.</p>
+      </div>
+      <div class="form-row">
+        <label>Cadencia por defecto</label>
+        <select name="default_minutes">
+          {% for m, label in cadence_choices %}
+            <option value="{{ m }}" {% if m == default_minutes %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <p class="field-help muted">Se usa cuando el modo inteligente está desactivado.</p>
+      </div>
+      <hr>
+      <div class="form-row">
+        <label class="switch"><input type="checkbox" name="crawl_new_feeds" value="1" {% if crawl_new_feeds %}checked{% endif %}>
+          <span>Archivar texto completo de los feeds nuevos</span></label>
+        <p class="field-help muted">Activa el crawler en cada feed que importes o añadas.
+          {% if not fulltext_enabled %}<strong>Requiere FULLTEXT_ENABLED (operador), ahora desactivado.</strong>{% endif %}</p>
+      </div>
+      <button class="btn" type="submit">Guardar</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Cadencia actual por feed</h3>
+    <table>
+      <thead><tr><th>Feed</th><th>Modo</th><th>Cada</th><th>Última descarga</th></tr></thead>
+      <tbody>
+      {% for feed in feeds %}
+        <tr>
+          <td>{{ feed.title|default:feed.source.name }}</td>
+          <td>{% if feed.auto_interval %}<span class="tag">inteligente</span>{% else %}manual{% endif %}</td>
+          <td>{{ feed.fetch_interval_minutes }} min</td>
+          <td>{{ feed.last_fetched|date:"d M H:i"|default:"—" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="muted">Sin feeds todavía.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ---------------- IA ---------------- #}
+<div data-subpane="ia" hidden>
+  <div class="card">
+    <p class="muted">Tus “Feeds con IA” buscan noticias por internet en segundo plano. Aquí defines
+      cada cuánto y el umbral de relevancia de las nuevas propuestas.</p>
+    <form method="post" action="{% url 'account_settings_tab' 'updates' %}">{% csrf_token %}
+      <input type="hidden" name="action" value="save_ai_updates">
+      <div class="form-row">
+        <label>Buscar noticias nuevas cada (minutos)</label>
+        <input type="number" class="narrow" name="ai_search_minutes" min="15" value="{{ ai_search_minutes }}">
+        <p class="field-help muted">Con qué frecuencia el scheduler busca propuestas nuevas para cada feed IA
+          (p. ej. 720 = cada 12 h). El botón “Buscar ahora” no espera a esto.</p>
+      </div>
+      <div class="form-row">
+        <label>Umbral de relevancia por defecto (0–10)</label>
+        <input type="number" class="narrow" name="ai_min_score" min="0" max="10" value="{{ ai_min_score }}">
+        <p class="field-help muted">Solo se proponen noticias con relevancia estimada igual o superior. Más alto = más estricto.</p>
+      </div>
+      <button class="btn" type="submit">Guardar</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Tus feeds con IA</h3>
+    <table>
+      <thead><tr><th>Feed</th><th>Estado</th><th>Última búsqueda</th></tr></thead>
+      <tbody>
+      {% for f in ai_feeds %}
+        <tr>
+          <td><a href="{% url 'aifeeds:detail' f.pk %}">{{ f.name }}</a></td>
+          <td>{% if f.enabled %}<span class="tag">activo</span>{% else %}pausado{% endif %}</td>
+          <td>{{ f.last_run|date:"d M H:i"|default:"—" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3" class="muted">Aún no tienes feeds con IA. <a href="{% url 'aifeeds:list' %}">Crear uno</a>.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ---------------- AUDIO (futuro) ---------------- #}
+<div data-subpane="audio" hidden>
+  <div class="card">
+    <h3>Fuentes audio</h3>
+    <p class="muted">Próximamente: podcasts y canales de YouTube con reproductor y transcripción
+      automática, tratados como artículos. (Funcionalidad futura.)</p>
+  </div>
 </div>
 {% endblock %}

@@ -16,7 +16,13 @@ def feed_list(request):
         name = request.POST.get("name", "").strip()[:200]
         description = request.POST.get("description", "").strip()
         if name and description:
-            AIFeed.objects.create(user=request.user, name=name, description=description)
+            from .services import ensure_feed
+
+            cfg = getattr(request.user, "config", None)
+            min_score = int((cfg.data.get("ai_min_score", 6) if cfg else 6))
+            ai = AIFeed.objects.create(user=request.user, name=name, description=description,
+                                       min_score=min_score)
+            ensure_feed(ai)  # crea el feed sintético ya (aparece en el sidebar)
             messages.success(request, "Feed con IA creado. Pulsa “Buscar ahora” para ver propuestas.")
         return redirect("aifeeds:list")
     feeds = AIFeed.objects.filter(user=request.user).annotate(

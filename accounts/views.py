@@ -71,6 +71,19 @@ def settings_view(request, tab="general"):
         elif action == "save_updates":
             _save_updates(request)
             messages.success(request, "Preferencias de actualización guardadas.")
+        elif action == "save_ai_updates":
+            config, _ = UserConfig.objects.get_or_create(user=request.user)
+            try:
+                config.data["ai_search_minutes"] = max(15, int(request.POST.get("ai_search_minutes", 720)))
+            except ValueError:
+                config.data["ai_search_minutes"] = 720
+            try:
+                config.data["ai_min_score"] = max(0, min(10, int(request.POST.get("ai_min_score", 6))))
+            except ValueError:
+                config.data["ai_min_score"] = 6
+            config.save(update_fields=["data"])
+            messages.success(request, "Ajustes de fuentes IA guardados.")
+            return redirect("account_settings_tab", tab="updates")
         elif action == "save_reading":
             _save_reading(request)
             messages.success(request, "Preferencias de lectura guardadas.")
@@ -125,6 +138,7 @@ def settings_view(request, tab="general"):
         elif action == "save_sync":
             cfg, _ = UserConfig.objects.get_or_create(user=request.user)
             cfg.data["sync_curation"] = "1" if request.POST.get("sync_curation") == "1" else "0"
+            cfg.data["sync_aifeeds"] = "1" if request.POST.get("sync_aifeeds") == "1" else "0"
             cfg.save(update_fields=["data"])
             messages.success(request, "Preferencia de sincronización guardada.")
             return redirect("account_settings_tab", tab="tokens")
@@ -200,6 +214,9 @@ def settings_view(request, tab="general"):
         ctx["default_minutes"] = int(data.get("fetch_default_minutes", 60))
         ctx["crawl_new_feeds"] = data.get("crawl_new_feeds", "0") == "1"
         ctx["fulltext_enabled"] = settings.FULLTEXT_ENABLED
+        ctx["ai_search_minutes"] = int(data.get("ai_search_minutes", 720))
+        ctx["ai_min_score"] = int(data.get("ai_min_score", 6))
+        ctx["ai_feeds"] = request.user.ai_feeds.all()
         ctx["feeds"] = Feed.objects.filter(user=request.user).select_related("source").order_by(
             "fetch_interval_minutes"
         )
@@ -212,6 +229,7 @@ def settings_view(request, tab="general"):
         ctx["greader_url"] = request.build_absolute_uri("/api/greader/")
         cfg = getattr(request.user, "config", None)
         ctx["sync_curation"] = bool(cfg and cfg.data.get("sync_curation") == "1")
+        ctx["sync_aifeeds"] = not (cfg and cfg.data.get("sync_aifeeds") == "0")
     elif tab == "account":
         from django_otp.plugins.otp_totp.models import TOTPDevice
 
