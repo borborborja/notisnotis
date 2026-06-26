@@ -333,3 +333,39 @@ class CredibilityEdgeCasesTests(TestCase):
         s = self._S(factuality="", country="", ownership="")
         self.assertEqual(source_signal(s, "")["flags"], [])
         self.assertEqual(context_label(s, ""), "")
+
+
+class RelatedThresholdTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from feeds.models import Source, Feed
+        from articles.models import Article
+        self.U = get_user_model().objects.create_user("relu", "", "pw-rel-123")
+        src = Source.objects.create(name="S", domain="s.com")
+        self.feed = Feed.objects.create(user=self.U, url="http://s.com/f", source=src, title="F")
+        # vector base y uno casi idéntico (alto), uno ortogonal (bajo)
+        self.base = Article.objects.create(feed=self.feed, source=src, guid="b", title="base",
+                                           embedding=[1.0, 0.0, 0.0])
+        self.near = Article.objects.create(feed=self.feed, source=src, guid="n", title="near",
+                                           embedding=[0.98, 0.02, 0.0])
+        self.far = Article.objects.create(feed=self.feed, source=src, guid="f", title="far",
+                                          embedding=[0.0, 0.0, 1.0])
+
+    def test_top_k_min_score_excludes_far(self):
+        from stories.nn import top_k_articles
+        res = top_k_articles(self.U, self.base.embedding, k=10, exclude_pk=self.base.pk, min_score=0.6)
+        pks = [a.pk for _, a in res]
+        self.assertIn(self.near.pk, pks)
+        self.assertNotIn(self.far.pk, pks)  # ortogonal (score ~0) descartado
+
+    def test_related_articles_empty_without_embedding(self):
+        from articles.models import Article
+        from articles.ai_actions import related_articles
+        no_emb = Article.objects.create(feed=self.feed, source=self.feed.source, guid="x", title="x")
+        self.assertEqual(related_articles(no_emb, self.U), [])
+
+    def test_related_articles_attaches_score(self):
+        from articles.ai_actions import related_articles
+        res = related_articles(self.base, self.U)
+        self.assertTrue(all(hasattr(a, "rel_score") for a in res))
+        self.assertTrue(all(a.pk != self.far.pk for a in res))  # lejano filtrado

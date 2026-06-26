@@ -16,7 +16,8 @@
   <ul class="related-list">
     {% for a in semantic %}
       <li><a href="#" hx-get="{% url 'articles:reading' a.pk %}" hx-target="#reading-pane" hx-swap="innerHTML">
-        <span class="rel-source">{{ a.source.name }}</span><span class="rel-title">{{ a.title }}</span></a></li>
+        <span class="rel-source">{{ a.source.name }}</span><span class="rel-title">{{ a.title }}</span>
+        {% if a.rel_score %}<span class="rel-score" title="Similitud">{{ a.rel_score }}%</span>{% endif %}</a></li>
     {% endfor %}
   </ul>
 </section>

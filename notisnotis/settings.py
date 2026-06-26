@@ -196,6 +196,9 @@ AI = {
     "ENRICH_MODE": os.environ.get("AI_ENRICH_MODE", "on_demand"),  # batch|on_demand
     "CLUSTER_THRESHOLD": float(os.environ.get("AI_CLUSTER_THRESHOLD", "0.78")),
     "CLUSTER_WINDOW_DAYS": int(os.environ.get("AI_CLUSTER_WINDOW_DAYS", "3")),
+    # "Relacionado en otras fuentes": umbral mínimo de similitud y ventana temporal.
+    "RELATED_THRESHOLD": float(os.environ.get("AI_RELATED_THRESHOLD", "0.6")),
+    "RELATED_DAYS": int(os.environ.get("AI_RELATED_DAYS", "45")),
     "TIMEOUT": int(os.environ.get("AI_TIMEOUT", "120")),
     "TRANSCRIBE_TIMEOUT": int(os.environ.get("AI_TRANSCRIBE_TIMEOUT", "1800")),
 }

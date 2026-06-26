@@ -35,8 +35,12 @@ def _pgvector_topk(qs, vector, k):
     return [(1 - a._distance, a) for a in rows]
 
 
-def top_k_articles(user, vector, k=10, exclude_pk=None):
-    """Devuelve [(score, Article)] de los k artículos del usuario más cercanos a `vector`."""
+def top_k_articles(user, vector, k=10, exclude_pk=None, min_score=0.0, since=None):
+    """Devuelve [(score, Article)] de los k artículos del usuario más cercanos a `vector`.
+
+    min_score: descarta los que estén por debajo de ese coseno (evita "vecinos lejanos"
+    irrelevantes). since: limita a artículos con published_at desde esa fecha.
+    """
     from articles.models import Article
 
     if not vector:
@@ -44,9 +48,19 @@ def top_k_articles(user, vector, k=10, exclude_pk=None):
     qs = Article.objects.filter(feed__user=user, embedding__isnull=False).select_related("source")
     if exclude_pk:
         qs = qs.exclude(pk=exclude_pk)
+    if since is not None:
+        from django.db.models import Q
+
+        # Respeta la ventana pero no descarta artículos sin fecha de publicación.
+        qs = qs.filter(Q(published_at__gte=since) | Q(published_at__isnull=True))
+    # Sobre-pedimos para que, tras filtrar por umbral, queden suficientes.
+    fetch = max(k * 4, 40) if min_score else k
     # Postgres: búsqueda ANN con pgvector. SQLite/dev o fallo: coseno en Python.
+    result = None
     if connection.vendor == "postgresql":
-        result = _pgvector_topk(qs, vector, k)
-        if result is not None:
-            return result
-    return _python_topk(qs, vector, k)
+        result = _pgvector_topk(qs, vector, fetch)
+    if result is None:
+        result = _python_topk(qs, vector, fetch)
+    if min_score:
+        result = [(s, a) for s, a in result if s >= min_score]
+    return result[:k]

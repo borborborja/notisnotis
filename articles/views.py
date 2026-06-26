@@ -235,7 +235,7 @@ def related_panel(request, pk):
                 seen.add(x.article.source_id)
     # 2) Relacionados por embedding, de OTRAS fuentes (temas parecidos).
     semantic = []
-    for a in related_articles(article, request.user, k=20):
+    for a in related_articles(article, request.user, k=12):
         if a.source_id in seen:
             continue
         seen.add(a.source_id)

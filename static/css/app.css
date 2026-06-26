@@ -460,6 +460,8 @@ body.resizing iframe { pointer-events: none; }
 /* Podcasts: cabecera, grid y filas de episodio */
 .pod-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .pod-nav { display: flex; gap: .4rem; flex-wrap: wrap; }
+.rel-score { font-size: .68rem; color: var(--muted); margin-left: .35rem; font-variant-numeric: tabular-nums; }
+
 /* Badges de credibilidad de fuente */
 .src-badge { display: inline-block; font-size: .68rem; font-weight: 600; padding: .02rem .35rem;
   border-radius: 999px; margin-left: .25rem; background: var(--border-2); color: var(--muted); vertical-align: middle; }

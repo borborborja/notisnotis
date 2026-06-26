@@ -64,18 +64,28 @@ def summarize_article(article, client=None):
 
 
 # --------------------------------------------------------------------------- contexto + chat
-def related_articles(article, user, k=8):
-    """Artículos del usuario más relacionados (semántica si hay embedding)."""
+def related_articles(article, user, k=12):
+    """Artículos del usuario realmente relacionados por similitud semántica.
+
+    Aplica un umbral mínimo de similitud y una ventana temporal: si no hay nada
+    suficientemente parecido (o el artículo no tiene embedding) devuelve []. Cada artículo
+    devuelto lleva `rel_score` (0-100) para mostrarlo en la UI.
+    """
+    from datetime import timedelta
+
+    from django.conf import settings
+
     from stories.nn import top_k_articles
 
     if not article.embedding:
-        from .models import Article
-
-        return list(
-            Article.objects.filter(feed__user=user).exclude(pk=article.pk)
-            .select_related("source").order_by("-published_at")[:k]
-        )
-    return [a for _, a in top_k_articles(user, article.embedding, k=k, exclude_pk=article.pk)]
+        return []
+    since = timezone.now() - timedelta(days=settings.AI["RELATED_DAYS"])
+    out = []
+    for score, a in top_k_articles(user, article.embedding, k=k, exclude_pk=article.pk,
+                                   min_score=settings.AI["RELATED_THRESHOLD"], since=since):
+        a.rel_score = round(score * 100)
+        out.append(a)
+    return out
 
 
 def build_context(article, user, k=8):
