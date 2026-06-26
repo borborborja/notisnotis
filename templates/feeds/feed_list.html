@@ -5,8 +5,8 @@
 
 <div class="subtabs" role="tablist">
   <button class="subtab {% if active == 'rss' %}active{% endif %}" type="button" data-subtab="rss">Fuentes RSS</button>
-  <button class="subtab {% if active == 'ia' %}active{% endif %}" type="button" data-subtab="ia">Fuentes IA</button>
-  <button class="subtab {% if active == 'podcasts' %}active{% endif %}" type="button" data-subtab="podcasts">Podcasts</button>
+  {% if 'curation' in modules %}<button class="subtab {% if active == 'ia' %}active{% endif %}" type="button" data-subtab="ia">Fuentes IA</button>{% endif %}
+  {% if 'podcasts' in modules %}<button class="subtab {% if active == 'podcasts' %}active{% endif %}" type="button" data-subtab="podcasts">Podcasts</button>{% endif %}
 </div>
 
 {# ---------------- RSS ---------------- #}
@@ -54,6 +54,7 @@
 </div>
 
 {# ---------------- IA ---------------- #}
+{% if 'curation' in modules %}
 <div data-subpane="ia" {% if active != 'ia' %}hidden{% endif %}>
   <div class="card">
     <p class="muted">Describe un tema y la IA busca noticias por internet (no de tus RSS). Tú marcas
@@ -88,8 +89,10 @@
     </table>
   </div>
 </div>
+{% endif %}
 
 {# ---------------- PODCASTS ---------------- #}
+{% if 'podcasts' in modules %}
 <div data-subpane="podcasts" {% if active != 'podcasts' %}hidden{% endif %}>
   <div class="card">
     <p>
@@ -111,4 +114,5 @@
     {% include "feeds/_feed_table.html" with feeds=podcast_feeds table_id="podcasts" empty_msg="Aún no tienes podcasts ni canales. Búscalos arriba o importa un OPML como Podcasts." %}
   </div>
 </div>
+{% endif %}
 {% endblock %}

@@ -6,6 +6,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from features.decorators import module_required
+from features.modules import enabled_modules
+
 from .discovery import discover_feeds, feed_title
 from .models import Category, Feed, Rule, Source
 from .opml import _domain, crawl_new_feeds, import_opml_for_user
@@ -37,8 +40,14 @@ def feed_list(request):
         n_pending=Count("candidates", filter=Q(candidates__status=AIFeedCandidate.PENDING)),
         n_accepted=Count("candidates", filter=Q(candidates__status=AIFeedCandidate.ACCEPTED)),
     )
+    mods = enabled_modules(request.user)
     active = request.GET.get("tab", "rss")
-    if active not in ("rss", "ia", "podcasts"):
+    # No abrir una pestaña de un módulo desactivado.
+    if active == "ia" and "curation" not in mods:
+        active = "rss"
+    elif active == "podcasts" and "podcasts" not in mods:
+        active = "rss"
+    elif active not in ("rss", "ia", "podcasts"):
         active = "rss"
     return render(request, "feeds/feed_list.html", {
         "feeds": feeds,
@@ -51,6 +60,7 @@ def feed_list(request):
 
 
 @login_required
+@module_required("podcasts")
 def podcast_search(request):
     """Buscador de podcasts (htmx): devuelve resultados del directorio para suscribirse."""
     from .podcastsearch import search_podcasts

@@ -23,10 +23,14 @@ class Command(BaseCommand):
         if opts.get("feed"):
             qs = qs.filter(pk=opts["feed"])
 
+        from features.modules import module_enabled
+
         gated = not (opts.get("force") or opts.get("feed"))
         now = timezone.now()
         total = 0
         for ai in qs:
+            if not module_enabled(ai.user, "curation"):
+                continue
             if gated and ai.last_run:
                 cfg = getattr(ai.user, "config", None)
                 minutes = int(cfg.data.get("ai_search_minutes", 720)) if cfg else 720

@@ -10,11 +10,13 @@ from django.views.decorators.http import require_POST
 
 from articles.models import Article
 from feeds.models import BIAS_ORDER, LEFT_BUCKETS, RIGHT_BUCKETS, Source
+from features.decorators import module_required
 
 from .models import Story
 
 
 @login_required
+@module_required("curation")
 def home(request):
     qs = (Story.objects.filter(user=request.user)
           .prefetch_related("story_articles")
@@ -47,6 +49,7 @@ def home(request):
 
 
 @login_required
+@module_required("curation")
 def topic_list(request):
     from .models import Topic
 
@@ -61,6 +64,7 @@ def topic_list(request):
 
 
 @login_required
+@module_required("curation")
 @require_POST
 def topic_delete(request, pk):
     from .models import Topic
@@ -70,6 +74,7 @@ def topic_delete(request, pk):
 
 
 @login_required
+@module_required("curation")
 def trending(request):
     """Historias más cubiertas ahora (por nº de fuentes y recencia)."""
     since = timezone.now() - timedelta(days=3)
@@ -83,6 +88,7 @@ def trending(request):
 
 
 @login_required
+@module_required("curation")
 def compare_sources(request):
     """Compara la cobertura de dos fuentes: exclusivas de cada una y comunes."""
     sources = Source.objects.filter(feeds__user=request.user).distinct()
@@ -147,12 +153,14 @@ def _story_context(request, pk):
 
 
 @login_required
+@module_required("curation")
 def story_reading(request, pk):
     """Panel de lectura de una historia (parcial htmx)."""
     return render(request, "stories/_story_reading.html", _story_context(request, pk))
 
 
 @login_required
+@module_required("curation")
 @require_POST
 def story_synthesize(request, pk):
     """Redacta (o regenera) la noticia contrastada de una historia multi-fuente (htmx)."""
@@ -171,11 +179,13 @@ def story_synthesize(request, pk):
 
 
 @login_required
+@module_required("curation")
 def story_detail(request, pk):
     return render(request, "stories/story_detail.html", _story_context(request, pk))
 
 
 @login_required
+@module_required("curation")
 def bias_diet(request):
     """Dieta informativa: sesgo de lo que el usuario realmente LEE."""
     try:

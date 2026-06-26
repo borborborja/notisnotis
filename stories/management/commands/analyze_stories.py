@@ -17,9 +17,13 @@ class Command(BaseCommand):
         qs = qs.select_related("user").order_by("-last_updated")
         if opts["limit"]:
             qs = qs[: opts["limit"]]
+        from features.modules import module_enabled
+
         clients = {}
         done = 0
         for story in qs:
+            if not module_enabled(story.user, "curation"):
+                continue
             client = clients.get(story.user_id)
             if client is None:
                 client = clients[story.user_id] = get_chat_client(story.user)

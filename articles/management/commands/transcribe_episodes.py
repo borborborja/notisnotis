@@ -18,8 +18,12 @@ class Command(BaseCommand):
             users = users.filter(username=opts["user"])
         limit = opts.get("limit", 3)
 
+        from features.modules import module_enabled
+
         done = 0
         for user in users:
+            if not module_enabled(user, "podcasts"):
+                continue
             cfg = getattr(user, "config", None)
             auto = bool(cfg and cfg.data.get("auto_transcribe") == "1")
             base = (Article.objects.filter(feed__user=user, feed__kind__in=["podcast", "youtube"])

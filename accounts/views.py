@@ -97,6 +97,17 @@ def settings_view(request, tab="general"):
         elif action == "save_reading":
             _save_reading(request)
             messages.success(request, "Preferencias de lectura guardadas.")
+        elif action == "save_modules":
+            from features.modules import MODULE_FIELDS
+            from notisnotis import optconfig
+
+            cfg, _ = UserConfig.objects.get_or_create(user=request.user)
+            for field in MODULE_FIELDS:
+                if optconfig.is_locked(field):
+                    continue  # lo fijó el operador en .env
+                cfg.data[field[optconfig.KEY]] = "1" if request.POST.get(field[optconfig.KEY]) == "1" else "0"
+            cfg.save(update_fields=["data"])
+            messages.success(request, "Módulos actualizados.")
         elif action == "save_filters":
             _save_filters(request)
             messages.success(request, "Filtros guardados.")
@@ -174,10 +185,12 @@ def settings_view(request, tab="general"):
     ctx = {"tabs": TABS, "active_tab": tab}
     if tab == "general":
         from articles.ai_actions import LANGS, reading_prefs
+        from features.modules import modules_state
 
         ctx["langs"] = LANGS
         ctx["reading"] = reading_prefs(request.user)
         ctx["fonts"], ctx["sizes"], ctx["widths"] = FONTS, SIZES, WIDTHS
+        ctx["modules_state"] = modules_state(request.user)
     if tab == "filters":
         cfg = getattr(request.user, "config", None)
         data = cfg.data if cfg else {}

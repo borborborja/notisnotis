@@ -103,6 +103,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "feeds.context_processors.sidebar",
                 "features.context_processors.features",
+                "features.context_processors.modules",
             ],
         },
     },

@@ -21,6 +21,7 @@
 
   <form method="post" action="{% url 'account_settings_tab' 'tokens' %}" style="margin-top:1rem">{% csrf_token %}
     <input type="hidden" name="action" value="save_sync">
+    {% if 'curation' in modules %}
     <div class="form-row">
       <label class="switch"><input type="checkbox" name="sync_curation" value="1" {% if sync_curation %}checked{% endif %}>
         <span>Enriquecer los artículos con la curación de NotisNotis</span></label>
@@ -34,12 +35,15 @@
       <p class="field-help muted">Si lo desactivas, los artículos de tus “Feeds con IA” no se
         envían por Fever/Google Reader (tu lector externo queda solo con tus RSS).</p>
     </div>
+    {% endif %}
+    {% if 'podcasts' in modules %}
     <div class="form-row">
       <label class="switch"><input type="checkbox" name="sync_transcription" value="1" {% if sync_transcription %}checked{% endif %}>
         <span>Incluir las transcripciones de podcasts en la sincronización</span></label>
       <p class="field-help muted">Si lo desactivas, los episodios se sincronizan sin la transcripción
         automática (solo con su descripción).</p>
     </div>
+    {% endif %}
     <button class="btn btn-ghost" type="submit">Guardar</button>
   </form>
 </div>

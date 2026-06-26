@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST
 from accounts.models import UserConfig
 from aiproviders.client import get_chat_client
 from aiproviders.config import effective_config
-from features.decorators import feature_required
+from features.decorators import feature_required, module_required
 
 from .ai_actions import LANGS, chat_reply, reading_prefs, summarize_article, translate_article
 from .enrich import enrich_article
@@ -204,6 +204,7 @@ def reading_pane(request, pk):
 
 @login_required
 @require_POST
+@module_required("podcasts")
 def request_transcribe(request, pk):
     """Encola la transcripción de un episodio (la hace el scheduler en segundo plano)."""
     article = get_object_or_404(Article.objects.select_related("source", "feed"),
@@ -216,6 +217,7 @@ def request_transcribe(request, pk):
 
 
 @login_required
+@module_required("curation")
 def related_panel(request, pk):
     """Sección 'Otras fuentes' del lector (carga diferida por htmx)."""
     from .ai_actions import related_articles
@@ -245,15 +247,19 @@ def related_panel(request, pk):
 
 
 def _reading_ctx(request, article):
+    from features.modules import module_enabled
+
     from .transcribe import is_transcribable, youtube_id
 
     story = article.stories.filter(story__user=request.user).select_related("story").first()
     yt = youtube_id(article.url)
+    podcasts_on = module_enabled(request.user, "podcasts")
     return {
         "article": article,
         "story_link": story.story if story else None,
         "yt_id": yt,
-        "can_transcribe": is_transcribable(article) and article.fulltext_source != "transcript",
+        "can_transcribe": (podcasts_on and is_transcribable(article)
+                           and article.fulltext_source != "transcript"),
         "fulltext_enabled": effective_config(request.user)["fulltext_enabled"],
         "show_original": request.GET.get("original") == "1",
         "langs": LANGS,

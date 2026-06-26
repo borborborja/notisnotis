@@ -4,13 +4,14 @@ from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from features.decorators import feature_required
+from features.decorators import feature_required, module_required
 
 from .models import AIFeed, AIFeedCandidate
 
 
 @login_required
 @feature_required("aifeeds")
+@module_required("curation")
 def feed_list(request):
     if request.method == "POST":
         name = request.POST.get("name", "").strip()[:200]
@@ -34,6 +35,7 @@ def feed_list(request):
 
 @login_required
 @feature_required("aifeeds")
+@module_required("curation")
 def feed_detail(request, pk):
     ai = get_object_or_404(AIFeed, pk=pk, user=request.user)
     pending = ai.candidates.filter(status=AIFeedCandidate.PENDING)
@@ -45,6 +47,7 @@ def feed_detail(request, pk):
 @login_required
 @require_POST
 @feature_required("aifeeds")
+@module_required("curation")
 def search_now(request, pk):
     ai = get_object_or_404(AIFeed, pk=pk, user=request.user)
     from .services import run_search
@@ -60,6 +63,7 @@ def search_now(request, pk):
 @login_required
 @require_POST
 @feature_required("aifeeds")
+@module_required("curation")
 def candidate_decide(request, pk):
     """Marca una propuesta como Encaja (crea artículo) o No encaja (ejemplo negativo)."""
     cand = get_object_or_404(AIFeedCandidate, pk=pk, ai_feed__user=request.user,
@@ -79,6 +83,7 @@ def candidate_decide(request, pk):
 @login_required
 @require_POST
 @feature_required("aifeeds")
+@module_required("curation")
 def feed_delete(request, pk):
     get_object_or_404(AIFeed, pk=pk, user=request.user).delete()
     messages.success(request, "Feed con IA eliminado.")

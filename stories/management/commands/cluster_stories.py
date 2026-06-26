@@ -22,8 +22,12 @@ class Command(BaseCommand):
         if opts.get("user"):
             users = users.filter(username=opts["user"])
 
+        from features.modules import module_enabled
+
         total_assigned, total_new_stories = 0, 0
         for user in users:
+            if not module_enabled(user, "curation"):
+                continue
             cfg = effective_config(user)
             since = timezone.now() - timedelta(days=cfg["cluster_window_days"])
             assigned, new_stories = self._cluster_user(user, since, cfg["cluster_threshold"])

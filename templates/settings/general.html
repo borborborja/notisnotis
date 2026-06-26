@@ -14,6 +14,31 @@
 </div>
 
 <div class="card">
+  <h3>Módulos</h3>
+  <p class="muted">Activa o desactiva sectores enteros de la app. Desactívalos para usarla como un
+    lector RSS sencillo (con resúmenes IA) y añade Podcasts cuando quieras.</p>
+  <form method="post" action="{% url 'account_settings_tab' 'general' %}">{% csrf_token %}
+    <input type="hidden" name="action" value="save_modules">
+    {% for m in modules_state %}
+      <div class="form-row">
+        {% if m.locked %}
+          <label class="switch"><input type="checkbox" disabled {% if m.enabled %}checked{% endif %}>
+            <span>{{ m.label }}</span></label>
+          <p class="field-help muted">Fijado por el operador ({% if m.enabled %}activado{% else %}desactivado{% endif %}).</p>
+        {% else %}
+          <label class="switch"><input type="checkbox" name="{{ m.field }}" value="1" {% if m.enabled %}checked{% endif %}>
+            <span>{{ m.label }}</span></label>
+          <p class="field-help muted">{% if m.module == 'curation' %}Historias, blindspots, dieta, tendencias,
+            comparar, feeds con IA y el contexto/afirmaciones del lector.{% else %}Feeds de podcasts y
+            canales de YouTube, con reproductor y transcripción.{% endif %}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <button class="btn" type="submit">Guardar módulos</button>
+  </form>
+</div>
+
+<div class="card">
   <h3>Lectura e IA</h3>
   <p class="muted">Traduce y resume artículos al abrirlos. El idioma se usa también en el chat con la IA.</p>
   <form method="post" action="{% url 'account_settings_tab' 'general' %}">{% csrf_token %}

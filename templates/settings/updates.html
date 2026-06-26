@@ -4,8 +4,8 @@
 
 <div class="subtabs" role="tablist">
   <button class="subtab active" type="button" data-subtab="rss">Fuentes RSS</button>
-  <button class="subtab" type="button" data-subtab="ia">Fuentes IA</button>
-  <button class="subtab" type="button" data-subtab="audio">Podcasts</button>
+  {% if 'curation' in modules %}<button class="subtab" type="button" data-subtab="ia">Fuentes IA</button>{% endif %}
+  {% if 'podcasts' in modules %}<button class="subtab" type="button" data-subtab="audio">Podcasts</button>{% endif %}
 </div>
 
 {# ---------------- RSS ---------------- #}
@@ -61,6 +61,7 @@
 </div>
 
 {# ---------------- IA ---------------- #}
+{% if 'curation' in modules %}
 <div data-subpane="ia" hidden>
   <div class="card">
     <p class="muted">Tus “Feeds con IA” buscan noticias por internet en segundo plano. Aquí defines
@@ -101,7 +102,10 @@
   </div>
 </div>
 
+{% endif %}
+
 {# ---------------- AUDIO ---------------- #}
+{% if 'podcasts' in modules %}
 <div data-subpane="audio" hidden>
   <div class="card">
     <p class="muted">Podcasts y canales de YouTube con reproductor y transcripción automática,
@@ -131,4 +135,5 @@
     </form>
   </div>
 </div>
+{% endif %}
 {% endblock %}

@@ -16,6 +16,7 @@
   </a>
 </nav>
 
+{% if 'curation' in modules %}
 <div class="sb-section" data-section="curation">
 <button class="sb-section-head" type="button" data-section-toggle><span class="caret">▸</span> Curación IA</button>
 <div class="sb-section-body">
@@ -33,6 +34,7 @@
   {% if 'aifeeds' in features %}<a href="{% url 'aifeeds:list' %}" class="sb-item"><span><svg class="ic"><use href="#i-sparkles"/></svg> Feeds con IA</span></a>{% endif %}
 </nav>
 </div></div>
+{% endif %}
 
 <hr class="sb-sep">
 <div class="sb-section" data-section="sources">
@@ -80,7 +82,7 @@
 </nav>
 </div></div>
 
-{% if sidebar_aifeeds %}
+{% if sidebar_aifeeds and 'curation' in modules %}
 <div class="sb-section" data-section="aifeeds">
 <button class="sb-section-head" type="button" data-section-toggle><span class="caret">▸</span> Fuentes IA</button>
 <div class="sb-section-body">
@@ -96,7 +98,7 @@
 </div></div>
 {% endif %}
 
-{% if sidebar_audio %}
+{% if sidebar_audio and 'podcasts' in modules %}
 <div class="sb-section" data-section="audio">
 <button class="sb-section-head" type="button" data-section-toggle><span class="caret">▸</span> Podcasts</button>
 <div class="sb-section-body">

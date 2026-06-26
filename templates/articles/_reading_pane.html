@@ -115,7 +115,7 @@
     <p class="item-meta">Texto completo vía {{ article.fulltext_source }}.</p>
   {% endif %}
 
-  {% if article.is_enriched %}
+  {% if article.is_enriched and 'curation' in modules %}
   <section class="enrich">
     <h3><svg class="ic"><use href="#i-sparkles"/></svg> Contexto</h3>
     {% if article.context %}<p>{{ article.context }}</p>{% endif %}
@@ -133,8 +133,10 @@
   </section>
   {% endif %}
 
+  {% if 'curation' in modules %}
   <section class="related-wrap" hx-get="{% url 'articles:related' article.pk %}"
            hx-trigger="load" hx-swap="innerHTML">
     <p class="muted">Buscando otras fuentes que cubran esto…</p>
   </section>
+  {% endif %}
 </article>

@@ -61,3 +61,50 @@ class FeatureGatingTests(TestCase):
         su = get_user_model().objects.create_superuser("admin", "", "pw")
         with patch.dict(os.environ, {"FEATURES_ENFORCED": "1"}):
             self.assertTrue(has_feature(su, "chat"))
+
+
+class ModuleTests(TestCase):
+    def setUp(self):
+        from accounts.models import UserConfig
+        self.U = get_user_model()
+        self.user = self.U.objects.create_user("mu", "", "pw-mods-123")
+        self.cfg = UserConfig.objects.create(user=self.user, data={})
+
+    def test_default_all_on(self):
+        from features.modules import enabled_modules, module_enabled
+        self.assertEqual(enabled_modules(self.user), {"rss", "curation", "podcasts"})
+        self.assertTrue(module_enabled(self.user, "rss"))
+
+    def test_user_override_off(self):
+        from features.modules import module_enabled
+        self.cfg.data = {"module_curation": "0"}
+        self.cfg.save()
+        self.user.refresh_from_db()
+        self.assertFalse(module_enabled(self.user, "curation"))
+        self.assertTrue(module_enabled(self.user, "podcasts"))
+
+    def test_env_locks_and_overrides_user(self):
+        from features.modules import module_enabled, modules_state
+        self.cfg.data = {"module_podcasts": "1"}  # el usuario lo quiere on…
+        self.cfg.save()
+        self.user.refresh_from_db()
+        with patch.dict(os.environ, {"MODULE_PODCASTS": "0"}):  # …pero el operador manda
+            self.assertFalse(module_enabled(self.user, "podcasts"))
+            st = {m["module"]: m for m in modules_state(self.user)}
+            self.assertTrue(st["podcasts"]["locked"])
+            self.assertFalse(st["podcasts"]["enabled"])
+
+    def test_module_required_redirects_when_off(self):
+        from django.urls import reverse
+        self.cfg.data = {"module_curation": "0"}
+        self.cfg.save()
+        self.client.force_login(self.user)
+        r = self.client.get(reverse("stories:home"))
+        self.assertEqual(r.status_code, 302)
+        r2 = self.client.get(reverse("stories:home"), follow=True)
+        self.assertContains(r2, "desactivada")
+
+    def test_module_on_allows_view(self):
+        from django.urls import reverse
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.get(reverse("stories:home")).status_code, 200)
