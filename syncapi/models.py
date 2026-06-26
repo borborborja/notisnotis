@@ -41,3 +41,22 @@ class SyncCredential(models.Model):
         cred = cls(user=user)
         cred.regenerate()
         return cred
+
+
+class GpodderDevice(models.Model):
+    """Dispositivo gpodder de un usuario (AntennaPod, gPodder…)."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                             related_name="gpodder_devices")
+    device_id = models.CharField(max_length=128)
+    caption = models.CharField(max_length=255, blank=True)
+    type = models.CharField(max_length=32, default="mobile")
+    last_sync = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "device_id"], name="uniq_user_gpodder_device"),
+        ]
+
+    def __str__(self):
+        return f"{self.user} · {self.device_id}"

@@ -256,6 +256,8 @@ def settings_view(request, tab="general"):
         ctx["sync"] = SyncCredential.get_or_create_for(request.user)
         ctx["fever_url"] = request.build_absolute_uri("/api/fever/")
         ctx["greader_url"] = request.build_absolute_uri("/api/greader/")
+        ctx["gpodder_url"] = request.build_absolute_uri("/").rstrip("/")
+        ctx["gpodder_enabled"] = settings.GPODDER_ENABLED
         cfg = getattr(request.user, "config", None)
         ctx["sync_curation"] = bool(cfg and cfg.data.get("sync_curation") == "1")
         ctx["sync_aifeeds"] = not (cfg and cfg.data.get("sync_aifeeds") == "0")

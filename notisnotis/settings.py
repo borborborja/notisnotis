@@ -151,6 +151,7 @@ MEDIA_URL = os.environ.get("MEDIA_URL", "/media/")
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Subida de ficheros: los grandes (p.ej. backups AntennaPod) se streamean a disco temporal.
+GPODDER_ENABLED = env_bool("GPODDER_ENABLED", True)      # API gpodder (sync con AntennaPod)
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024            # >5MB → TemporaryUploadedFile (disco)
 DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("DATA_UPLOAD_MAX_MEMORY_SIZE", str(512 * 1024 * 1024)))
 

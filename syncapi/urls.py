@@ -1,8 +1,14 @@
-from django.urls import path
+from django.urls import path, re_path
 
-from . import fever, googlereader as gr
+from . import fever, googlereader as gr, gpodder
 
 urlpatterns = [
+    # gpodder (mygpo) — montado en /api/, así AntennaPod usa host = <raíz>.
+    path("2/auth/<str:username>/login.json", gpodder.login, name="gp_login"),
+    path("2/devices/<str:username>.json", gpodder.devices, name="gp_devices"),
+    path("2/devices/<str:username>/<str:deviceid>.json", gpodder.device_update, name="gp_device"),
+    path("2/subscriptions/<str:username>/<str:deviceid>.json", gpodder.subscriptions, name="gp_subs"),
+    path("2/episodes/<str:username>.json", gpodder.episodes, name="gp_episodes"),
     # Fever
     path("fever/", fever.endpoint, name="fever"),
     # Google Reader

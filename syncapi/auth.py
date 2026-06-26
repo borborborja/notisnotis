@@ -1,7 +1,28 @@
 """Resolución de usuario para las APIs de sincronización."""
 from __future__ import annotations
 
+import base64
+
 from .models import SyncCredential
+
+
+def user_from_basic(request, username=None):
+    """gpodder: HTTP Basic (usuario + app-password de SyncCredential). Devuelve usuario o None."""
+    header = request.META.get("HTTP_AUTHORIZATION", "")
+    if not header.startswith("Basic "):
+        return None
+    try:
+        raw = base64.b64decode(header.split(" ", 1)[1]).decode("utf-8", "replace")
+        user, _, pwd = raw.partition(":")
+    except Exception:  # noqa: BLE001
+        return None
+    cred = (SyncCredential.objects.select_related("user")
+            .filter(user__username=user, password=pwd).first())
+    if not cred:
+        return None
+    if username and cred.user.get_username() != username:
+        return None
+    return cred.user
 
 
 def user_from_fever(api_key):

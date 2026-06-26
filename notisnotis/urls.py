@@ -1,10 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 
 from accounts import views as account_views
 from accounts import twofa as twofa_views
+from syncapi import gpodder as gpodder_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -22,6 +23,9 @@ urlpatterns = [
     path("accounts/import/", account_views.import_data, name="account_import"),
     path("accounts/settings/<str:tab>/", account_views.settings_view, name="account_settings_tab"),
     path("api/", include("syncapi.urls")),
+    # gpodder "simple API" (raíz, fuera de /api/): subida/descarga de suscripciones.
+    re_path(r"^subscriptions/(?P<username>[^/]+)/(?P<deviceid>[^/]+)\.(?P<fmt>opml|json|txt)$",
+            gpodder_views.subscriptions_file, name="gp_subs_file"),
     path("notifications/", include("notifications.urls")),
     path("feeds/", include("feeds.urls")),
     path("aifeeds/", include("aifeeds.urls")),
