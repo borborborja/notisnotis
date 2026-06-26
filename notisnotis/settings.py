@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "notifications",
     "features",
     "aifeeds",
+    "podcasts",
     # 2FA (TOTP + códigos de recuperación)
     "django_otp",
     "django_otp.plugins.otp_totp",

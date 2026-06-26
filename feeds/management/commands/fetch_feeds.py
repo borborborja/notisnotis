@@ -33,6 +33,38 @@ def _enclosure(entry):
     return "", ""
 
 
+def _entry_image(entry):
+    img = entry.get("image")
+    if isinstance(img, dict) and img.get("href"):
+        return img["href"]
+    return entry.get("itunes_image", "") or ""
+
+
+def _duration_seconds(entry):
+    """itunes:duration puede ser segundos o HH:MM:SS."""
+    raw = (entry.get("itunes_duration") or "").strip()
+    if not raw:
+        return 0
+    try:
+        if ":" in raw:
+            parts = [int(p) for p in raw.split(":")]
+            sec = 0
+            for p in parts:
+                sec = sec * 60 + p
+            return sec
+        return int(float(raw))
+    except (ValueError, TypeError):
+        return 0
+
+
+def _feed_image(parsed):
+    feed = parsed.feed
+    img = feed.get("image")
+    if isinstance(img, dict) and img.get("href"):
+        return img["href"]
+    return feed.get("itunes_image", "") or ""
+
+
 def _download(feed):
     """Descarga (red) un feed con conditional GET. Devuelve (feed, parsed | None, error)."""
     try:
@@ -116,6 +148,15 @@ class Command(BaseCommand):
                 if feed.kind == "rss" and any("audio" in (a.enclosure_type or "") for a in new_articles):
                     feed.kind = "podcast"
                     fields.append("kind")
+                # Portada/descripción del podcast (rellena si faltan).
+                img = _feed_image(parsed)
+                if img and not feed.image_url:
+                    feed.image_url = img[:1000]
+                    fields.append("image_url")
+                desc = (parsed.feed.get("subtitle") or parsed.feed.get("description") or "")[:2000]
+                if desc and not feed.description:
+                    feed.description = desc
+                    fields.append("description")
 
                 feed.etag = (getattr(parsed, "etag", "") or "")[:512]
                 feed.last_modified = (getattr(parsed, "modified", "") or "")[:128]
@@ -151,6 +192,7 @@ class Command(BaseCommand):
                     "source": feed.source, "url": url, "title": title, "summary": summary,
                     "published_at": _parse_published(entry),
                     "enclosure_url": enc_url[:1000], "enclosure_type": enc_type[:64],
+                    "image_url": _entry_image(entry)[:1000], "duration": _duration_seconds(entry),
                 },
             )
             if created:

@@ -68,6 +68,14 @@ class Article(models.Model):
     # Transcripción (fuentes audio): el resultado va a full_text (fulltext_source="transcript").
     transcribe_requested = models.BooleanField(default=False)
 
+    # Reproductor de podcasts: posición (resumen), duración y carátula del episodio.
+    # is_read = "escuchado"; is_saved = "favorito".
+    play_position = models.PositiveIntegerField(default=0)   # segundos
+    duration = models.PositiveIntegerField(default=0)        # segundos (0 = desconocida)
+    play_updated_at = models.DateTimeField(null=True, blank=True)
+    image_url = models.URLField(max_length=1000, blank=True)  # carátula del episodio
+    chapters = models.JSONField(default=list, blank=True)     # [{start, title, ...}]
+
     # Estado de lectura (Feed ya es por-usuario)
     is_read = models.BooleanField(default=False)
     is_saved = models.BooleanField(default=False)

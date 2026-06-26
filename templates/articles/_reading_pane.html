@@ -90,7 +90,14 @@
     title="YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
   {% elif article.enclosure_url %}
   <div class="enclosure">
-    {% if 'audio' in article.enclosure_type %}<audio controls src="{{ article.enclosure_url }}"></audio>
+    {% if 'audio' in article.enclosure_type %}
+      {% if 'podcasts' in modules %}
+        <button class="btn" data-ep-play data-ep-id="{{ article.pk }}" data-ep-src="{{ article.enclosure_url }}"
+                data-ep-title="{{ article.title }}" data-ep-feed="{{ article.feed.title|default:article.source.name }}"
+                data-ep-art="{{ article.image_url|default:article.feed.image_url }}" data-ep-pos="{{ article.play_position }}"
+                data-ep-speed="{{ article.feed.playback_speed }}"><svg class="ic"><use href="#i-play"/></svg> Reproducir</button>
+      {% endif %}
+      <audio controls preload="none" src="{{ article.enclosure_url }}"></audio>
     {% elif 'image' in article.enclosure_type %}<img src="{{ article.enclosure_url }}" alt="">
     {% elif 'video' in article.enclosure_type %}<video controls src="{{ article.enclosure_url }}"></video>
     {% else %}<a class="tbtn" href="{{ article.enclosure_url }}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-external"/></svg> Adjunto</a>{% endif %}

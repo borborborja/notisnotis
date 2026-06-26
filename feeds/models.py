@@ -115,6 +115,12 @@ class Feed(models.Model):
     auto_interval = models.BooleanField(default=True)
     # Crawler: descargar el texto completo automáticamente al recibir artículos.
     crawler = models.BooleanField(default=False)
+    # Podcast: portada, descripción y ajustes de reproducción por podcast.
+    image_url = models.URLField(max_length=1000, blank=True)
+    description = models.TextField(blank=True)
+    playback_speed = models.FloatField(default=1.0)
+    skip_intro = models.PositiveIntegerField(default=0)   # segundos al empezar
+    skip_outro = models.PositiveIntegerField(default=0)   # segundos al final
 
     def is_due(self, now):
         from datetime import timedelta

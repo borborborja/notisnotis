@@ -121,6 +121,121 @@
   function post(url) {
     return fetch(url, { method: "POST", headers: { "X-CSRFToken": getCookie("csrftoken") } });
   }
+  function postForm(url, data) {
+    var body = new FormData();
+    Object.keys(data || {}).forEach(function (k) { body.append(k, data[k]); });
+    return fetch(url, { method: "POST", headers: { "X-CSRFToken": getCookie("csrftoken") }, body: body });
+  }
+
+  // ---- Reproductor de podcasts persistente (Pocket Casts-style) ----
+  var SPEEDS = [1, 1.2, 1.5, 1.75, 2, 0.8];
+  function fmtTime(s) {
+    s = Math.max(0, Math.floor(s || 0));
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    var mm = (h ? (m < 10 ? "0" : "") : "") + m, ss = (sec < 10 ? "0" : "") + sec;
+    return (h ? h + ":" : "") + mm + ":" + ss;
+  }
+  function initPlayer() {
+    var bar = document.getElementById("nn-player");
+    if (!bar) return;
+    var audio = document.getElementById("np-audio");
+    var els = {
+      art: document.getElementById("np-art"), title: document.getElementById("np-title"),
+      feed: document.getElementById("np-feed"), toggle: document.getElementById("np-toggle"),
+      seek: document.getElementById("np-seek"), cur: document.getElementById("np-cur"),
+      dur: document.getElementById("np-dur"), speed: document.getElementById("np-speed"),
+    };
+    var cur = null;            // {id, src, title, feed, art, speed}
+    var lastSave = 0, seeking = false;
+
+    function saveProgress(beacon) {
+      if (!cur || !audio.duration) return;
+      var data = { position: Math.floor(audio.currentTime), duration: Math.floor(audio.duration) };
+      var url = "/podcasts/ep/" + cur.id + "/progress/";
+      if (beacon && navigator.sendBeacon) {
+        var fd = new FormData();
+        fd.append("position", data.position); fd.append("duration", data.duration);
+        fd.append("csrfmiddlewaretoken", getCookie("csrftoken"));
+        navigator.sendBeacon(url, fd);
+      } else { postForm(url, data); }
+    }
+    function setPlayIcon(playing) {
+      els.toggle.querySelector("use").setAttribute("href", playing ? "#i-pause" : "#i-play");
+    }
+
+    function play(ep) {
+      cur = ep;
+      bar.hidden = false;
+      els.title.textContent = ep.title || "";
+      els.feed.textContent = ep.feed || "";
+      if (ep.art) { els.art.src = ep.art; els.art.style.visibility = "visible"; }
+      else { els.art.removeAttribute("src"); els.art.style.visibility = "hidden"; }
+      audio.src = ep.src;
+      var speed = parseFloat(ep.speed) || 1;
+      audio.playbackRate = speed;
+      els.speed.textContent = (speed % 1 ? speed : speed + "") + "×";
+      var resume = parseFloat(ep.pos) || 0;
+      audio.addEventListener("loadedmetadata", function once() {
+        audio.removeEventListener("loadedmetadata", once);
+        if (resume > 0 && resume < (audio.duration - 5)) audio.currentTime = resume;
+      });
+      try { localStorage.setItem("nn_player", JSON.stringify(ep)); } catch (e) {}
+      audio.play().catch(function () {});
+    }
+    window.nnPlay = play;   // otras partes (listas, cola) pueden invocarlo
+
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-ep-play]");
+      if (!btn) return;
+      e.preventDefault();
+      play({
+        id: btn.getAttribute("data-ep-id"), src: btn.getAttribute("data-ep-src"),
+        title: btn.getAttribute("data-ep-title"), feed: btn.getAttribute("data-ep-feed"),
+        art: btn.getAttribute("data-ep-art"), pos: btn.getAttribute("data-ep-pos"),
+        speed: btn.getAttribute("data-ep-speed"),
+      });
+    });
+
+    els.toggle.addEventListener("click", function () { audio.paused ? audio.play() : audio.pause(); });
+    document.getElementById("np-back").addEventListener("click", function () { audio.currentTime -= 15; });
+    document.getElementById("np-fwd").addEventListener("click", function () { audio.currentTime += 30; });
+    document.getElementById("np-close").addEventListener("click", function () {
+      saveProgress(false); audio.pause(); bar.hidden = true; cur = null;
+    });
+    document.getElementById("np-played").addEventListener("click", function () {
+      if (cur) post("/podcasts/ep/" + cur.id + "/played/");
+    });
+    els.speed.addEventListener("click", function () {
+      var i = SPEEDS.indexOf(audio.playbackRate);
+      var next = SPEEDS[(i + 1) % SPEEDS.length];
+      audio.playbackRate = next;
+      els.speed.textContent = (next % 1 ? next : next + "") + "×";
+    });
+    els.seek.addEventListener("input", function () { seeking = true; });
+    els.seek.addEventListener("change", function () {
+      if (audio.duration) audio.currentTime = (els.seek.value / 1000) * audio.duration;
+      seeking = false;
+    });
+
+    audio.addEventListener("play", function () { setPlayIcon(true); });
+    audio.addEventListener("pause", function () { setPlayIcon(false); saveProgress(false); });
+    audio.addEventListener("timeupdate", function () {
+      if (!audio.duration) return;
+      if (!seeking) els.seek.value = (audio.currentTime / audio.duration) * 1000;
+      els.cur.textContent = fmtTime(audio.currentTime);
+      els.dur.textContent = fmtTime(audio.duration);
+      var now = Date.now();
+      if (now - lastSave > 15000) { lastSave = now; saveProgress(false); }
+    });
+    audio.addEventListener("ended", function () {
+      if (cur) post("/podcasts/ep/" + cur.id + "/played/");
+      if (window.nnQueueNext) window.nnQueueNext();
+    });
+    window.addEventListener("pagehide", function () { saveProgress(true); });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") saveProgress(true);
+    });
+  }
 
   // ---- Atajos de teclado (estilo miniflux / ReactFlux) ----
   var sel = -1;
@@ -347,7 +462,7 @@
     // Cada init aislado: que un fallo no impida el resto.
     [initGroups, initSections, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
      initResizers, initTypeControls, initPush, initPWA, initAiProvider, initRangeOutputs,
-     initSubtabs, initFeedFilter].forEach(function (fn) {
+     initSubtabs, initFeedFilter, initPlayer].forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });
     var h = document.querySelector("[data-help-close]");

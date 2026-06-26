@@ -25,6 +25,7 @@ urlpatterns = [
     path("notifications/", include("notifications.urls")),
     path("feeds/", include("feeds.urls")),
     path("aifeeds/", include("aifeeds.urls")),
+    path("podcasts/", include("podcasts.urls")),
     path("articles/", include("articles.urls")),
     path("", include("stories.urls")),
 ]
