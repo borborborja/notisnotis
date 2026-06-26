@@ -23,6 +23,11 @@
       <button class="np-btn" title="{% if ep.pk in queued %}En la cola{% else %}Añadir a la cola{% endif %}"
         data-queue-toggle data-ep="{{ ep.pk }}" data-queued="{% if ep.pk in queued %}1{% else %}0{% endif %}">
         <svg class="ic"><use href="#i-queue"/></svg></button>
+      <button class="np-btn" title="Descargar para offline" data-download data-ep-id="{{ ep.pk }}"
+        data-ep-src="{{ ep.enclosure_url }}" data-ep-title="{{ ep.title }}"
+        data-ep-feed="{{ ep.feed.title|default:ep.source.name }}"
+        data-ep-art="{{ ep.image_url|default:ep.feed.image_url }}" data-ep-pos="{{ ep.play_position }}"
+        data-ep-speed="{{ ep.feed.playback_speed }}"><svg class="ic"><use href="#i-download2"/></svg></button>
     {% endif %}
     <button class="np-btn" title="Escuchado" data-played-toggle data-ep="{{ ep.pk }}"><svg class="ic"><use href="#i-check"/></svg></button>
   </div>

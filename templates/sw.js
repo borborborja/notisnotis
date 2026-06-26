@@ -1,5 +1,6 @@
 // Service worker de NotisNotis (servido en /sw.js → scope raíz). Caché offline + Web Push.
 const CACHE = "notisnotis-v1";
+const AUDIO = "nn-audio";   // episodios descargados para escuchar sin conexión
 const SHELL = [
   "/static/css/app.css",
   "/static/js/app.js",
@@ -14,15 +15,39 @@ self.addEventListener("install", (e) => {
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+    caches.keys().then((keys) => Promise.all(
+      keys.filter((k) => k !== CACHE && k !== AUDIO).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
+
+// Descargas offline: la página pide cachear/borrar el audio de un episodio.
+self.addEventListener("message", (e) => {
+  const m = e.data || {};
+  if (m.type === "cache-audio" && m.url) {
+    e.waitUntil(caches.open(AUDIO)
+      .then((c) => c.add(new Request(m.url, { mode: "no-cors" })))
+      .then(() => reply(e, { ok: true, url: m.url }))
+      .catch(() => reply(e, { ok: false, url: m.url })));
+  } else if (m.type === "uncache-audio" && m.url) {
+    e.waitUntil(caches.open(AUDIO).then((c) => c.delete(new Request(m.url, { mode: "no-cors" })))
+      .then((ok) => reply(e, { ok: ok, url: m.url, removed: true })));
+  }
+});
+function reply(e, data) {
+  if (e.source && e.source.postMessage) e.source.postMessage(data);
+}
 
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+  // Episodio descargado: servir desde la caché de audio (también cross-origin/opaque).
+  if (req.destination === "audio" || /\.(mp3|m4a|ogg|aac|opus|wav)(\?|$)/i.test(url.pathname)) {
+    e.respondWith(caches.open(AUDIO).then((c) => c.match(req, { ignoreVary: true }))
+      .then((hit) => hit || fetch(req)));
+    return;
+  }
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/static/")) {
     // estáticos: cache-first

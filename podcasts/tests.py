@@ -134,3 +134,12 @@ class AntennaPodImportTests(TestCase):
         self.assertEqual(counts["episodes"], 2)
         self.assertEqual(counts["played"], 1)
         self.assertEqual(counts["favorites"], 1)
+
+
+class DownloadsViewTests(TestCase):
+    def test_downloads_page_renders(self):
+        u = get_user_model().objects.create_user("dl", "", "pw-dl-12345")
+        self.client.login(username="dl", password="pw-dl-12345")
+        r = self.client.get("/podcasts/downloads/")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "downloads-list")

@@ -468,6 +468,8 @@ body.resizing iframe { pointer-events: none; }
 .ep-actions { display: flex; align-items: center; gap: .2rem; flex: 0 0 auto; }
 .ep-actions form { display: inline; }
 .np-btn.active { color: var(--accent); }
+.np-btn.loading { opacity: .45; animation: nn-pulse 1s ease-in-out infinite; }
+@keyframes nn-pulse { 50% { opacity: .85; } }
 .drag-handle { cursor: grab; color: var(--muted); user-select: none; }
 
 /* Reproductor de podcasts persistente */

@@ -7,6 +7,7 @@ app_name = "podcasts"
 urlpatterns = [
     path("", views.home, name="home"),
     path("up-next/", views.up_next, name="up_next"),
+    path("downloads/", views.downloads, name="downloads"),
     path("list/<str:kind>/", views.filtered, name="filtered"),
     path("<int:pk>/", views.podcast_detail, name="detail"),
     path("ep/<int:pk>/progress/", views.progress, name="progress"),

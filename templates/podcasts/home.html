@@ -8,6 +8,7 @@
     <a class="btn btn-ghost" href="{% url 'podcasts:filtered' 'in_progress' %}"><svg class="ic"><use href="#i-clock"/></svg> En curso{% if in_progress_n %} ({{ in_progress_n }}){% endif %}</a>
     <a class="btn btn-ghost" href="{% url 'podcasts:filtered' 'new' %}"><svg class="ic"><use href="#i-sparkles"/></svg> Nuevos</a>
     <a class="btn btn-ghost" href="{% url 'podcasts:filtered' 'favorites' %}"><svg class="ic"><use href="#i-star"/></svg> Favoritos</a>
+    <a class="btn btn-ghost" href="{% url 'podcasts:downloads' %}"><svg class="ic"><use href="#i-download2"/></svg> Descargas</a>
     <a class="btn btn-ghost" href="{% url 'feeds:feed_list' %}?tab=podcasts"><svg class="ic"><use href="#i-settings"/></svg> Gestionar</a>
   </nav>
 </div>

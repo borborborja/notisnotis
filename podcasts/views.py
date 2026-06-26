@@ -74,6 +74,13 @@ def filtered(request, kind):
 
 @login_required
 @module_required("podcasts")
+def downloads(request):
+    """Página de descargas offline (se rellena en cliente desde localStorage)."""
+    return render(request, "podcasts/downloads.html", {"active": "podcasts"})
+
+
+@login_required
+@module_required("podcasts")
 def up_next(request):
     items = (QueueItem.objects.filter(user=request.user)
              .select_related("article", "article__feed", "article__source"))

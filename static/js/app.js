@@ -318,6 +318,81 @@
     }
   }
 
+  // ---- Descargas offline (PWA) ----
+  function dlStore() { try { return JSON.parse(localStorage.getItem("nn_downloads") || "{}"); } catch (e) { return {}; } }
+  function dlSave(s) { try { localStorage.setItem("nn_downloads", JSON.stringify(s)); } catch (e) {} }
+  function swSend(msg) {
+    if (navigator.serviceWorker && navigator.serviceWorker.controller)
+      navigator.serviceWorker.controller.postMessage(msg);
+  }
+  function initDownloads() {
+    if (!("serviceWorker" in navigator)) return;
+    var store = dlStore();
+
+    // Marcar botones ya descargados.
+    document.querySelectorAll("[data-download]").forEach(function (b) {
+      if (store[b.getAttribute("data-ep-id")]) b.classList.add("active");
+    });
+
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-download]");
+      if (!b) return;
+      e.preventDefault();
+      var id = b.getAttribute("data-ep-id"), url = b.getAttribute("data-ep-src");
+      store = dlStore();
+      if (store[id]) {
+        swSend({ type: "uncache-audio", url: url });
+        delete store[id]; dlSave(store); b.classList.remove("active");
+      } else {
+        b.classList.add("loading");
+        swSend({ type: "cache-audio", url: url });
+        store[id] = { id: id, src: url, title: b.getAttribute("data-ep-title"),
+          feed: b.getAttribute("data-ep-feed"), art: b.getAttribute("data-ep-art"),
+          pos: b.getAttribute("data-ep-pos"), speed: b.getAttribute("data-ep-speed") };
+        dlSave(store); b.classList.add("active");
+      }
+    });
+
+    navigator.serviceWorker.addEventListener("message", function (e) {
+      var btn = document.querySelector('[data-download][data-ep-src="' + (e.data && e.data.url) + '"]');
+      if (btn) btn.classList.remove("loading");
+      if (e.data && !e.data.ok && !e.data.removed) {
+        // falló la descarga → revertir
+        document.querySelectorAll('[data-download][data-ep-src="' + e.data.url + '"]').forEach(function (b) {
+          b.classList.remove("active"); var s = dlStore(); delete s[b.getAttribute("data-ep-id")]; dlSave(s);
+        });
+      }
+    });
+
+    // Página de descargas (cliente).
+    var list = document.getElementById("downloads-list");
+    if (list) {
+      var items = Object.keys(store).map(function (k) { return store[k]; });
+      if (!items.length) { list.innerHTML = '<p class="muted">No tienes episodios descargados.</p>'; }
+      else items.forEach(function (ep) {
+        var row = document.createElement("div"); row.className = "ep-row";
+        row.innerHTML =
+          '<img class="ep-art" src="' + (ep.art || "") + '" alt="">' +
+          '<div class="ep-body"><div class="ep-title">' + (ep.title || "") + '</div>' +
+          '<div class="ep-meta muted">' + (ep.feed || "") + '</div></div>' +
+          '<div class="ep-actions">' +
+          '<button class="np-btn" data-ep-play data-ep-id="' + ep.id + '" data-ep-src="' + ep.src +
+          '" data-ep-title="' + (ep.title || "") + '" data-ep-feed="' + (ep.feed || "") +
+          '" data-ep-art="' + (ep.art || "") + '" data-ep-pos="' + (ep.pos || 0) +
+          '" data-ep-speed="' + (ep.speed || 1) + '"><svg class="ic"><use href="#i-play"/></svg></button>' +
+          '<button class="np-btn active" data-download data-ep-id="' + ep.id + '" data-ep-src="' + ep.src +
+          '" title="Borrar descarga"><svg class="ic"><use href="#i-x"/></svg></button></div>';
+        list.appendChild(row);
+      });
+      var usage = document.getElementById("storage-usage");
+      if (usage && navigator.storage && navigator.storage.estimate)
+        navigator.storage.estimate().then(function (q) {
+          var mb = Math.round((q.usage || 0) / 1048576);
+          usage.textContent = "Almacenamiento usado: ~" + mb + " MB";
+        });
+    }
+  }
+
   // ---- Atajos de teclado (estilo miniflux / ReactFlux) ----
   var sel = -1;
   function items() { return Array.prototype.slice.call(document.querySelectorAll("#article-items .item")); }
@@ -543,7 +618,7 @@
     // Cada init aislado: que un fallo no impida el resto.
     [initGroups, initSections, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
      initResizers, initTypeControls, initPush, initPWA, initAiProvider, initRangeOutputs,
-     initSubtabs, initFeedFilter, initPlayer, initPodcasts].forEach(function (fn) {
+     initSubtabs, initFeedFilter, initPlayer, initPodcasts, initDownloads].forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });
     var h = document.querySelector("[data-help-close]");
