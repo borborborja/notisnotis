@@ -158,10 +158,14 @@ def _story_context(request, pk):
 def _story_view(request, story):
     from itertools import groupby
 
+    from .credibility import source_signal
+
     # Agrupado por sesgo (vista por defecto)
-    sas_bias = story.story_articles.select_related("article", "article__source").order_by(
+    sas_bias = list(story.story_articles.select_related("article", "article__source").order_by(
         "-article__published_at"
-    )
+    ))
+    for sa in sas_bias:  # anota la señal de credibilidad para los badges
+        sa.article.cred_flags = source_signal(sa.article.source, story.location_country)["flags"]
     grouped = {b.value: {"label": b.label, "articles": []} for b in BIAS_ORDER}
     grouped["unknown"] = {"label": "Desconocido", "articles": []}
     for sa in sas_bias:

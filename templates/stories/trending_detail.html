@@ -36,7 +36,8 @@
           {% for a in group.articles %}
             <li><a href="{{ a.url }}" target="_blank" rel="noopener">
               <span class="rel-source">{{ a.source.name }}</span><span class="rel-title">{{ a.title }}</span>
-              <svg class="ic"><use href="#i-external"/></svg></a></li>
+              <svg class="ic"><use href="#i-external"/></svg></a>
+              {% include "partials/source_badges.html" with flags=a.cred_flags %}</li>
           {% endfor %}
         </ul>
       </div>

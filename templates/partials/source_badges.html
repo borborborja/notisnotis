@@ -1,0 +1,2 @@
+{# Badges de credibilidad contextual de una fuente. Espera: flags (lista de strings). #}
+{% for f in flags %}<span class="src-badge{% if f == 'estatal' or f == 'baja libertad de prensa' %} warn{% elif f == 'local' %} ok{% endif %}">{{ f }}</span>{% endfor %}

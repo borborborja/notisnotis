@@ -17,6 +17,7 @@ class Story(models.Model):
     synthesis = models.TextField(blank=True)
     synthesized_at = models.DateTimeField(null=True, blank=True)
     bias_distribution = models.JSONField(default=dict, blank=True)  # {bucket: count}
+    location_country = models.CharField(max_length=2, blank=True)  # país del suceso (ISO-2)
     is_blindspot = models.BooleanField(default=False)
     blindspot_side = models.CharField(max_length=8, blank=True)  # left|right
     blindspot_notified = models.BooleanField(default=False)  # evita push repetidos

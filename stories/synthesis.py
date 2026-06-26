@@ -24,11 +24,17 @@ SYSTEM = (
     "5) NO inventes datos: usa solo lo que aportan las fuentes; si no hay un dato, no lo pongas. "
     "6) Cuando las fuentes difieran o aporten ángulos distintos, indícalo de forma objetiva "
     "('según X…', 'mientras que Y…'). "
+    "7) CREDIBILIDAD CONTEXTUAL: da más peso a fuentes independientes y a medios locales fiables; "
+    "cuando una afirmación provenga SOLO de medios estatales de países con baja libertad de prensa, "
+    "atribúyela explícitamente ('según medios estatales de X…') en vez de darla por hecho. NO "
+    "ocultes ninguna versión. Cada fuente lleva su contexto entre paréntesis. "
     "Devuelve SOLO el artículo en markdown, sin preámbulos."
 )
 
 
 def _coverage(story, max_articles=12, per_article=1500):
+    from .credibility import context_label
+
     lines = []
     sas = (story.story_articles.select_related("article", "article__source")
            .order_by("article__published_at"))
@@ -36,7 +42,9 @@ def _coverage(story, max_articles=12, per_article=1500):
         a = sa.article
         text = (a.best_text or "")[:per_article].replace("\n", " ").strip()
         when = a.published_at.date().isoformat() if a.published_at else "s/f"
-        lines.append(f"## {a.source.name} ({a.source.get_bias_display()}, {when})\n{a.title}\n{text}")
+        ctx = context_label(a.source, story.location_country)
+        meta = f"{a.source.get_bias_display()}{', ' + ctx if ctx else ''}, {when}"
+        lines.append(f"## {a.source.name} ({meta})\n{a.title}\n{text}")
     return "\n\n".join(lines)
 
 

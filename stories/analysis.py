@@ -11,12 +11,13 @@ SYSTEM = "Eres un editor neutral que sintetiza cobertura de múltiples medios. D
 PROMPT = (
     "Te doy titulares de varios medios sobre el mismo suceso. Devuelve SOLO JSON:\n"
     '{{"headline": "titular neutral del suceso",\n'
+    '  "country": "ISO-3166 alpha-2 del país del que trata el suceso, o vacío si es global",\n'
     '  "neutral_summary": "resumen objetivo de 2-4 frases",\n'
     '  "perspectives": {{"left": "cómo lo enmarca la izquierda",\n'
     '                    "center": "encuadre de centro",\n'
     '                    "right": "cómo lo enmarca la derecha"}}}}\n'
     "Si falta cobertura de un lado, indícalo en esa perspectiva.\n\n"
-    "COBERTURA:\n{coverage}"
+    "COBERTURA (cada línea: [sesgo · contexto de la fuente]):\n{coverage}"
 )
 
 
@@ -48,11 +49,15 @@ def detect_blindspot(dist, *, dominance=0.7, starvation=0.15):
 
 
 def _coverage_text(articles, limit=25):
+    from .credibility import context_label
+
     lines = []
     for art in articles[:limit]:
         bias = art.source.get_bias_display()
+        ctx = context_label(art.source)
+        tag = f"{bias} · {ctx}" if ctx else bias
         snippet = (art.summary or art.body or "")[:200].replace("\n", " ")
-        lines.append(f"- [{bias}] {art.source.name}: {art.title}\n  {snippet}")
+        lines.append(f"- [{tag}] {art.source.name}: {art.title}\n  {snippet}")
     return "\n".join(lines)
 
 
@@ -82,6 +87,7 @@ def analyze_story(story, client=None):
 
     persp = data.get("perspectives") or {}
     story.headline = (data.get("headline") or story.headline or articles[0].title)[:500]
+    story.location_country = (data.get("country") or "")[:2].upper()
     story.neutral_summary = data.get("neutral_summary") or ""
     story.perspectives = {
         "left": persp.get("left", ""),

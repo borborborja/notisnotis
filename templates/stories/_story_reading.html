@@ -90,6 +90,7 @@
           <div class="cov-item">
             <a href="{% url 'articles:detail' article.pk %}">{{ article.title }}</a>
             <span class="item-meta">· {{ article.source.name }}</span>
+            {% include "partials/source_badges.html" with flags=article.cred_flags %}
             {% if article.published_at %}<span class="item-meta">· {{ article.published_at|date:"d M H:i" }}</span>{% endif %}
             {% if article.url %}· <a href="{{ article.url }}" target="_blank" rel="noopener" title="Original"><svg class="ic"><use href="#i-external"/></svg></a>{% endif %}
           </div>

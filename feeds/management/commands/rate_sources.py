@@ -7,12 +7,16 @@ from feeds.models import Bias, Source
 VALID_BIAS = {b.value for b in Bias}
 
 PROMPT = (
-    "Eres un analista de medios. Estima la orientación política editorial y la "
-    "fiabilidad factual del medio indicado. Responde SOLO con JSON: "
+    "Eres un analista de medios. Estima orientación política editorial, fiabilidad factual, "
+    "PAÍS base del medio (ISO-3166 alpha-2, p.ej. ES, US, VE) y su PROPIEDAD/control. "
+    "Responde SOLO con JSON: "
     '{{"bias": "left|lean_left|center|lean_right|right", '
-    '"factuality": "high|mixed|low", "reasoning": "una frase"}}.\n\n'
+    '"factuality": "high|mixed|low", '
+    '"country": "XX", "ownership": "independent|state|partisan", '
+    '"reasoning": "una frase"}}.\n\n'
     "Medio: {name}\nDominio: {domain}"
 )
+VALID_OWNERSHIP = {"independent", "state", "partisan", "unknown"}
 
 
 class Command(BaseCommand):
@@ -34,8 +38,12 @@ class Command(BaseCommand):
         source.bias = bias if bias in VALID_BIAS else Bias.UNKNOWN
         source.factuality = (data.get("factuality") or "")[:64]
         source.bias_reasoning = (data.get("reasoning") or "")[:1000]
+        source.country = (data.get("country") or "")[:2].upper()
+        own = (data.get("ownership") or "unknown").lower()
+        source.ownership = own if own in VALID_OWNERSHIP else "unknown"
         source.bias_source = "llm"
-        source.save(update_fields=["bias", "factuality", "bias_reasoning", "bias_source"])
+        source.save(update_fields=["bias", "factuality", "bias_reasoning", "country",
+                                   "ownership", "bias_source"])
 
     def handle(self, *args, **opts):
         User = get_user_model()

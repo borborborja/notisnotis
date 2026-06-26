@@ -24,6 +24,11 @@ class Source(models.Model):
     domain = models.CharField(max_length=255, unique=True)
     bias = models.CharField(max_length=16, choices=Bias.choices, default=Bias.UNKNOWN)
     factuality = models.CharField(max_length=64, blank=True)
+    # Contexto de credibilidad: país base del medio (ISO-2) y propiedad/control.
+    country = models.CharField(max_length=2, blank=True)
+    OWNERSHIP = [("independent", "Independiente"), ("state", "Estatal"),
+                 ("partisan", "Partidista"), ("unknown", "Desconocido")]
+    ownership = models.CharField(max_length=16, choices=OWNERSHIP, default="unknown", blank=True)
     bias_source = models.CharField(
         max_length=8,
         choices=[("llm", "LLM"), ("manual", "Manual")],

@@ -278,3 +278,32 @@ class TrendingTests(TestCase):
         from accounts.models import UserConfig
         self.client.post("/trending/country/", {"country": "US"})
         self.assertEqual(UserConfig.objects.get(user=self.user).data["trending_country"], "US")
+
+
+class CredibilityTests(TestCase):
+    def test_press_freedom_tiers(self):
+        from feeds.press_freedom import tier
+        self.assertEqual(tier("ES"), "free")
+        self.assertEqual(tier("VE"), "not_free")
+        self.assertEqual(tier("ZZ"), "unknown")
+
+    def test_signal_local_free_boost_and_state_censored_discount(self):
+        from stories.credibility import source_signal
+        class S:
+            def __init__(self, **k): self.__dict__.update(k)
+        # Local en país libre, alta fiabilidad → peso alto + flag local
+        s1 = S(factuality="high", country="ES", ownership="independent")
+        r1 = source_signal(s1, "ES")
+        self.assertIn("local", r1["flags"]); self.assertGreaterEqual(r1["weight"], 1.0)
+        # Estatal en país sin libertad de prensa → fuerte recorte + flags
+        s2 = S(factuality="high", country="VE", ownership="state")
+        r2 = source_signal(s2, "VE")
+        self.assertIn("estatal", r2["flags"]); self.assertIn("baja libertad de prensa", r2["flags"])
+        self.assertLess(r2["weight"], r1["weight"])
+
+    def test_context_label(self):
+        from stories.credibility import context_label
+        class S:
+            def __init__(self, **k): self.__dict__.update(k)
+        lbl = context_label(S(country="VE", ownership="state", factuality="mixed"), "VE")
+        self.assertIn("local", lbl); self.assertIn("estatal", lbl); self.assertIn("libertad", lbl)
