@@ -278,6 +278,9 @@
       if (cur) post("/podcasts/ep/" + cur.id + "/played/");
       if (window.nnQueueNext) window.nnQueueNext();
     });
+    audio.addEventListener("error", function () {
+      if (cur && audio.src) els.feed.textContent = "No se pudo reproducir el audio.";
+    });
     window.addEventListener("pagehide", function () { saveProgress(true); });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") saveProgress(true);
@@ -637,12 +640,16 @@
   // Filtro rápido de tablas de feeds por nombre (gestor de feeds).
   function initFeedFilter() {
     document.querySelectorAll("[data-filter]").forEach(function (input) {
-      var table = document.querySelector("[data-filter-table='" + input.getAttribute("data-filter") + "']");
-      if (!table) return;
+      if (input.dataset.fbound) return; input.dataset.fbound = "1";
+      var key = input.getAttribute("data-filter");
+      var scope = document.querySelector("[data-filter-table='" + key + "'], [data-filter-scope='" + key + "']");
+      if (!scope) return;
+      // Tablas: filtra filas; cualquier otro contenedor: filtra hijos con data-name.
+      var sel = scope.tagName === "TABLE" ? "tbody tr[data-name]" : "[data-name]";
       input.addEventListener("input", function () {
         var q = input.value.trim().toLowerCase();
-        table.querySelectorAll("tbody tr[data-name]").forEach(function (row) {
-          row.hidden = q && row.getAttribute("data-name").indexOf(q) === -1;
+        scope.querySelectorAll(sel).forEach(function (el) {
+          el.hidden = q && el.getAttribute("data-name").indexOf(q) === -1;
         });
       });
     });

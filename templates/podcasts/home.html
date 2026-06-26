@@ -36,9 +36,10 @@
 
 {% if feeds %}
 <h2 class="pod-section-title">Tus podcasts</h2>
-<div class="pod-grid">
+{% if feeds|length > 12 %}<input type="search" class="feed-filter" data-filter="podgrid" placeholder="Filtrar podcasts…">{% endif %}
+<div class="pod-grid" data-filter-scope="podgrid">
   {% for f in feeds %}
-    <a class="pod-card" href="{% url 'podcasts:detail' f.pk %}" title="{{ f.title|default:f.source.name }}">
+    <a class="pod-card" data-name="{{ f.title|default:f.source.name|lower }}" href="{% url 'podcasts:detail' f.pk %}" title="{{ f.title|default:f.source.name }}">
       <div class="pod-cover">
         {% if f.image_url or f.source.favicon %}<img data-ph src="{{ f.image_url|default:f.source.favicon }}" alt="" loading="lazy">
         {% else %}<div class="pod-cover-ph"><svg class="ic"><use href="#i-mic"/></svg></div>{% endif %}
