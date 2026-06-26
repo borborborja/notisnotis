@@ -307,3 +307,29 @@ class CredibilityTests(TestCase):
             def __init__(self, **k): self.__dict__.update(k)
         lbl = context_label(S(country="VE", ownership="state", factuality="mixed"), "VE")
         self.assertIn("local", lbl); self.assertIn("estatal", lbl); self.assertIn("libertad", lbl)
+
+
+class CredibilityEdgeCasesTests(TestCase):
+    class _S:
+        def __init__(self, **k): self.__dict__.update(k)
+
+    def test_source_without_country(self):
+        from stories.credibility import source_signal, context_label
+        s = self._S(factuality="mixed", country="", ownership="unknown")
+        sig = source_signal(s, "VE")
+        self.assertEqual(sig["flags"], [])          # sin país → sin flags
+        self.assertEqual(context_label(s, "VE"), "")  # sin contexto que mostrar
+
+    def test_story_without_country_still_flags_state_media(self):
+        from stories.credibility import source_signal
+        s = self._S(factuality="high", country="VE", ownership="state")
+        sig = source_signal(s, "")                  # suceso sin país
+        self.assertIn("estatal", sig["flags"])
+        self.assertIn("baja libertad de prensa", sig["flags"])
+        self.assertNotIn("local", sig["flags"])     # no se puede determinar localidad
+
+    def test_both_empty_no_crash(self):
+        from stories.credibility import source_signal, context_label
+        s = self._S(factuality="", country="", ownership="")
+        self.assertEqual(source_signal(s, "")["flags"], [])
+        self.assertEqual(context_label(s, ""), "")
