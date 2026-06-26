@@ -17,11 +17,20 @@ def sidebar(request):
     if request.headers.get("HX-Request") or getattr(request, "path", "").startswith("/accounts/settings"):
         return {}
 
-    feeds = (
+    # Conteo de no-leídos por feed en UNA sola consulta (en vez de 3 annotate con LEFT JOIN,
+    # caros con decenas de miles de episodios de podcast). Solo escanea filas no leídas.
+    unread_by_feed = {
+        row["feed_id"]: row["n"]
+        for row in Article.objects.filter(feed__user=user, is_read=False)
+        .values("feed_id").annotate(n=Count("id"))
+    }
+
+    feeds = list(
         Feed.objects.filter(user=user, ai_feed__isnull=True, kind="rss")  # IA y audio en su sección
         .select_related("source", "category")
-        .annotate(unread=Count("articles", filter=Q(articles__is_read=False)))
     )
+    for feed in feeds:
+        feed.unread = unread_by_feed.get(feed.id, 0)
 
     # Agrupa feeds por categoría (None = "Sin categoría").
     by_cat = {}
@@ -46,17 +55,16 @@ def sidebar(request):
 
     aifeeds = []
     for ai in (AIFeed.objects.filter(user=user)
-               .annotate(unread=Count("feed__articles", filter=Q(feed__articles__is_read=False)),
-                         pending=Count("candidates", filter=Q(candidates__status="pending")))):
+               .annotate(pending=Count("candidates", filter=Q(candidates__status="pending")))):
         aifeeds.append({"id": ai.id, "name": ai.name, "feed_id": ai.feed_id,
-                        "unread": ai.unread, "pending": ai.pending})
+                        "unread": unread_by_feed.get(ai.feed_id, 0), "pending": ai.pending})
 
     # Fuentes audio (podcasts + canales de YouTube).
     audio_feeds = list(
-        Feed.objects.filter(user=user, kind__in=["podcast", "youtube"])
-        .select_related("source")
-        .annotate(unread=Count("articles", filter=Q(articles__is_read=False)))
+        Feed.objects.filter(user=user, kind__in=["podcast", "youtube"]).select_related("source")
     )
+    for feed in audio_feeds:
+        feed.unread = unread_by_feed.get(feed.id, 0)
     from podcasts.models import QueueItem
     queue_n = QueueItem.objects.filter(user=user).count() if audio_feeds else 0
 
@@ -69,7 +77,7 @@ def sidebar(request):
         "sidebar_tags": tags,
         "reading_ui": reading_prefs(user),
         "sidebar_counts": {
-            "unread": Article.objects.filter(feed__user=user, is_read=False).count(),
+            "unread": sum(unread_by_feed.values()),
             "saved": Article.objects.filter(feed__user=user, is_saved=True).count(),
             "stories": Story.objects.filter(user=user).count(),
             "blindspots": Story.objects.filter(user=user, is_blindspot=True).count(),
