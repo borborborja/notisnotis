@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
@@ -241,10 +242,13 @@ def settings_view(request, tab="general"):
         ctx["ai_search_minutes"] = int(data.get("ai_search_minutes", 720))
         ctx["ai_min_score"] = int(data.get("ai_min_score", 6))
         ctx["ai_feeds"] = request.user.ai_feeds.all()
-        from aiproviders.config import TRANSCRIBE_KEYS, fields_state
+        from aiproviders.config import TRANSCRIBE_LANGS, fields_state
 
         st = fields_state(request.user)
-        ctx["transcribe_fields"] = [st[k] for k in TRANSCRIBE_KEYS]
+        ctx["transcribe"] = _ai_section(st, "transcribe", "transcribe_provider", "transcribe_model")
+        ctx["transcribe_langs"] = TRANSCRIBE_LANGS
+        ctx["current_lang"] = st["transcribe_lang"]["effective"]
+        ctx["lang_locked"] = st["transcribe_lang"]["locked"]
         ctx["auto_transcribe"] = data.get("auto_transcribe", "0") == "1"
         ctx["feeds"] = Feed.objects.filter(user=request.user).select_related("source").order_by(
             "fetch_interval_minutes"
@@ -277,6 +281,7 @@ _PROVIDER_CONN = {
     "openai": ["openai_api_key", "openai_base_url"],
     "openrouter": ["openrouter_api_key", "openrouter_base_url"],
     "jina": ["jina_api_key", "jina_base_url"],
+    "whisper_local": ["whisper_url"],
 }
 _CONN_KEYS = sorted({k for ks in _PROVIDER_CONN.values() for k in ks})
 
@@ -298,32 +303,73 @@ def _ai_section(st, kind, prov_key, model_key):
     }
 
 
-@login_required
-@require_POST
-def ai_models(request):
-    """htmx: recupera los modelos del proveedor (con la config del formulario sin guardar)."""
-    from aiproviders.client import build_chat_client, build_embed_client
+_PROV_KEY = {"chat": "chat_provider", "embed": "embed_provider", "transcribe": "transcribe_provider"}
+_MODEL_KEY = {"chat": "chat_model", "embed": "embed_model", "transcribe": "transcribe_model"}
+
+
+def _client_cfg(request, kind):
+    """Config resuelta + overrides del formulario sin guardar (proveedor + conexión + url)."""
     from aiproviders.config import effective_config
 
-    kind = request.POST.get("kind", "chat")
     cfg = dict(effective_config(request.user))
-    prov_key = "chat_provider" if kind == "chat" else "embed_provider"
-    submitted_provider = request.POST.get(prov_key, "").strip()
-    if submitted_provider:
-        cfg[prov_key] = submitted_provider
+    prov = request.POST.get(_PROV_KEY[kind], "").strip()
+    if prov:
+        cfg[_PROV_KEY[kind]] = prov
     for k in _CONN_KEYS:
         v = request.POST.get(k, "").strip()
         if v:
             cfg[k] = v
+    return cfg
+
+
+@login_required
+@require_POST
+def ai_models(request):
+    """htmx: recupera los modelos del proveedor (con la config del formulario sin guardar)."""
+    from aiproviders.client import (build_chat_client, build_embed_client,
+                                    build_transcribe_client)
+
+    kind = request.POST.get("kind", "chat")
+    if kind not in _PROV_KEY:
+        kind = "chat"
+    cfg = _client_cfg(request, kind)
     models, error = [], ""
     try:
-        client = build_chat_client(cfg) if kind == "chat" else build_embed_client(cfg)
-        models = client.list_models()
+        builder = {"chat": build_chat_client, "embed": build_embed_client,
+                   "transcribe": build_transcribe_client}[kind]
+        models = builder(cfg).list_models()
     except Exception as exc:  # noqa: BLE001
         error = str(exc)[:200]
-    name = "chat_model" if kind == "chat" else "embed_model"
     return render(request, "settings/_model_options.html",
-                  {"name": name, "models": models, "current": request.POST.get("current", ""), "error": error})
+                  {"name": _MODEL_KEY[kind], "models": models,
+                   "current": request.POST.get("current", ""), "error": error})
+
+
+@login_required
+@require_POST
+def transcribe_download_model(request):
+    """Descarga (pull) un modelo de Whisper local en segundo plano."""
+    import threading
+
+    from aiproviders.client import build_transcribe_client
+
+    model = request.POST.get("transcribe_model", "").strip()
+    if not model:
+        return JsonResponse({"ok": False, "error": "Elige un modelo primero."})
+    cfg = _client_cfg(request, "transcribe")
+    try:
+        client = build_transcribe_client(cfg)
+    except Exception as exc:  # noqa: BLE001
+        return JsonResponse({"ok": False, "error": str(exc)[:200]})
+
+    def _pull():
+        try:
+            client.download_model(model)
+        except Exception:  # noqa: BLE001 - el usuario lo verifica con "Recuperar modelos"
+            pass
+
+    threading.Thread(target=_pull, daemon=True).start()
+    return JsonResponse({"ok": True, "model": model})
 
 
 def _save_ai_config(request):

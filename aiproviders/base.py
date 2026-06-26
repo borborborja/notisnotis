@@ -71,3 +71,7 @@ class BaseTranscribeProvider:
 
     def list_models(self):
         return []
+
+    def download_model(self, model_id):
+        """Descarga un modelo (solo backends locales). Por defecto, no soportado."""
+        raise AIError("Este proveedor no permite descargar modelos.")

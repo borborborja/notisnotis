@@ -443,6 +443,8 @@ body.resizing iframe { pointer-events: none; }
 .subtab:hover { color: var(--text); }
 .subtab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
+.ai-model-actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-top: .4rem; }
+
 /* Podcasts: cabecera, grid y filas de episodio */
 .pod-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .pod-nav { display: flex; gap: .4rem; flex-wrap: wrap; }

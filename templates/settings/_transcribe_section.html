@@ -1,0 +1,79 @@
+{# context: s = sección transcribe; transcribe_langs, current_lang, lang_locked. #}
+<div class="card" data-ai-section="transcribe">
+  <h3>Transcripción <span class="muted">— motor Whisper para los podcasts</span></h3>
+
+  {# 1) Proveedor #}
+  {% with pf=s.provider_field %}
+  <div class="form-row">
+    <label>Proveedor</label>
+    {% if pf.locked %}
+      <p class="locked-val"><code>{{ pf.effective }}</code> <span class="muted">· fijado por el operador (.env)</span></p>
+    {% else %}
+      <select name="{{ pf.key }}" data-ai-provider="transcribe">
+        {% for c in pf.choices %}<option value="{{ c }}" {% if c == s.current_provider %}selected{% endif %}>{{ c }}</option>{% endfor %}
+      </select>
+    {% endif %}
+  </div>
+  {% endwith %}
+
+  {# 2) Conexión del proveedor elegido #}
+  {% for c in s.conn %}
+    <div class="ai-conn" data-conn="transcribe" data-provider="{{ c.provider }}"
+         {% if c.provider != s.current_provider %}hidden{% endif %}>
+      {% for f in c.fields %}
+        <div class="form-row">
+          <label>{{ f.label }}</label>
+          {% if f.locked %}
+            <p class="locked-val">{% if f.secret %}••••••{% else %}<code>{{ f.env_value }}</code>{% endif %} <span class="muted">· operador</span></p>
+          {% elif f.secret %}
+            <input type="password" name="{{ f.key }}" autocomplete="off"
+                   placeholder="{% if f.has_value %}•••••• (guardada — deja vacío para mantener){% else %}pega tu API key{% endif %}">
+          {% else %}
+            <input type="text" name="{{ f.key }}" value="{{ f.value }}" placeholder="{{ f.default }}">
+          {% endif %}
+        </div>
+      {% endfor %}
+      {% if not c.fields %}<p class="muted">No necesita configuración: funciona sin claves.</p>{% endif %}
+    </div>
+  {% endfor %}
+
+  {# 3) Modelo: recuperar lista + (local) descargar #}
+  <div class="form-row">
+    <label>Modelo</label>
+    <div class="ai-model" id="ai-model-transcribe">
+      {% include "settings/_model_options.html" with name=s.model_field.key current=s.current_model models='' error='' %}
+    </div>
+    <div class="ai-model-actions">
+      <button type="button" class="btn btn-ghost"
+              hx-post="{% url 'ai_models' %}"
+              hx-include="[data-ai-section='transcribe']"
+              hx-vals='{"kind": "transcribe", "current": "{{ s.current_model }}"}'
+              hx-target="#ai-model-transcribe" hx-swap="innerHTML">
+        <svg class="ic"><use href="#i-refresh"/></svg> Recuperar modelos
+      </button>
+      <span class="ai-conn" data-conn="transcribe" data-provider="whisper_local"
+            {% if s.current_provider != 'whisper_local' %}hidden{% endif %}>
+        <button type="button" class="btn btn-ghost" id="dl-transcribe-model">
+          <svg class="ic"><use href="#i-download2"/></svg> Descargar modelo
+        </button>
+        <span class="muted" id="dl-transcribe-status"></span>
+      </span>
+    </div>
+    <p class="field-help muted">El modelo se descarga solo en la primera transcripción; “Descargar
+      modelo” lo baja ahora (puede tardar varios minutos).</p>
+  </div>
+
+  {# 4) Idioma #}
+  <div class="form-row">
+    <label>Idioma</label>
+    {% if lang_locked %}
+      <p class="locked-val"><code>{{ current_lang|default:"auto" }}</code> <span class="muted">· operador</span></p>
+    {% else %}
+      <select name="transcribe_lang">
+        {% for code, label in transcribe_langs %}<option value="{{ code }}" {% if code == current_lang %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    {% endif %}
+    <p class="field-help muted">Whisper detecta varios idiomas automáticamente; elige uno concreto
+      solo si quieres forzarlo.</p>
+  </div>
+</div>

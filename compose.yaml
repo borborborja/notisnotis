@@ -50,13 +50,13 @@ services:
         done
     restart: unless-stopped
 
-  # Transcripción self-hosted (Whisper) para las "fuentes audio" (podcasts).
+  # Transcripción self-hosted (Whisper, OpenAI-compatible) para los podcasts.
+  # speaches: lista y descarga modelos a demanda (POST /v1/models/{id}).
   whisper:
-    image: onerahmet/openai-whisper-asr-webservice:latest
-    environment:
-      - ASR_MODEL=${ASR_MODEL:-base}
-      - ASR_ENGINE=faster_whisper
+    image: ghcr.io/speaches-ai/speaches:latest-cpu
     restart: unless-stopped
+    volumes:
+      - whisper-models:/home/ubuntu/.cache/huggingface  # cachea los modelos descargados
 
   # Buscador self-hosted para los "feeds con IA" (búsqueda web sin coste ni claves).
   searxng:
@@ -85,3 +85,4 @@ services:
 
 volumes:
   pgdata:
+  whisper-models:

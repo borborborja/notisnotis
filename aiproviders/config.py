@@ -20,7 +20,7 @@ FIELDS = [
      "Proveedor de transcripción", ["mock", "whisper_local", "openai"]),
     ("transcribe_model", "AI_TRANSCRIBE_MODEL", "", "str", False, "Modelo de transcripción", None),
     ("transcribe_lang", "AI_TRANSCRIBE_LANG", "", "str", False, "Idioma de transcripción (vacío = auto)", None),
-    ("whisper_url", "WHISPER_URL", "http://whisper:9000", "str", False, "Whisper local URL", None),
+    ("whisper_url", "WHISPER_URL", "http://whisper:8000", "str", False, "Whisper local URL", None),
     ("openrouter_api_key", "OPENROUTER_API_KEY", "", "str", True, "OpenRouter API key", None),
     ("openrouter_base_url", "OPENROUTER_BASE_URL",
      "https://openrouter.ai/api/v1/chat/completions", "str", False, "OpenRouter base URL", None),
@@ -48,6 +48,16 @@ TRANSCRIBE_KEYS = ["transcribe_provider", "transcribe_model", "transcribe_lang",
 
 def transcribe_fields():
     return [FIELDS_BY_KEY[k] for k in TRANSCRIBE_KEYS]
+
+
+# Idiomas para la transcripción. "" = detección automática (modo multiidioma de Whisper).
+TRANSCRIBE_LANGS = [
+    ("", "Detección automática (multiidioma)"),
+    ("es", "Español"), ("en", "Inglés"), ("ca", "Catalán"), ("gl", "Gallego"),
+    ("eu", "Euskera"), ("fr", "Francés"), ("de", "Alemán"), ("it", "Italiano"),
+    ("pt", "Portugués"), ("nl", "Neerlandés"), ("ru", "Ruso"), ("zh", "Chino"),
+    ("ja", "Japonés"), ("ar", "Árabe"),
+]
 
 
 def is_env_locked(key) -> bool:

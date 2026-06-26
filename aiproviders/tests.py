@@ -229,3 +229,65 @@ class ProviderSelectionTests(TestCase):
         # Fijada por el operador: sale de editables y aparece como bloqueada (solo lectura).
         self.assertNotIn("openai_api_key", editable_keys)
         self.assertIn("openai_api_key", locked_keys)
+
+
+class WhisperLocalTests(TestCase):
+    def test_transcribe_posts_openai_format(self):
+        from unittest import mock
+        from aiproviders.providers.whisper_local import WhisperLocalTranscribeProvider
+
+        class _R:
+            status_code = 200
+            def json(self): return {"text": "hola mundo"}
+        captured = {}
+        def _post(url, **kw):
+            captured["url"] = url; captured["data"] = kw.get("data"); return _R()
+        with mock.patch("aiproviders.providers.whisper_local.requests.post", _post):
+            p = WhisperLocalTranscribeProvider(model="Systran/faster-whisper-small", url="http://w:8000")
+            out = p.transcribe(b"audio", lang="es")
+        self.assertEqual(out, "hola mundo")
+        self.assertTrue(captured["url"].endswith("/v1/audio/transcriptions"))
+        self.assertEqual(captured["data"]["model"], "Systran/faster-whisper-small")
+        self.assertEqual(captured["data"]["language"], "es")
+
+    def test_list_models_merges_installed_and_common(self):
+        from unittest import mock
+        from aiproviders.providers.whisper_local import WhisperLocalTranscribeProvider
+
+        class _R:
+            status_code = 200
+            def json(self): return {"data": [{"id": "Systran/faster-whisper-base"}]}
+        with mock.patch("aiproviders.providers.whisper_local.requests.get", return_value=_R()):
+            models = WhisperLocalTranscribeProvider(url="http://w:8000").list_models()
+        self.assertIn("Systran/faster-whisper-base", models)
+        self.assertIn("Systran/faster-whisper-large-v3", models)  # de la lista curada
+
+    def test_download_model_calls_endpoint(self):
+        from unittest import mock
+        from aiproviders.providers.whisper_local import WhisperLocalTranscribeProvider
+
+        class _R:
+            status_code = 200
+            text = ""
+        with mock.patch("aiproviders.providers.whisper_local.requests.post", return_value=_R()) as p:
+            WhisperLocalTranscribeProvider(url="http://w:8000").download_model("Systran/faster-whisper-small")
+        self.assertIn("/v1/models/Systran/faster-whisper-small", p.call_args[0][0])
+
+
+class TranscribeModelsViewTests(TestCase):
+    def setUp(self):
+        from accounts.models import UserConfig
+        self.u = User.objects.create_user("tm", "", "pw-tm-12345")
+        UserConfig.objects.create(user=self.u, data={"transcribe_provider": "mock"})
+        self.client.login(username="tm", password="pw-tm-12345")
+
+    def test_ai_models_transcribe(self):
+        r = self.client.post("/accounts/settings/ai/models/",
+                             {"kind": "transcribe", "transcribe_provider": "mock"})
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "mock-whisper")
+
+    def test_download_endpoint(self):
+        r = self.client.post("/accounts/settings/transcribe/download/",
+                             {"transcribe_provider": "mock", "transcribe_model": "x"})
+        self.assertEqual(r.status_code, 200)

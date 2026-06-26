@@ -600,6 +600,31 @@
     });
   }
 
+  // Ajustes de transcripción: descargar el modelo de Whisper local.
+  function initTranscribeDownload() {
+    var btn = document.getElementById("dl-transcribe-model");
+    if (!btn) return;
+    var status = document.getElementById("dl-transcribe-status");
+    btn.addEventListener("click", function () {
+      var sec = document.querySelector("[data-ai-section='transcribe']");
+      var sel = sec && sec.querySelector("select[name='transcribe_model']");
+      var model = sel ? sel.value : "";
+      if (!model) { if (status) status.textContent = "Elige un modelo primero."; return; }
+      if (status) status.textContent = "Iniciando descarga…";
+      var data = { transcribe_model: model };
+      var url = sec.querySelector("[name='whisper_url']"); if (url) data.whisper_url = url.value;
+      var prov = sec.querySelector("[name='transcribe_provider']"); if (prov) data.transcribe_provider = prov.value;
+      postForm("/accounts/settings/transcribe/download/", data)
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (status) status.textContent = d.ok
+            ? ("Descargando " + d.model + "… pulsa “Recuperar modelos” en unos minutos.")
+            : (d.error || "Error");
+        })
+        .catch(function () { if (status) status.textContent = "Error de red."; });
+    });
+  }
+
   // Ajustes de IA: mostrar solo la conexión del proveedor seleccionado.
   function initAiProvider() {
     document.querySelectorAll("[data-ai-provider]").forEach(function (sel) {
@@ -618,7 +643,8 @@
     // Cada init aislado: que un fallo no impida el resto.
     [initGroups, initSections, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
      initResizers, initTypeControls, initPush, initPWA, initAiProvider, initRangeOutputs,
-     initSubtabs, initFeedFilter, initPlayer, initPodcasts, initDownloads].forEach(function (fn) {
+     initSubtabs, initFeedFilter, initPlayer, initPodcasts, initDownloads,
+     initTranscribeDownload].forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });
     var h = document.querySelector("[data-help-close]");
