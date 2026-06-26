@@ -105,6 +105,8 @@ body.app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; height: 1
 .view-titles .item:not(.is-read), .view-magazine .item:not(.is-read) { border-left-color: var(--accent); }
 .view-titles .item:not(.is-read) .item-headline, .view-magazine .item:not(.is-read) .item-headline { font-weight: 700; }
 .list-end { text-align: center; padding: 1rem; font-size: .82rem; }
+/* Feedback de carga en acciones htmx (traducir, resumir, transcribir, chat…). */
+.htmx-request, form.htmx-request button, .htmx-request.btn { opacity: .55; pointer-events: none; cursor: progress; }
 .item-headline { font-size: .95rem; font-weight: 650; margin: .15rem 0; }
 .item-source { font-weight: 600; font-size: .8rem; }
 .item-meta { color: var(--muted); font-size: .78rem; }

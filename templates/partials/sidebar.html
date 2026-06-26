@@ -4,7 +4,9 @@
 </div>
 
 <form class="sb-search" action="{% url 'articles:list' %}" method="get">
-  <input type="search" name="q" placeholder="Buscar…" value="{{ request.GET.q }}">
+  <input type="search" name="q" placeholder="Buscar…  (is:unread, is:saved)" value="{{ request.GET.q }}"
+         title="Operadores: is:unread, is:read, is:saved, feed:ID. Atajo: /">
+
 </form>
 
 <nav class="sb-nav">

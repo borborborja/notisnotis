@@ -746,6 +746,7 @@
     } else if (e.target && e.target.id === "reading-pane") {
       try { runPerswap(); } catch (err) {}
       try { if (window.nnMarkPlaying) window.nnMarkPlaying(); } catch (err) {}
+      e.target.scrollTop = 0;  // empezar arriba al abrir un artículo
     }
   });
 
