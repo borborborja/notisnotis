@@ -1,0 +1,35 @@
+{# Tabla de feeds reutilizable. Espera: feeds, table_id, empty_msg. #}
+<input type="text" class="feed-filter" placeholder="Filtrar por nombre…" data-filter="{{ table_id }}">
+<table data-filter-table="{{ table_id }}">
+  <thead><tr><th>Feed</th><th>Categoría</th><th>Fuente / sesgo</th><th>Estado</th><th></th></tr></thead>
+  <tbody>
+  {% for feed in feeds %}
+    <tr data-name="{{ feed.title|default:feed.source.name|lower }}">
+      <td>{{ feed.title|default:feed.url }}</td>
+      <td>{{ feed.category.name|default:"—" }}</td>
+      <td>{{ feed.source.name }} <span class="tag">{{ feed.source.get_bias_display }}</span></td>
+      <td>{% if feed.enabled %}Activo{% else %}<span class="tag badge-blindspot">Desactivado</span>{% endif %}
+          {% if feed.fail_count %}<span class="tag badge-blindspot" title="{{ feed.last_error }}">{{ feed.fail_count }} fallos</span>{% endif %}</td>
+      <td>
+        <a href="{% url 'feeds:feed_edit' feed.pk %}">Editar</a>
+        ·
+        {% if not feed.enabled or feed.fail_count %}
+        <form method="post" action="{% url 'feeds:reactivate_feed' feed.pk %}" class="inline">{% csrf_token %}
+          <button class="linkbtn">Reactivar</button>
+        </form>
+        ·
+        {% endif %}
+        <form method="post" action="{% url 'feeds:toggle_feed' feed.pk %}" class="inline">{% csrf_token %}
+          <button class="linkbtn">{% if feed.enabled %}Pausar{% else %}Activar{% endif %}</button>
+        </form>
+        ·
+        <form method="post" action="{% url 'feeds:delete_feed' feed.pk %}" class="inline" onsubmit="return confirm('¿Eliminar feed?')">{% csrf_token %}
+          <button class="linkbtn">Eliminar</button>
+        </form>
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5" class="muted">{{ empty_msg|default:"Sin feeds." }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>

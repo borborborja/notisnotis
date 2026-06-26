@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Añadir feed · NotisNotis{% endblock %}
 {% block content %}
-<h1>Añadir feed</h1>
+<h1>{% if kind == 'podcast' %}Añadir podcast / canal{% else %}Añadir feed{% endif %}</h1>
 <div class="card">
-  <p class="muted">Pega la URL de un feed RSS/Atom o de una web (buscaremos su feed automáticamente).</p>
+  <p class="muted">{% if kind == 'podcast' %}Pega la URL del feed de un podcast o de un canal de YouTube (buscaremos su feed){% else %}Pega la URL de un feed RSS/Atom o de una web (buscaremos su feed automáticamente){% endif %}.</p>
   <form method="post">{% csrf_token %}
+    {% if kind %}<input type="hidden" name="kind" value="{{ kind }}">{% endif %}
     <div class="form-row">
       <label>URL</label>
       <input type="text" name="url" value="{{ url }}" placeholder="https://ejemplo.com" autofocus>
@@ -27,6 +28,7 @@
     <form method="post" class="cand-row">{% csrf_token %}
       <input type="hidden" name="feed_url" value="{{ furl }}">
       <input type="hidden" name="title" value="{{ ftitle }}">
+      {% if kind %}<input type="hidden" name="kind" value="{{ kind }}">{% endif %}
       <input type="hidden" name="category" value="{% if category %}{{ category.id }}{% endif %}">
       <span>{{ ftitle|default:furl }} <span class="muted">· {{ furl }}</span></span>
       <button class="btn btn-ghost" type="submit">Añadir</button>

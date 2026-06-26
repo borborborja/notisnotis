@@ -5,7 +5,7 @@
 <div class="subtabs" role="tablist">
   <button class="subtab active" type="button" data-subtab="rss">Fuentes RSS</button>
   <button class="subtab" type="button" data-subtab="ia">Fuentes IA</button>
-  <button class="subtab" type="button" data-subtab="audio">Fuentes audio</button>
+  <button class="subtab" type="button" data-subtab="audio">Podcasts</button>
 </div>
 
 {# ---------------- RSS ---------------- #}
@@ -105,8 +105,8 @@
 <div data-subpane="audio" hidden>
   <div class="card">
     <p class="muted">Podcasts y canales de YouTube con reproductor y transcripción automática,
-      tratados como artículos. Importa un OPML de podcasts o añade un canal de YouTube desde
-      “Añadir feed”.</p>
+      tratados como artículos. Añade o importa podcasts desde la pestaña <strong>Podcasts</strong>
+      del gestor de feeds.</p>
     <form method="post" action="{% url 'account_settings_tab' 'updates' %}">{% csrf_token %}
       <input type="hidden" name="action" value="save_audio">
       {% for f in transcribe_fields %}

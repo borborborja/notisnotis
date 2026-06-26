@@ -315,6 +315,20 @@
     });
   }
 
+  // Filtro rápido de tablas de feeds por nombre (gestor de feeds).
+  function initFeedFilter() {
+    document.querySelectorAll("[data-filter]").forEach(function (input) {
+      var table = document.querySelector("[data-filter-table='" + input.getAttribute("data-filter") + "']");
+      if (!table) return;
+      input.addEventListener("input", function () {
+        var q = input.value.trim().toLowerCase();
+        table.querySelectorAll("tbody tr[data-name]").forEach(function (row) {
+          row.hidden = q && row.getAttribute("data-name").indexOf(q) === -1;
+        });
+      });
+    });
+  }
+
   // Ajustes de IA: mostrar solo la conexión del proveedor seleccionado.
   function initAiProvider() {
     document.querySelectorAll("[data-ai-provider]").forEach(function (sel) {
@@ -333,7 +347,7 @@
     // Cada init aislado: que un fallo no impida el resto.
     [initGroups, initSections, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
      initResizers, initTypeControls, initPush, initPWA, initAiProvider, initRangeOutputs,
-     initSubtabs].forEach(function (fn) {
+     initSubtabs, initFeedFilter].forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });
     var h = document.querySelector("[data-help-close]");

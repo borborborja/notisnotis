@@ -55,8 +55,12 @@ def crawl_new_feeds(user) -> bool:
     return bool(cfg and cfg.data.get("crawl_new_feeds") == "1")
 
 
-def import_opml_for_user(user, content: str):
-    """Crea/actualiza Category, Source y Feed para el usuario. Devuelve (creados, omitidos)."""
+def import_opml_for_user(user, content: str, kind="rss"):
+    """Crea/actualiza Category, Source y Feed para el usuario. Devuelve (creados, omitidos).
+
+    `kind`: tipo a asignar a los feeds importados ("rss" o "podcast"). Los canales de YouTube
+    se detectan por su URL como "youtube" en cualquier caso.
+    """
     created, skipped = 0, 0
     cat_cache = {}
     want_crawl = crawl_new_feeds(user)
@@ -79,13 +83,13 @@ def import_opml_for_user(user, content: str):
                 cat_cache[cat_name], _ = Category.objects.get_or_create(user=user, name=cat_name)
             category = cat_cache[cat_name]
 
-        # Detección de tipo por URL (los podcasts se auto-detectan luego por su audio).
-        kind = "youtube" if "youtube.com/feeds/videos.xml" in url else "rss"
+        # Tipo: YouTube por URL; si no, el elegido al importar (rss o podcast).
+        feed_kind = "youtube" if "youtube.com/feeds/videos.xml" in url else kind
         feed, was_created = Feed.objects.get_or_create(
             user=user,
             url=url,
             defaults={"source": source, "title": entry["title"], "category": category,
-                      "crawler": want_crawl, "kind": kind},
+                      "crawler": want_crawl, "kind": feed_kind},
         )
         if was_created:
             created += 1

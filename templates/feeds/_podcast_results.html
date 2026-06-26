@@ -1,0 +1,23 @@
+{% if error %}
+  <p class="muted">No se pudo buscar: {{ error }}</p>
+{% elif q and not results %}
+  <p class="muted">Sin resultados para “{{ q }}”.</p>
+{% elif results %}
+  <ul class="podcast-results">
+    {% for r in results %}
+      <li class="podcast-result">
+        {% if r.artwork %}<img src="{{ r.artwork }}" alt="" class="podcast-art">{% endif %}
+        <div class="podcast-meta">
+          <strong>{{ r.title }}</strong>
+          {% if r.author %}<span class="muted">{{ r.author }}</span>{% endif %}
+        </div>
+        <form method="post" action="{% url 'feeds:subscribe' %}">{% csrf_token %}
+          <input type="hidden" name="feed_url" value="{{ r.feed_url }}">
+          <input type="hidden" name="title" value="{{ r.title }}">
+          <input type="hidden" name="kind" value="podcast">
+          <button class="btn" type="submit"><svg class="ic"><use href="#i-plus"/></svg> Añadir</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}

@@ -10,6 +10,7 @@ urlpatterns = [
     path("opml/export/", views.export_opml, name="export_opml"),
     path("refresh/", views.refresh, name="refresh"),
     path("subscribe/", views.subscribe, name="subscribe"),
+    path("podcasts/search/", views.podcast_search, name="podcast_search"),
     path("rules/", views.rule_list, name="rule_list"),
     path("rules/<int:pk>/delete/", views.rule_delete, name="rule_delete"),
     path("rules/<int:pk>/toggle/", views.rule_toggle, name="rule_toggle"),

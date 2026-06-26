@@ -2,76 +2,113 @@
 {% block title %}Feeds · NotisNotis{% endblock %}
 {% block content %}
 <h1>Feeds</h1>
-<div class="card">
-  <p>
-    <a class="btn" href="{% url 'feeds:subscribe' %}"><svg class="ic"><use href="#i-plus"/></svg> Añadir feed</a>
-    <a class="btn btn-ghost" href="{% url 'feeds:rule_list' %}"><svg class="ic"><use href="#i-settings"/></svg> Reglas</a>
-    <a class="btn btn-ghost" href="{% url 'feeds:upload_opml' %}"><svg class="ic"><use href="#i-upload"/></svg> Importar OPML</a>
-    <a class="btn btn-ghost" href="{% url 'feeds:export_opml' %}"><svg class="ic"><use href="#i-download"/></svg> Exportar OPML</a>
-  </p>
+
+<div class="subtabs" role="tablist">
+  <button class="subtab {% if active == 'rss' %}active{% endif %}" type="button" data-subtab="rss">Fuentes RSS</button>
+  <button class="subtab {% if active == 'ia' %}active{% endif %}" type="button" data-subtab="ia">Fuentes IA</button>
+  <button class="subtab {% if active == 'podcasts' %}active{% endif %}" type="button" data-subtab="podcasts">Podcasts</button>
 </div>
 
-<div class="card">
-  <h3>Categorías</h3>
-  <form method="post" action="{% url 'feeds:category_create' %}" class="inline-form">{% csrf_token %}
-    <input type="text" name="name" placeholder="Nueva categoría" required>
-    <button class="btn btn-ghost" type="submit"><svg class="ic"><use href="#i-plus"/></svg> Crear</button>
-  </form>
-  <table>
-    {% for c in categories %}
-      <tr>
-        <td>
-          <form method="post" action="{% url 'feeds:category_rename' c.pk %}" class="inline-form">{% csrf_token %}
-            <input type="text" name="name" value="{{ c.name }}">
-            <button class="linkbtn" type="submit">Renombrar</button>
-          </form>
-        </td>
-        <td class="muted">{{ c.feeds.count }} feeds</td>
-        <td>
-          <form method="post" action="{% url 'feeds:category_delete' c.pk %}" class="inline" onsubmit="return confirm('¿Eliminar categoría? Sus feeds quedarán sin categoría.')">{% csrf_token %}
-            <button class="linkbtn">Eliminar</button>
-          </form>
-        </td>
-      </tr>
-    {% empty %}
-      <tr><td class="muted">Sin categorías todavía.</td></tr>
-    {% endfor %}
-  </table>
+{# ---------------- RSS ---------------- #}
+<div data-subpane="rss" {% if active != 'rss' %}hidden{% endif %}>
+  <div class="card">
+    <p>
+      <a class="btn" href="{% url 'feeds:subscribe' %}"><svg class="ic"><use href="#i-plus"/></svg> Añadir feed</a>
+      <a class="btn btn-ghost" href="{% url 'feeds:rule_list' %}"><svg class="ic"><use href="#i-settings"/></svg> Reglas</a>
+      <a class="btn btn-ghost" href="{% url 'feeds:upload_opml' %}"><svg class="ic"><use href="#i-upload"/></svg> Importar OPML</a>
+      <a class="btn btn-ghost" href="{% url 'feeds:export_opml' %}"><svg class="ic"><use href="#i-download"/></svg> Exportar OPML</a>
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>Categorías</h3>
+    <form method="post" action="{% url 'feeds:category_create' %}" class="inline-form">{% csrf_token %}
+      <input type="text" name="name" placeholder="Nueva categoría" required>
+      <button class="btn btn-ghost" type="submit"><svg class="ic"><use href="#i-plus"/></svg> Crear</button>
+    </form>
+    <table>
+      {% for c in categories %}
+        <tr>
+          <td>
+            <form method="post" action="{% url 'feeds:category_rename' c.pk %}" class="inline-form">{% csrf_token %}
+              <input type="text" name="name" value="{{ c.name }}">
+              <button class="linkbtn" type="submit">Renombrar</button>
+            </form>
+          </td>
+          <td class="muted">{{ c.feeds.count }} feeds</td>
+          <td>
+            <form method="post" action="{% url 'feeds:category_delete' c.pk %}" class="inline" onsubmit="return confirm('¿Eliminar categoría? Sus feeds quedarán sin categoría.')">{% csrf_token %}
+              <button class="linkbtn">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td class="muted">Sin categorías todavía.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="card">
+    {% include "feeds/_feed_table.html" with feeds=rss_feeds table_id="rss" empty_msg="No tienes feeds RSS. Añade uno o importa un OPML." %}
+  </div>
 </div>
 
-<div class="card">
-  <table>
-    <thead><tr><th>Feed</th><th>Categoría</th><th>Fuente / sesgo</th><th>Estado</th><th></th></tr></thead>
-    <tbody>
-    {% for feed in feeds %}
-      <tr>
-        <td>{{ feed.title|default:feed.url }}</td>
-        <td>{{ feed.category.name|default:"—" }}</td>
-        <td>{{ feed.source.name }} <span class="tag">{{ feed.source.get_bias_display }}</span></td>
-        <td>{% if feed.enabled %}Activo{% else %}<span class="tag badge-blindspot">Desactivado</span>{% endif %}
-            {% if feed.fail_count %}<span class="tag badge-blindspot" title="{{ feed.last_error }}">{{ feed.fail_count }} fallos</span>{% endif %}</td>
-        <td>
-          <a href="{% url 'feeds:feed_edit' feed.pk %}">Editar</a>
-          ·
-          {% if not feed.enabled or feed.fail_count %}
-          <form method="post" action="{% url 'feeds:reactivate_feed' feed.pk %}" class="inline">{% csrf_token %}
-            <button class="linkbtn">Reactivar</button>
-          </form>
-          ·
-          {% endif %}
-          <form method="post" action="{% url 'feeds:toggle_feed' feed.pk %}" class="inline">{% csrf_token %}
-            <button class="linkbtn">{% if feed.enabled %}Pausar{% else %}Activar{% endif %}</button>
-          </form>
-          ·
-          <form method="post" action="{% url 'feeds:delete_feed' feed.pk %}" class="inline" onsubmit="return confirm('¿Eliminar feed?')">{% csrf_token %}
-            <button class="linkbtn">Eliminar</button>
-          </form>
-        </td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="5">No tienes feeds. <a href="{% url 'feeds:upload_opml' %}">Importa un OPML</a>.</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
+{# ---------------- IA ---------------- #}
+<div data-subpane="ia" {% if active != 'ia' %}hidden{% endif %}>
+  <div class="card">
+    <p class="muted">Describe un tema y la IA busca noticias por internet (no de tus RSS). Tú marcas
+      cuáles encajan y va afinando.</p>
+    <form method="post" action="{% url 'aifeeds:list' %}">{% csrf_token %}
+      <div class="form-row">
+        <input type="text" name="name" placeholder="Nombre (p. ej. IA local y LLM)" required>
+      </div>
+      <div class="form-row">
+        <textarea name="description" rows="2" placeholder="Qué quieres seguir, en lenguaje natural" required></textarea>
+      </div>
+      <button class="btn" type="submit"><svg class="ic"><use href="#i-sparkles"/></svg> Crear feed con IA</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Tus feeds con IA</h3>
+    <table>
+      <thead><tr><th>Feed</th><th>Propuestas</th><th>Aceptadas</th><th></th></tr></thead>
+      <tbody>
+      {% for f in ai_feeds %}
+        <tr>
+          <td>{{ f.name }}</td>
+          <td>{% if f.n_pending %}<span class="tag badge-blindspot">{{ f.n_pending }}</span>{% else %}0{% endif %}</td>
+          <td>{{ f.n_accepted }}</td>
+          <td><a href="{% url 'aifeeds:detail' f.pk %}">Gestionar</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="muted">Aún no tienes feeds con IA.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ---------------- PODCASTS ---------------- #}
+<div data-subpane="podcasts" {% if active != 'podcasts' %}hidden{% endif %}>
+  <div class="card">
+    <p>
+      <a class="btn" href="{% url 'feeds:subscribe' %}?kind=podcast"><svg class="ic"><use href="#i-plus"/></svg> Añadir podcast / canal</a>
+      <a class="btn btn-ghost" href="{% url 'feeds:upload_opml' %}?kind=podcast"><svg class="ic"><use href="#i-upload"/></svg> Importar OPML</a>
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>Buscar podcasts</h3>
+    <p class="muted">Busca en el directorio de Apple Podcasts y añade el que quieras.</p>
+    <input type="search" name="q" placeholder="Nombre del podcast…"
+           hx-get="{% url 'feeds:podcast_search' %}" hx-target="#podcast-results"
+           hx-trigger="keyup changed delay:500ms" hx-swap="innerHTML">
+    <div id="podcast-results"></div>
+  </div>
+
+  <div class="card">
+    {% include "feeds/_feed_table.html" with feeds=podcast_feeds table_id="podcasts" empty_msg="Aún no tienes podcasts ni canales. Búscalos arriba o importa un OPML como Podcasts." %}
+  </div>
 </div>
 {% endblock %}

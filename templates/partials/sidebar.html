@@ -98,7 +98,7 @@
 
 {% if sidebar_audio %}
 <div class="sb-section" data-section="audio">
-<button class="sb-section-head" type="button" data-section-toggle><span class="caret">▸</span> Fuentes audio</button>
+<button class="sb-section-head" type="button" data-section-toggle><span class="caret">▸</span> Podcasts</button>
 <div class="sb-section-body">
 <nav class="sb-nav">
   {% for f in sidebar_audio %}
@@ -107,6 +107,7 @@
       {% if f.unread %}<span class="sb-count">{{ f.unread }}</span>{% endif %}
     </a>
   {% endfor %}
+  <a href="{% url 'feeds:feed_list' %}?tab=podcasts" class="sb-item"><span><svg class="ic"><use href="#i-plus"/></svg> Gestionar podcasts</span></a>
 </nav>
 </div></div>
 {% endif %}
@@ -123,9 +124,7 @@
 {% endif %}
 
 <div class="sb-footer">
-  <a href="{% url 'feeds:subscribe' %}" class="sb-item"><span><svg class="ic"><use href="#i-plus"/></svg> Añadir feed</span></a>
   <a href="{% url 'feeds:feed_list' %}" class="sb-item"><span><svg class="ic"><use href="#i-rss"/></svg> Feeds</span></a>
-  <a href="{% url 'feeds:upload_opml' %}" class="sb-item"><span><svg class="ic"><use href="#i-upload"/></svg> Importar OPML</span></a>
   <a href="{% url 'account_settings' %}" class="sb-item"><span><svg class="ic"><use href="#i-settings"/></svg> Ajustes</span></a>
   <button type="button" class="sb-item linkbtn" data-theme-toggle><span><svg class="ic"><use href="#i-moon"/></svg> Tema</span></button>
   <form method="post" action="{% url 'logout' %}">{% csrf_token %}

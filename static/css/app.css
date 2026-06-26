@@ -442,3 +442,12 @@ body.resizing iframe { pointer-events: none; }
   padding: .5rem .8rem; cursor: pointer; font: inherit; font-weight: 600; }
 .subtab:hover { color: var(--text); }
 .subtab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Gestor de feeds: filtro y buscador de podcasts */
+.feed-filter { width: 100%; max-width: 22rem; margin-bottom: .7rem; }
+.podcast-results { list-style: none; padding: 0; margin: .6rem 0 0; }
+.podcast-result { display: flex; align-items: center; gap: .7rem; padding: .5rem 0;
+  border-bottom: 1px solid var(--border); }
+.podcast-art { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex: 0 0 auto; }
+.podcast-meta { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+.podcast-meta strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

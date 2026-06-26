@@ -192,3 +192,60 @@ class OpmlKindTests(TestCase):
         import_opml_for_user(u, opml)
         self.assertEqual(Feed.objects.get(user=u, url__contains="youtube").kind, "youtube")
         self.assertEqual(Feed.objects.get(user=u, url="https://blog.com/rss").kind, "rss")
+
+
+class FeedsManagerTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        self.U = get_user_model()
+        self.u = self.U.objects.create_user("mg", "", "pw-mgr-12345")
+        self.client.login(username="mg", password="pw-mgr-12345")
+
+    def test_opml_import_as_podcast(self):
+        from feeds.models import Feed
+        from feeds.opml import import_opml_for_user
+        opml = ('<?xml version="1.0"?><opml><body>'
+                '<outline type="rss" text="Pod" xmlUrl="https://pod.com/rss"/>'
+                '<outline type="rss" text="Yt" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UC1"/>'
+                '</body></opml>')
+        import_opml_for_user(self.u, opml, kind="podcast")
+        self.assertEqual(Feed.objects.get(user=self.u, url="https://pod.com/rss").kind, "podcast")
+        # YouTube siempre se detecta como youtube aunque importes como podcast.
+        self.assertEqual(Feed.objects.get(user=self.u, url__contains="youtube").kind, "youtube")
+
+    def test_search_podcasts_parses_itunes(self):
+        from unittest import mock
+        from feeds.podcastsearch import search_podcasts
+
+        class _Resp:
+            def raise_for_status(self): pass
+            def json(self):
+                return {"results": [
+                    {"collectionName": "Mi Pod", "feedUrl": "https://x/rss", "artistName": "Autor",
+                     "artworkUrl100": "https://x/art.jpg"},
+                    {"collectionName": "Sin feed"},  # se descarta
+                ]}
+        with mock.patch("feeds.podcastsearch.requests.get", return_value=_Resp()):
+            out = search_podcasts("test")
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0]["feed_url"], "https://x/rss")
+        self.assertEqual(out[0]["title"], "Mi Pod")
+
+    def test_podcast_search_view(self):
+        from unittest import mock
+        with mock.patch("feeds.views.search_podcasts" if False else "feeds.podcastsearch.requests.get") as g:
+            g.return_value.raise_for_status = lambda: None
+            g.return_value.json = lambda: {"results": []}
+            r = self.client.get("/feeds/podcasts/search/?q=algo")
+        self.assertEqual(r.status_code, 200)
+
+    def test_feed_list_tabs_split_by_kind(self):
+        from feeds.models import Feed, Source
+        s = Source.objects.create(name="S", domain="s.com")
+        Feed.objects.create(user=self.u, source=s, url="http://s/rss", kind="rss")
+        Feed.objects.create(user=self.u, source=s, url="http://s/pod", kind="podcast")
+        r = self.client.get("/feeds/?tab=podcasts")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.context["active"], "podcasts")
+        self.assertEqual(len(r.context["rss_feeds"]), 1)
+        self.assertEqual(len(r.context["podcast_feeds"]), 1)

@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.management import call_command
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from .discovery import discover_feeds, feed_title
@@ -10,10 +11,11 @@ from .models import Category, Feed, Rule, Source
 from .opml import _domain, crawl_new_feeds, import_opml_for_user
 
 
-def _create_feed(user, url, title, category=None):
+def _create_feed(user, url, title, category=None, kind=None):
     domain = _domain(url) or "unknown"
     source, _ = Source.objects.get_or_create(domain=domain, defaults={"name": title or domain})
-    kind = "youtube" if "youtube.com/feeds/videos.xml" in url else "rss"
+    if not kind:
+        kind = "youtube" if "youtube.com/feeds/videos.xml" in url else "rss"
     feed, created = Feed.objects.get_or_create(
         user=user, url=url,
         defaults={"source": source, "title": title or "", "category": category, "kind": kind,
@@ -24,9 +26,43 @@ def _create_feed(user, url, title, category=None):
 
 @login_required
 def feed_list(request):
-    feeds = Feed.objects.filter(user=request.user).select_related("source", "category")
+    from django.db.models import Count, Q
+
+    from aifeeds.models import AIFeed, AIFeedCandidate
+
+    feeds = (Feed.objects.filter(user=request.user, ai_feed__isnull=True)
+             .select_related("source", "category").order_by("title"))
     categories = Category.objects.filter(user=request.user)
-    return render(request, "feeds/feed_list.html", {"feeds": feeds, "categories": categories})
+    ai_feeds = AIFeed.objects.filter(user=request.user).annotate(
+        n_pending=Count("candidates", filter=Q(candidates__status=AIFeedCandidate.PENDING)),
+        n_accepted=Count("candidates", filter=Q(candidates__status=AIFeedCandidate.ACCEPTED)),
+    )
+    active = request.GET.get("tab", "rss")
+    if active not in ("rss", "ia", "podcasts"):
+        active = "rss"
+    return render(request, "feeds/feed_list.html", {
+        "feeds": feeds,
+        "rss_feeds": [f for f in feeds if f.kind == "rss"],
+        "podcast_feeds": [f for f in feeds if f.kind in ("podcast", "youtube")],
+        "ai_feeds": ai_feeds,
+        "categories": categories,
+        "active": active,
+    })
+
+
+@login_required
+def podcast_search(request):
+    """Buscador de podcasts (htmx): devuelve resultados del directorio para suscribirse."""
+    from .podcastsearch import search_podcasts
+
+    q = request.GET.get("q", "").strip()
+    results, error = [], ""
+    if q:
+        try:
+            results = search_podcasts(q)
+        except Exception as exc:  # noqa: BLE001
+            error = str(exc)[:200]
+    return render(request, "feeds/_podcast_results.html", {"results": results, "error": error, "q": q})
 
 
 @login_required
@@ -36,9 +72,12 @@ def upload_opml(request):
         if not f:
             messages.error(request, "Selecciona un archivo OPML.")
             return redirect("feeds:upload_opml")
+        kind = request.POST.get("kind", "rss")
+        if kind not in ("rss", "podcast"):
+            kind = "rss"
         try:
             content = f.read()
-            created, skipped = import_opml_for_user(request.user, content)
+            created, skipped = import_opml_for_user(request.user, content, kind=kind)
         except Exception as exc:  # noqa: BLE001 - feedback al usuario
             messages.error(request, f"No se pudo importar el OPML: {exc}")
             return redirect("feeds:upload_opml")
@@ -46,8 +85,8 @@ def upload_opml(request):
             request,
             f"OPML importado: {created} feeds nuevos, {skipped} ya existían.",
         )
-        return redirect("feeds:feed_list")
-    return render(request, "feeds/upload_opml.html")
+        return redirect(f"{reverse('feeds:feed_list')}?tab={'podcasts' if kind == 'podcast' else 'rss'}")
+    return render(request, "feeds/upload_opml.html", {"kind": request.GET.get("kind", "rss")})
 
 
 @login_required
@@ -150,25 +189,30 @@ def rule_toggle(request, pk):
 @login_required
 def subscribe(request):
     categories = Category.objects.filter(user=request.user)
+    kind = request.POST.get("kind") if request.method == "POST" else request.GET.get("kind")
+    kind = kind if kind in ("rss", "podcast") else None
+    dest = redirect(f"{reverse('feeds:feed_list')}?tab={'podcasts' if kind == 'podcast' else 'rss'}")
     if request.method == "POST":
         cat = categories.filter(id=request.POST.get("category")).first()
         direct = request.POST.get("feed_url")
         if direct:  # el usuario eligió un candidato
-            _, created = _create_feed(request.user, direct, request.POST.get("title") or feed_title(direct), cat)
+            _, created = _create_feed(request.user, direct,
+                                      request.POST.get("title") or feed_title(direct), cat, kind=kind)
             messages.success(request, "Feed añadido." if created else "Ese feed ya existía.")
-            return redirect("feeds:feed_list")
+            return dest
         url = request.POST.get("url", "").strip()
         candidates = discover_feeds(url) if url else []
         if not candidates:
             messages.error(request, "No se encontró ningún feed en esa URL.")
         elif len(candidates) == 1:
-            _, created = _create_feed(request.user, candidates[0][0], candidates[0][1], cat)
+            _, created = _create_feed(request.user, candidates[0][0], candidates[0][1], cat, kind=kind)
             messages.success(request, "Feed añadido." if created else "Ese feed ya existía.")
-            return redirect("feeds:feed_list")
+            return dest
         else:
             return render(request, "feeds/subscribe.html",
-                          {"candidates": candidates, "categories": categories, "url": url, "category": cat})
-    return render(request, "feeds/subscribe.html", {"categories": categories})
+                          {"candidates": candidates, "categories": categories, "url": url,
+                           "category": cat, "kind": kind})
+    return render(request, "feeds/subscribe.html", {"categories": categories, "kind": kind})
 
 
 @login_required

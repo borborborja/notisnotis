@@ -3,9 +3,20 @@
 {% block content %}
 <h1>Importar OPML</h1>
 <div class="card">
-  <p class="muted">Sube el archivo OPML con tus suscripciones RSS. Crearemos los feeds y las fuentes.</p>
+  <p class="muted">Sube el archivo OPML con tus suscripciones. Crearemos los feeds y las fuentes.</p>
   <form method="post" enctype="multipart/form-data">{% csrf_token %}
-    <p><input type="file" name="opml" accept=".opml,.xml,text/xml" required></p>
+    <div class="form-row">
+      <label>Importar como</label>
+      <select name="kind">
+        <option value="rss" {% if kind != 'podcast' %}selected{% endif %}>RSS</option>
+        <option value="podcast" {% if kind == 'podcast' %}selected{% endif %}>Podcasts</option>
+      </select>
+      <p class="field-help muted">Elige “Podcasts” si el OPML son fuentes de audio: irán a la
+        pestaña Podcasts. Los canales de YouTube se detectan solos.</p>
+    </div>
+    <div class="form-row">
+      <input type="file" name="opml" accept=".opml,.xml,text/xml" required>
+    </div>
     <button class="btn" type="submit">Importar</button>
   </form>
 </div>
