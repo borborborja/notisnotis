@@ -475,11 +475,13 @@ body.resizing iframe { pointer-events: none; }
 .drag-handle { cursor: grab; color: var(--muted); user-select: none; }
 
 /* Reproductor de podcasts persistente */
-.nn-player { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+.nn-player { position: fixed; left: var(--sidebar-w); right: 0; bottom: 0; z-index: 60;
   display: flex; align-items: center; gap: .8rem; padding: .5rem .9rem;
   background: var(--panel); border-top: 1px solid var(--border);
   box-shadow: 0 -4px 16px rgba(0,0,0,.12); }
 .nn-player[hidden] { display: none; }
+/* Hueco para que el reproductor no tape el final del contenido. */
+.app.player-on .page, .app.player-on .reading, .app.player-on .article-items { padding-bottom: 76px; }
 .np-art { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex: 0 0 auto; background: var(--border); }
 .np-meta { min-width: 0; width: 16rem; flex: 0 1 auto; }
 .np-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -499,7 +501,7 @@ body.resizing iframe { pointer-events: none; }
 @media (max-width: 720px) {
   .np-meta { width: auto; flex: 1 1 auto; }
   .np-progress { order: 5; flex-basis: 100%; }
-  .nn-player { flex-wrap: wrap; }
+  .nn-player { flex-wrap: wrap; left: 0; }
 }
 
 /* Gestor de feeds: filtro y buscador de podcasts */

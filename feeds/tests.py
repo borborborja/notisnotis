@@ -260,3 +260,40 @@ class FeedsManagerTests(TestCase):
         self.assertEqual(r.context["active"], "podcasts")
         self.assertEqual(len(r.context["rss_feeds"]), 1)
         self.assertEqual(len(r.context["podcast_feeds"]), 1)
+
+
+class SidebarPerfTests(TestCase):
+    def test_sidebar_skipped_on_htmx(self):
+        from django.contrib.auth import get_user_model
+        from feeds.context_processors import sidebar
+
+        class _Req:
+            def __init__(self, htmx):
+                self.user = u
+                self.headers = {"HX-Request": "true"} if htmx else {}
+        u = get_user_model().objects.create_user("sp", "", "pw-sp-123")
+        self.assertEqual(sidebar(_Req(True)), {})         # htmx → vacío (sin queries)
+        self.assertIn("sidebar_categories", sidebar(_Req(False)))  # full → datos
+
+
+class ImageExtractionTests(TestCase):
+    def test_img_field_sources_and_https(self):
+        from feeds.management.commands.fetch_feeds import _img_field, _entry_image
+        self.assertEqual(_img_field({"image": {"href": "http://x/a.jpg"}}), "https://x/a.jpg")
+        self.assertEqual(_img_field({"itunes_image": "http://x/b.jpg"}), "https://x/b.jpg")
+        self.assertEqual(_img_field({"media_thumbnail": [{"url": "https://x/c.jpg"}]}), "https://x/c.jpg")
+        self.assertEqual(_entry_image({}), "")
+
+    def test_backfill_from_episode(self):
+        from django.contrib.auth import get_user_model
+        from django.core.management import call_command
+        from feeds.models import Feed, Source
+        from articles.models import Article
+        u = get_user_model().objects.create_user("bf", "", "pw-bf-123")
+        src = Source.objects.create(name="B", domain="b.com")
+        feed = Feed.objects.create(user=u, source=src, url="http://b/rss", kind="podcast")
+        Article.objects.create(feed=feed, source=src, guid="b1", title="E",
+                               image_url="https://b/ep.jpg")
+        call_command("backfill_podcast_images", "--user", "bf")
+        feed.refresh_from_db()
+        self.assertEqual(feed.image_url, "https://b/ep.jpg")

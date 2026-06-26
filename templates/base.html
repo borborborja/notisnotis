@@ -13,7 +13,9 @@
   <script src="{% static 'js/htmx.min.js' %}" defer></script>
   <script src="{% static 'js/app.js' %}" defer></script>
 </head>
-<body class="app" data-font="{{ reading_ui.font }}" data-size="{{ reading_ui.size }}" data-width="{{ reading_ui.width }}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="app" data-font="{{ reading_ui.font }}" data-size="{{ reading_ui.size }}" data-width="{{ reading_ui.width }}"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      hx-boost="true" hx-target="#content" hx-select="#content" hx-swap="outerHTML show:window:top">
   {% include "partials/icons.html" %}
   <button class="sidebar-toggle" data-sidebar-toggle aria-label="Menú"><svg class="ic"><use href="#i-menu"/></svg></button>
   <aside class="sidebar" data-sidebar>
@@ -21,7 +23,7 @@
     <div class="col-resizer" data-resize="sidebar"></div>
   </aside>
   <div class="sidebar-backdrop" data-sidebar-close></div>
-  <main class="main">
+  <main class="main" id="content">
     <div class="messages">
       {% for message in messages %}<div class="msg msg-{{ message.tags }}">{{ message }}</div>{% endfor %}
     </div>
@@ -30,7 +32,7 @@
 
   {% if 'podcasts' in modules %}
   <div id="nn-player" class="nn-player" hidden aria-label="Reproductor de podcasts">
-    <img class="np-art" id="np-art" alt="">
+    <img class="np-art" id="np-art" data-ph alt="">
     <div class="np-meta">
       <div class="np-title" id="np-title"></div>
       <div class="np-feed muted" id="np-feed"></div>

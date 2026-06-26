@@ -11,6 +11,11 @@ def sidebar(request):
     if not user or not user.is_authenticated:
         return {}
 
+    # En peticiones htmx (navegación hx-boost, parciales) el sidebar persistente NO se
+    # re-renderiza, así que evitamos sus ~12 queries por completo.
+    if request.headers.get("HX-Request"):
+        return {}
+
     feeds = (
         Feed.objects.filter(user=user, ai_feed__isnull=True, kind="rss")  # IA y audio en su sección
         .select_related("source", "category")

@@ -33,11 +33,39 @@ def _enclosure(entry):
     return "", ""
 
 
-def _entry_image(entry):
-    img = entry.get("image")
+def _https(url):
+    """Fuerza https en imágenes para evitar mixed-content cuando la app va por https."""
+    url = (url or "").strip()
+    if url.startswith("http://"):
+        return "https://" + url[len("http://"):]
+    return url
+
+
+def _img_field(obj):
+    """Extrae una URL de imagen de un feed/entry de feedparser, mirando varios campos."""
+    img = obj.get("image")
     if isinstance(img, dict) and img.get("href"):
-        return img["href"]
-    return entry.get("itunes_image", "") or ""
+        return _https(img["href"])
+    it = obj.get("itunes_image")
+    if isinstance(it, dict) and it.get("href"):
+        return _https(it["href"])
+    if isinstance(it, str) and it:
+        return _https(it)
+    for thumb in (obj.get("media_thumbnail") or []):
+        if thumb.get("url"):
+            return _https(thumb["url"])
+    for media in (obj.get("media_content") or []):
+        if media.get("url") and "image" in (media.get("type") or "image"):
+            return _https(media["url"])
+    for key in ("logo", "icon"):
+        val = obj.get(key)
+        if isinstance(val, str) and val:
+            return _https(val)
+    return ""
+
+
+def _entry_image(entry):
+    return _img_field(entry)
 
 
 def _duration_seconds(entry):
@@ -58,11 +86,7 @@ def _duration_seconds(entry):
 
 
 def _feed_image(parsed):
-    feed = parsed.feed
-    img = feed.get("image")
-    if isinstance(img, dict) and img.get("href"):
-        return img["href"]
-    return feed.get("itunes_image", "") or ""
+    return _img_field(parsed.feed)
 
 
 def _download(feed):
@@ -150,6 +174,8 @@ class Command(BaseCommand):
                     fields.append("kind")
                 # Portada/descripción del podcast (rellena si faltan).
                 img = _feed_image(parsed)
+                if not img:  # fallback: arte de un episodio nuevo
+                    img = next((a.image_url for a in new_articles if a.image_url), "")
                 if img and not feed.image_url:
                     feed.image_url = img[:1000]
                     fields.append("image_url")

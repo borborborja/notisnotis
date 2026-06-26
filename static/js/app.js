@@ -127,6 +127,18 @@
     return fetch(url, { method: "POST", headers: { "X-CSRFToken": getCookie("csrftoken") }, body: body });
   }
 
+  // ---- Fallback de imágenes rotas (hotlink/404/mixed-content) → placeholder ----
+  var IMG_PH = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='6' fill='%23e6e3f0'/%3E%3Cpath d='M24 13a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0v-6a3 3 0 0 0-3-3z' fill='%239b93b8'/%3E%3Cpath d='M30 21v1a6 6 0 0 1-12 0v-1' stroke='%239b93b8' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E";
+  function initImageFallback() {
+    document.addEventListener("error", function (e) {
+      var img = e.target;
+      if (img && img.tagName === "IMG" && img.hasAttribute("data-ph")) {
+        img.removeAttribute("data-ph");   // evita bucle
+        img.src = IMG_PH;
+      }
+    }, true);  // captura: los eventos 'error' de img no burbujean
+  }
+
   // ---- Reproductor de podcasts persistente (Pocket Casts-style) ----
   var SPEEDS = [1, 1.2, 1.5, 1.75, 2, 0.8];
   function fmtTime(s) {
@@ -166,6 +178,7 @@
     function play(ep) {
       cur = ep;
       bar.hidden = false;
+      document.body.classList.add("player-on");
       els.title.textContent = ep.title || "";
       els.feed.textContent = ep.feed || "";
       if (ep.art) { els.art.src = ep.art; els.art.style.visibility = "visible"; }
@@ -201,6 +214,7 @@
     document.getElementById("np-fwd").addEventListener("click", function () { audio.currentTime += 30; });
     document.getElementById("np-close").addEventListener("click", function () {
       saveProgress(false); audio.pause(); bar.hidden = true; cur = null;
+      document.body.classList.remove("player-on");
     });
     document.getElementById("np-played").addEventListener("click", function () {
       if (cur) post("/podcasts/ep/" + cur.id + "/played/");
@@ -639,12 +653,25 @@
     });
   }
 
+  // Inits que tocan el contenido (#content / #reading-pane): se re-ejecutan tras un swap htmx.
+  var PERSWAP = [initSubtabs, initFeedFilter, initTypeControls, initRangeOutputs, initAiProvider,
+                 initTranscribeDownload];
+  function runPerswap() {
+    PERSWAP.forEach(function (fn) { try { fn(); } catch (err) { console.error("perswap:", err); } });
+  }
+  // Tras la navegación boosteada (#content) o cargar un artículo (#reading-pane), re-vincular.
+  document.body.addEventListener("htmx:afterSwap", function (e) {
+    if (e.target && (e.target.id === "content" || e.target.id === "reading-pane")) {
+      runPerswap();
+      try { observeAutomark(); } catch (err) {}
+    }
+  });
+
   document.addEventListener("DOMContentLoaded", function () {
-    // Cada init aislado: que un fallo no impida el resto.
+    // Una-vez (sidebar/reproductor/document, persistentes) + por-swap. Cada init aislado.
     [initGroups, initSections, initSidebarToggle, initTheme, initKeys, observeAutomark, initTouch,
-     initResizers, initTypeControls, initPush, initPWA, initAiProvider, initRangeOutputs,
-     initSubtabs, initFeedFilter, initPlayer, initPodcasts, initDownloads,
-     initTranscribeDownload].forEach(function (fn) {
+     initResizers, initPush, initPWA, initPlayer, initPodcasts, initDownloads, initImageFallback]
+      .concat(PERSWAP).forEach(function (fn) {
       try { fn(); } catch (err) { console.error("init error:", err); }
     });
     var h = document.querySelector("[data-help-close]");

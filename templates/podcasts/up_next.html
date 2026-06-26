@@ -2,6 +2,7 @@
 {% load podcast_extras %}
 {% block title %}Up Next · Podcasts{% endblock %}
 {% block content %}
+<div class="page">
 <p class="muted"><a href="{% url 'podcasts:home' %}">← Podcasts</a></p>
 <div class="pod-head">
   <h1><svg class="ic"><use href="#i-queue"/></svg> Up Next</h1>
@@ -16,7 +17,7 @@
          data-ep-art="{{ ep.image_url|default:ep.feed.image_url }}" data-ep-pos="{{ ep.play_position }}"
          data-ep-speed="{{ ep.feed.playback_speed }}">
       <span class="drag-handle" title="Arrastrar">⋮⋮</span>
-      <img class="ep-art" src="{{ ep.image_url|default:ep.feed.image_url }}" alt="" loading="lazy">
+      <img class="ep-art" data-ph src="{{ ep.image_url|default:ep.feed.image_url|default:ep.source.favicon }}" alt="" loading="lazy">
       <div class="ep-body">
         <a href="{% url 'articles:detail' ep.pk %}" class="ep-title">{{ ep.title }}</a>
         <div class="ep-meta muted">{{ ep.feed.title|default:ep.source.name }}{% if ep.duration %} · {{ ep.duration|duration_hm }}{% endif %}</div>
@@ -36,5 +37,6 @@
   {% empty %}
     <p class="muted">La cola está vacía. Añade episodios con el icono de cola.</p>
   {% endfor %}
+</div>
 </div>
 {% endblock %}

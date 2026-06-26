@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Podcasts · NotisNotis{% endblock %}
 {% block content %}
+<div class="page">
 <div class="pod-head">
   <h1><svg class="ic"><use href="#i-headphones"/></svg> Podcasts</h1>
   <nav class="pod-nav">
@@ -18,7 +19,7 @@
   {% for f in feeds %}
     <a class="pod-card" href="{% url 'podcasts:detail' f.pk %}" title="{{ f.title|default:f.source.name }}">
       <div class="pod-cover">
-        {% if f.image_url %}<img src="{{ f.image_url }}" alt="" loading="lazy">
+        {% if f.image_url or f.source.favicon %}<img data-ph src="{{ f.image_url|default:f.source.favicon }}" alt="" loading="lazy">
         {% else %}<div class="pod-cover-ph"><svg class="ic"><use href="#i-mic"/></svg></div>{% endif %}
         {% if f.unplayed %}<span class="pod-badge">{{ f.unplayed }}</span>{% endif %}
       </div>
@@ -37,9 +38,10 @@
     → Exportar base de datos). Reconstruye suscripciones, escuchados, posición, favoritos, cola,
     velocidades, skip y capítulos. Para backups muy grandes (cientos de MB) usa el comando del
     servidor.</p>
-  <form method="post" action="{% url 'podcasts:import_antennapod' %}" enctype="multipart/form-data">{% csrf_token %}
+  <form method="post" action="{% url 'podcasts:import_antennapod' %}" enctype="multipart/form-data" hx-boost="false">{% csrf_token %}
     <input type="file" name="db" accept=".db,.sqlite,application/octet-stream" required>
     <button class="btn" type="submit"><svg class="ic"><use href="#i-upload"/></svg> Importar</button>
   </form>
 </details>
+</div>
 {% endblock %}

@@ -1,7 +1,7 @@
 {% load podcast_extras %}
 {# Fila de episodio. Espera: ep, queued (set de article_id en cola). #}
 <div class="ep-row{% if ep.is_read %} ep-played{% endif %}">
-  <img class="ep-art" src="{{ ep.image_url|default:ep.feed.image_url }}" alt="" loading="lazy">
+  <img class="ep-art" data-ph src="{{ ep.image_url|default:ep.feed.image_url|default:ep.source.favicon }}" alt="" loading="lazy">
   <div class="ep-body">
     <a href="{% url 'articles:detail' ep.pk %}" class="ep-title">{{ ep.title }}</a>
     <div class="ep-meta muted">

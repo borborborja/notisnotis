@@ -2,6 +2,7 @@
 {% load podcast_extras %}
 {% block title %}{{ title }} · Podcasts{% endblock %}
 {% block content %}
+<div class="page">
 <p class="muted"><a href="{% url 'podcasts:home' %}">← Podcasts</a></p>
 <h1>{{ title }}</h1>
 <div class="card">
@@ -10,5 +11,6 @@
   {% empty %}
     <p class="muted">Nada por aquí.</p>
   {% endfor %}
+</div>
 </div>
 {% endblock %}

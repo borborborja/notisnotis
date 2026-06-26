@@ -4,7 +4,7 @@
 <h1>Importar OPML</h1>
 <div class="card">
   <p class="muted">Sube el archivo OPML con tus suscripciones. Crearemos los feeds y las fuentes.</p>
-  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+  <form method="post" enctype="multipart/form-data" hx-boost="false">{% csrf_token %}
     <div class="form-row">
       <label>Importar como</label>
       <select name="kind">
