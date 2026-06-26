@@ -146,4 +146,4 @@ def _handle_mark(user, mark, as_, oid, before):
             qs = qs.filter(feed__category_id=oid)
         if before:
             qs = qs.filter(published_at__lte=timezone.datetime.fromtimestamp(int(before), tz=timezone.utc))
-        qs.update(is_read=True, read_at=now)
+        qs.update(is_read=True, read_at=now, updated_at=now)

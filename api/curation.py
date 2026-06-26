@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
 
 from .auth import api_token
-from .helpers import body_json, err, ok, param, require_module
+from .helpers import as_int, body_json, err, ok, param, require_module
 from .serializers import (aifeed_dict, article_dict, candidate_dict, story_dict, topic_dict)
 
 MODULE = "curation"
@@ -126,10 +126,10 @@ def aifeed_detail(request, pk):
     if request.method == "PATCH":
         data = body_json(request)
         fields = []
-        if "min_score" in data:
-            af.min_score = max(0, min(10, int(data["min_score"]))); fields.append("min_score")
-        if "auto_accept_score" in data:
-            af.auto_accept_score = max(0, min(11, int(data["auto_accept_score"]))); fields.append("auto_accept_score")
+        if "min_score" in data and as_int(data["min_score"]) is not None:
+            af.min_score = max(0, min(10, as_int(data["min_score"]))); fields.append("min_score")
+        if "auto_accept_score" in data and as_int(data["auto_accept_score"]) is not None:
+            af.auto_accept_score = max(0, min(11, as_int(data["auto_accept_score"]))); fields.append("auto_accept_score")
         if "enabled" in data:
             af.enabled = bool(data["enabled"]); fields.append("enabled")
         if fields:

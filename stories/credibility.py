@@ -34,7 +34,7 @@ def source_signal(source, story_country=""):
     press = press_tier(country)
     story_country = (story_country or "").upper()
 
-    weight = _FACT.get((source.factuality or "").lower(), 0.5)
+    weight = _FACT.get((getattr(source, "factuality", "") or "").lower(), 0.5)
     flags, notes = [], []
 
     local = bool(country and story_country and country == story_country)

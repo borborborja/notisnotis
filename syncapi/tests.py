@@ -51,11 +51,14 @@ class GReaderTests(SyncBase):
         r = c.post("/api/greader/accounts/ClientLogin", {"Email": "demo", "Passwd": self.cred.password}, **H)
         self.assertIn("Auth=", r.content.decode())
         auth = {"HTTP_AUTHORIZATION": f"GoogleLogin auth={self.cred.token}", **H}
+        before = self.art.updated_at
         r2 = c.post("/api/greader/reader/api/0/edit-tag",
                     {"i": str(self.art.id), "a": "user/-/state/com.google/read"}, **auth)
         self.assertEqual(r2.status_code, 200)
         self.art.refresh_from_db()
         self.assertTrue(self.art.is_read)
+        # El cambio debe refrescar updated_at para que el delta-sync de /api/v1 lo propague.
+        self.assertGreater(self.art.updated_at, before)
 
     def test_subscription_list_requires_auth(self):
         self.assertEqual(Client().get("/api/greader/reader/api/0/subscription/list", **H).status_code, 403)

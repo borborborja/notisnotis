@@ -78,11 +78,12 @@ def score_candidates(ai_feed, client, candidates):
             out[candidates[int(s["i"])]["url"]] = {
                 "score": max(0, min(10, int(s.get("score", 0)))),
                 "reason": str(s.get("reason", ""))[:300],
+                "llm": True,  # puntuado realmente por el LLM (requisito para auto-aceptar)
             }
         except (ValueError, TypeError, KeyError, IndexError):
             continue
     for c in candidates:
-        out.setdefault(c["url"], {"score": ai_feed.min_score, "reason": ""})
+        out.setdefault(c["url"], {"score": ai_feed.min_score, "reason": "", "llm": False})
     return out
 
 
@@ -120,7 +121,7 @@ def run_search(ai_feed, *, per_query=12):
             score = sc.get("score", 0)
             if score < ai_feed.min_score:
                 continue
-            if auto_on and score >= ai_feed.auto_accept_score:
+            if auto_on and sc.get("llm") and score >= ai_feed.auto_accept_score:
                 _auto_accept(ai_feed, r, score, sc.get("reason", ""))
                 auto += 1
             else:

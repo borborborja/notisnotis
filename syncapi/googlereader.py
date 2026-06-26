@@ -224,13 +224,13 @@ def edit_tag(request):
     arts = Article.objects.filter(feed__user=user, id__in=pks)
     now = timezone.now()
     if READ in add:
-        arts.update(is_read=True, read_at=now)
+        arts.update(is_read=True, read_at=now, updated_at=now)
     if READ in remove:
-        arts.update(is_read=False, read_at=None)
+        arts.update(is_read=False, read_at=None, updated_at=now)
     if STARRED in add:
-        arts.update(is_saved=True)
+        arts.update(is_saved=True, updated_at=now)
     if STARRED in remove:
-        arts.update(is_saved=False)
+        arts.update(is_saved=False, updated_at=now)
     # Etiquetas de usuario: user/-/label/<name>
     from articles.models import Tag
 
@@ -262,5 +262,6 @@ def mark_all_as_read(request):
             qs = qs.filter(published_at__lte=cutoff)
         except (ValueError, OSError):
             pass
-    qs.update(is_read=True, read_at=timezone.now())
+    _now = timezone.now()
+    qs.update(is_read=True, read_at=_now, updated_at=_now)
     return HttpResponse("OK")

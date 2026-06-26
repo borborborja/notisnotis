@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
 
 from .auth import api_token
-from .helpers import body_json, err, ok, param, require_module
+from .helpers import as_float, as_int, body_json, err, ok, param, require_module
 from .serializers import episode_dict, feed_dict, queue_dict
 
 MODULE = "podcasts"
@@ -45,7 +45,8 @@ def podcast_detail(request, pk):
     f = Feed.objects.filter(user=request.api_user, kind="podcast", pk=pk).select_related("source").first()
     if not f:
         return err("not_found", "Podcast no encontrado.", status=404)
-    eps = (f.articles.select_related("source").order_by("-published_at", "-id")[:100])
+    eps = (f.articles.select_related("source").prefetch_related("tags")
+           .order_by("-published_at", "-id")[:100])
     d = feed_dict(f)
     d["episodes"] = [episode_dict(a, user=request.api_user) for a in eps]
     return ok(d)
@@ -59,7 +60,7 @@ def episodes(request):
     from articles.models import Article
 
     qs = (Article.objects.filter(feed__user=request.api_user, feed__kind="podcast")
-          .select_related("source", "feed").order_by("-published_at", "-id"))
+          .select_related("source", "feed").prefetch_related("tags").order_by("-published_at", "-id"))
     if param(request, "feed"):
         qs = qs.filter(feed_id=param(request, "feed"))
     if param(request, "in_progress") == "1":
@@ -82,16 +83,17 @@ def queue(request):
 
     if request.method == "GET":
         items = (QueueItem.objects.filter(user=request.api_user)
-                 .select_related("article", "article__source").order_by("position", "added_at"))
-        return ok([queue_dict(q) for q in items])
+                 .select_related("article", "article__source")
+                 .prefetch_related("article__tags").order_by("position", "added_at"))
+        return ok([queue_dict(q, user=request.api_user) for q in items])
     # POST {episode_id, position?}
     data = body_json(request)
     ep = Article.objects.filter(feed__user=request.api_user, pk=data.get("episode_id")).first()
     if not ep:
         return err("not_found", "Episodio no encontrado.", status=404)
-    pos = data.get("position")
+    pos = as_int(data.get("position"))
     if pos is None:
-        pos = (QueueItem.objects.filter(user=request.api_user).count())
+        pos = QueueItem.objects.filter(user=request.api_user).count()
     q, _ = QueueItem.objects.get_or_create(user=request.api_user, article=ep,
                                            defaults={"position": pos})
     return ok(queue_dict(q))
@@ -137,9 +139,10 @@ def progress(request, pk):
     if not ep:
         return err("not_found", "Episodio no encontrado.", status=404)
     data = body_json(request)
-    ep.play_position = int(data.get("position", ep.play_position) or 0)
-    if data.get("duration"):
-        ep.duration = int(data["duration"])
+    ep.play_position = as_int(data.get("position"), ep.play_position) or 0
+    dur = as_int(data.get("duration"))
+    if dur is not None:
+        ep.duration = dur
     ep.play_updated_at = timezone.now()
     ep.save(update_fields=["play_position", "duration", "play_updated_at"])
     return ok(episode_dict(ep, user=request.api_user))
@@ -176,9 +179,12 @@ def podcast_settings(request, pk):
         return err("not_found", "Podcast no encontrado.", status=404)
     data = body_json(request)
     fields = []
-    for key, cast in (("playback_speed", float), ("skip_intro", int), ("skip_outro", int)):
+    for key, cast in (("playback_speed", as_float), ("skip_intro", as_int), ("skip_outro", as_int)):
         if key in data:
-            setattr(f, key, cast(data[key]))
+            val = cast(data[key])
+            if val is None:
+                return err("bad_request", f"Valor inválido para {key}.")
+            setattr(f, key, val)
             fields.append(key)
     if fields:
         f.save(update_fields=fields)

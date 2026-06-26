@@ -26,9 +26,9 @@ def sync(request):
     except ValueError:
         limit = 200
 
-    from articles.models import Article
+    from syncapi.curation import visible_articles
 
-    qs = (Article.objects.filter(feed__user=user)
+    qs = (visible_articles(user)
           .select_related("source", "feed").prefetch_related("tags")
           .order_by("updated_at", "id"))
     if since:

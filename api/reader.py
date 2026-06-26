@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
 
 from .auth import api_token
-from .helpers import body_json, err, make_cursor, ok, param, parse_cursor, parse_since
+from .helpers import as_int, body_json, err, make_cursor, ok, param, parse_cursor, parse_since
 from .serializers import article_dict, category_dict, feed_dict, tag_dict
 
 MAX_LIMIT = 200
@@ -42,9 +42,10 @@ def tags(request):
 
 
 def _article_qs(request):
-    from articles.models import Article
+    from syncapi.curation import visible_articles
 
-    qs = (Article.objects.filter(feed__user=request.api_user)
+    # visible_articles respeta la preferencia de ocultar feeds IA (sync_aifeeds_enabled).
+    qs = (visible_articles(request.api_user)
           .select_related("source", "feed").prefetch_related("tags"))
     feed = param(request, "feed")
     category = param(request, "category")
@@ -131,11 +132,14 @@ def articles_state(request):
     data = body_json(request)
     qs = Article.objects.filter(feed__user=request.api_user)
     if data.get("ids"):
-        qs = qs.filter(id__in=data["ids"])
+        ids = data["ids"]
+        if not isinstance(ids, list):
+            return err("bad_request", "'ids' debe ser una lista.")
+        qs = qs.filter(id__in=[i for i in ids if isinstance(i, int)])
     elif data.get("feed"):
-        qs = qs.filter(feed_id=data["feed"])
+        qs = qs.filter(feed_id=as_int(data["feed"], -1))
     elif data.get("category"):
-        qs = qs.filter(feed__category_id=data["category"])
+        qs = qs.filter(feed__category_id=as_int(data["category"], -1))
     else:
         return err("bad_request", "Indica ids, feed o category.")
     older = parse_since(data.get("older_than"))

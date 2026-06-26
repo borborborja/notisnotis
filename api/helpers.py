@@ -47,6 +47,20 @@ def param(request, key, default=None):
     return request.GET.get(key, default)
 
 
+def as_int(value, default=None):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def as_float(value, default=None):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def parse_since(value):
     """ISO8601 → datetime aware, o None."""
     return _parse_dt(value)

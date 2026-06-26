@@ -77,9 +77,9 @@ def episode_dict(a, user=None, full=False):
     return article_dict(a, user=user, full=full)
 
 
-def queue_dict(q):
+def queue_dict(q, user=None):
     return {"position": q.position, "added_at": iso(q.added_at),
-            "episode": article_dict(q.article)}
+            "episode": article_dict(q.article, user=user)}
 
 
 def _coverage(story, user):

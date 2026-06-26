@@ -104,7 +104,8 @@ class AutoAcceptTests(TestCase):
             AIFeedExample.objects.create(ai_feed=ai, title=f"ok{i}", relevant=True)
         results = [{"url": "https://x/hi", "title": "Alta", "snippet": "s"},
                    {"url": "https://x/lo", "title": "Media", "snippet": "s"}]
-        scores = {"https://x/hi": {"score": 9, "reason": ""}, "https://x/lo": {"score": 6, "reason": ""}}
+        scores = {"https://x/hi": {"score": 9, "reason": "", "llm": True},
+                  "https://x/lo": {"score": 6, "reason": "", "llm": True}}
         with mock.patch("aifeeds.services.web_search", side_effect=lambda q, k=12: results), \
              mock.patch("aifeeds.services.score_candidates", return_value=scores), \
              mock.patch("aifeeds.services.generate_queries", return_value=["q"]):
@@ -113,3 +114,21 @@ class AutoAcceptTests(TestCase):
         self.assertEqual(res["proposed"], 1)   # la de 6 queda por revisar
         self.assertTrue(Article.objects.filter(feed=ai.feed, title="Alta").exists())
         self.assertEqual(AIFeedCandidate.objects.filter(ai_feed=ai, status="accepted").count(), 1)
+
+    def test_unscored_never_auto_accepts(self):
+        """Un candidato que el LLM NO puntuó (llm=False) no se auto-acepta aunque min>=auto."""
+        from unittest import mock
+        from aifeeds import services
+        from aifeeds.models import AIFeedCandidate, AIFeedExample
+        ai = self._feed(min_score=8, auto_accept_score=8)  # config alcanzable por el usuario
+        for i in range(services.TRAIN_MIN):
+            AIFeedExample.objects.create(ai_feed=ai, title=f"ok{i}", relevant=True)
+        results = [{"url": "https://x/u", "title": "SinPuntuar", "snippet": "s"}]
+        # score_candidates real con LLM que no devuelve nada → fallback llm=False, score=min_score
+        with mock.patch("aifeeds.services.web_search", side_effect=lambda q, k=12: results), \
+             mock.patch("aifeeds.services.score_candidates",
+                        return_value={"https://x/u": {"score": 8, "reason": "", "llm": False}}), \
+             mock.patch("aifeeds.services.generate_queries", return_value=["q"]):
+            res = services.run_search(ai)
+        self.assertEqual(res["auto"], 0)       # NO se auto-acepta sin score real
+        self.assertEqual(res["proposed"], 1)   # queda como propuesta

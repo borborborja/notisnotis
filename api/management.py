@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.views.decorators.http import require_GET, require_http_methods
 
 from .auth import api_token
-from .helpers import body_json, err, ok
+from .helpers import as_int, body_json, err, ok
 from .serializers import category_dict, feed_dict
 
 
@@ -50,7 +50,7 @@ def feed_detail(request, pk):
     data = body_json(request)
     fields = []
     if "title" in data:
-        f.title = data["title"][:500]; fields.append("title")
+        f.title = str(data["title"])[:500]; fields.append("title")
     if "enabled" in data:
         f.enabled = bool(data["enabled"]); fields.append("enabled")
     if "crawler" in data:
@@ -91,9 +91,9 @@ def category_detail(request, pk):
     data = body_json(request)
     fields = []
     if "name" in data:
-        c.name = data["name"][:200]; fields.append("name")
-    if "position" in data:
-        c.position = int(data["position"]); fields.append("position")
+        c.name = str(data["name"])[:200]; fields.append("name")
+    if "position" in data and as_int(data["position"]) is not None:
+        c.position = as_int(data["position"]); fields.append("position")
     if fields:
         c.save(update_fields=fields)
     return ok(category_dict(c))
