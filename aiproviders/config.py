@@ -16,6 +16,11 @@ FIELDS = [
      "Proveedor de embeddings", ["mock", "openai", "jina", "ollama", "ollama_cloud"]),
     ("embed_model", "AI_EMBED_MODEL", "nomic-embed-text", "str", False, "Modelo de embeddings", None),
     ("embed_dim", "AI_EMBED_DIM", "256", "int", False, "Dimensión de embeddings", None),
+    ("transcribe_provider", "AI_TRANSCRIBE_PROVIDER", "whisper_local", "str", False,
+     "Proveedor de transcripción", ["mock", "whisper_local", "openai"]),
+    ("transcribe_model", "AI_TRANSCRIBE_MODEL", "", "str", False, "Modelo de transcripción", None),
+    ("transcribe_lang", "AI_TRANSCRIBE_LANG", "", "str", False, "Idioma de transcripción (vacío = auto)", None),
+    ("whisper_url", "WHISPER_URL", "http://whisper:9000", "str", False, "Whisper local URL", None),
     ("openrouter_api_key", "OPENROUTER_API_KEY", "", "str", True, "OpenRouter API key", None),
     ("openrouter_base_url", "OPENROUTER_BASE_URL",
      "https://openrouter.ai/api/v1/chat/completions", "str", False, "OpenRouter base URL", None),
@@ -36,6 +41,13 @@ FIELDS = [
     ("fulltext_enabled", "FULLTEXT_ENABLED", "0", "bool", False, "Texto completo / paywall", None),
 ]
 FIELDS_BY_KEY = {f[0]: f for f in FIELDS}
+
+# Campos de la transcripción (fuentes audio), para la pestaña de Ajustes → Audio.
+TRANSCRIBE_KEYS = ["transcribe_provider", "transcribe_model", "transcribe_lang", "whisper_url"]
+
+
+def transcribe_fields():
+    return [FIELDS_BY_KEY[k] for k in TRANSCRIBE_KEYS]
 
 
 def is_env_locked(key) -> bool:

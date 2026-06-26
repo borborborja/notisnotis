@@ -203,6 +203,19 @@ def reading_pane(request, pk):
 
 
 @login_required
+@require_POST
+def request_transcribe(request, pk):
+    """Encola la transcripción de un episodio (la hace el scheduler en segundo plano)."""
+    article = get_object_or_404(Article.objects.select_related("source", "feed"),
+                                pk=pk, feed__user=request.user)
+    if article.fulltext_source != "transcript" and not article.transcribe_requested:
+        article.transcribe_requested = True
+        article.save(update_fields=["transcribe_requested"])
+        messages.success(request, "En cola para transcribir. Aparecerá en breve.")
+    return render(request, "articles/_reading_pane.html", _reading_ctx(request, article))
+
+
+@login_required
 def related_panel(request, pk):
     """Sección 'Otras fuentes' del lector (carga diferida por htmx)."""
     from .ai_actions import related_articles
@@ -232,10 +245,15 @@ def related_panel(request, pk):
 
 
 def _reading_ctx(request, article):
+    from .transcribe import is_transcribable, youtube_id
+
     story = article.stories.filter(story__user=request.user).select_related("story").first()
+    yt = youtube_id(article.url)
     return {
         "article": article,
         "story_link": story.story if story else None,
+        "yt_id": yt,
+        "can_transcribe": is_transcribable(article) and article.fulltext_source != "transcript",
         "fulltext_enabled": effective_config(request.user)["fulltext_enabled"],
         "show_original": request.GET.get("original") == "1",
         "langs": LANGS,

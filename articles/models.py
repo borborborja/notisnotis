@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-from pgvector.django import HnswIndex, VectorField
+from pgvector.django import VectorField
 
 from feeds.models import Feed, Source
 
@@ -65,6 +65,9 @@ class Article(models.Model):
     tldr = models.TextField(blank=True)
     summarized_at = models.DateTimeField(null=True, blank=True)
 
+    # Transcripción (fuentes audio): el resultado va a full_text (fulltext_source="transcript").
+    transcribe_requested = models.BooleanField(default=False)
+
     # Estado de lectura (Feed ya es por-usuario)
     is_read = models.BooleanField(default=False)
     is_saved = models.BooleanField(default=False)
@@ -79,15 +82,9 @@ class Article(models.Model):
         indexes = [
             models.Index(fields=["is_read"]),
             models.Index(fields=["is_saved"]),
-            # Índice ANN de pgvector (solo se materializa en Postgres; ver
-            # articles/migrations/0007 — el DDL va guardado por vendor).
-            HnswIndex(
-                name="article_embedding_vec_hnsw",
-                fields=["embedding_vec"],
-                m=16,
-                ef_construction=64,
-                opclasses=["vector_cosine_ops"],
-            ),
+            # El índice ANN de pgvector existe SOLO en Postgres (lo crea articles/0007 con DDL
+            # guardado por vendor). NO se declara aquí en Meta: si estuviera, cualquier cambio
+            # de campo rehace la tabla en SQLite e intenta recrearlo (SQL incompatible).
         ]
 
     def __str__(self):

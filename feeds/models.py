@@ -98,6 +98,9 @@ class Feed(models.Model):
     source = models.ForeignKey(Source, on_delete=models.PROTECT, related_name="feeds")
     url = models.URLField(max_length=1000)
     title = models.CharField(max_length=500, blank=True)
+    # Tipo de fuente: RSS normal, podcast (audio) o canal de YouTube (vídeo).
+    KIND_CHOICES = [("rss", "RSS"), ("podcast", "Podcast"), ("youtube", "YouTube")]
+    kind = models.CharField(max_length=16, choices=KIND_CHOICES, default="rss")
     enabled = models.BooleanField(default=True)
     last_fetched = models.DateTimeField(null=True, blank=True)
     last_error = models.TextField(blank=True)

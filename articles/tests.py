@@ -163,3 +163,60 @@ class RelatedPanelTests(TestCase):
         r = self.client.get(f"/articles/{self.a.pk}/reading/", **H)
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "related-wrap")
+
+
+class TranscribeTests(TestCase):
+    def setUp(self):
+        from accounts.models import UserConfig
+
+        self.U = get_user_model()
+        self.u = self.U.objects.create_user("tr", "", "pw-initial-1")
+        UserConfig.objects.create(user=self.u, data={"transcribe_provider": "mock"})
+        self.client.login(username="tr", password="pw-initial-1")
+        src = Source.objects.create(name="Pod", domain="pod.com")
+        self.podcast = Feed.objects.create(user=self.u, source=src, url="http://pod/rss", kind="podcast")
+        self.ep = Article.objects.create(feed=self.podcast, source=src, guid="e1", title="Ep 1",
+                                         enclosure_url="http://pod/ep1.mp3", enclosure_type="audio/mpeg")
+
+    def test_youtube_id_extraction(self):
+        from articles.transcribe import youtube_id
+        self.assertEqual(youtube_id("https://www.youtube.com/watch?v=dQw4w9WgXcQ"), "dQw4w9WgXcQ")
+        self.assertEqual(youtube_id("https://youtu.be/dQw4w9WgXcQ"), "dQw4w9WgXcQ")
+        self.assertIsNone(youtube_id("http://pod/ep1.mp3"))
+
+    def test_transcribe_podcast_uses_client(self):
+        from unittest import mock
+        from articles.transcribe import transcribe_episode
+
+        class _Resp:
+            content = b"audio-bytes"
+            def raise_for_status(self): pass
+
+        # mock provider por defecto → transcribe devuelve texto mock; requests.get mockeado.
+        with mock.patch("articles.transcribe.requests.get", return_value=_Resp()):
+            transcribe_episode(self.ep)
+        self.ep.refresh_from_db()
+        self.assertEqual(self.ep.fulltext_source, "transcript")
+        self.assertIn("[mock] transcripción", self.ep.full_text)
+        self.assertFalse(self.ep.transcribe_requested)
+
+    def test_request_transcribe_button_queues(self):
+        r = self.client.post(f"/articles/{self.ep.pk}/transcribe/", **H)
+        self.assertEqual(r.status_code, 200)
+        self.ep.refresh_from_db()
+        self.assertTrue(self.ep.transcribe_requested)
+
+    def test_transcribe_episodes_command_respects_requested(self):
+        from unittest import mock
+        from django.core.management import call_command
+
+        class _Resp:
+            content = b"x"
+            def raise_for_status(self): pass
+
+        self.ep.transcribe_requested = True
+        self.ep.save(update_fields=["transcribe_requested"])
+        with mock.patch("articles.transcribe.requests.get", return_value=_Resp()):
+            call_command("transcribe_episodes", "--user", "tr", "--limit", "5")
+        self.ep.refresh_from_db()
+        self.assertEqual(self.ep.fulltext_source, "transcript")

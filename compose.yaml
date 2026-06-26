@@ -50,6 +50,14 @@ services:
         done
     restart: unless-stopped
 
+  # Transcripción self-hosted (Whisper) para las "fuentes audio" (podcasts).
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    environment:
+      - ASR_MODEL=${ASR_MODEL:-base}
+      - ASR_ENGINE=faster_whisper
+    restart: unless-stopped
+
   # Buscador self-hosted para los "feeds con IA" (búsqueda web sin coste ni claves).
   searxng:
     image: searxng/searxng:latest

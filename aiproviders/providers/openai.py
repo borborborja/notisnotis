@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import requests
 
-from ..base import AIError, BaseChatProvider, BaseEmbedProvider
+from ..base import AIError, BaseChatProvider, BaseEmbedProvider, BaseTranscribeProvider
 
 
 def _auth_headers(api_key):
@@ -83,3 +83,27 @@ class OpenAIEmbedProvider(BaseEmbedProvider):
             raise AIError(f"OpenAI embeddings {resp.status_code}: {resp.text[:300]}")
         data = sorted(resp.json()["data"], key=lambda d: d["index"])
         return [d["embedding"] for d in data]
+
+
+class OpenAITranscribeProvider(BaseTranscribeProvider):
+    def transcribe(self, audio_bytes, *, filename="audio.mp3", lang=""):
+        api_key = self.config.get("api_key")
+        base_url = self.config.get("base_url") or "https://api.openai.com/v1"
+        if not api_key:
+            raise AIError("OPENAI_API_KEY no configurada.")
+        data = {"model": self.model or "whisper-1"}
+        if lang:
+            data["language"] = lang
+        resp = requests.post(
+            f"{base_url}/audio/transcriptions",
+            headers={"Authorization": f"Bearer {api_key}"},  # multipart: no fijar Content-Type
+            files={"file": (filename, audio_bytes)},
+            data=data,
+            timeout=self.config.get("timeout", 600),
+        )
+        if resp.status_code >= 400:
+            raise AIError(f"OpenAI transcripción {resp.status_code}: {resp.text[:300]}")
+        return (resp.json().get("text") or "").strip()
+
+    def list_models(self):
+        return ["whisper-1", "gpt-4o-transcribe", "gpt-4o-mini-transcribe"]

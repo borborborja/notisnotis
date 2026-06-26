@@ -17,6 +17,13 @@
       </select>
     </div>
     <div class="form-row">
+      <label>Tipo de fuente</label>
+      <select name="kind">
+        {% for value, label in feed.KIND_CHOICES %}<option value="{{ value }}" {% if feed.kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+      <p class="field-help muted">Podcast/YouTube aparecen en “Fuentes audio” y pueden transcribirse.</p>
+    </div>
+    <div class="form-row">
       <label><input type="checkbox" name="enabled" value="1" {% if feed.enabled %}checked{% endif %}> Activo</label>
     </div>
     <div class="form-row">

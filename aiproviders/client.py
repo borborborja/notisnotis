@@ -8,8 +8,10 @@ from .providers.jina import JinaEmbedProvider
 from .providers.mock import MockChatProvider, MockEmbedProvider
 from .providers.ollama import OllamaChatProvider, OllamaEmbedProvider
 from .providers.ollama_cloud import OllamaCloudChatProvider, OllamaCloudEmbedProvider
-from .providers.openai import OpenAIChatProvider, OpenAIEmbedProvider
+from .providers.mock import MockTranscribeProvider
+from .providers.openai import OpenAIChatProvider, OpenAIEmbedProvider, OpenAITranscribeProvider
 from .providers.openrouter import OpenRouterChatProvider, OpenRouterEmbedProvider
+from .providers.whisper_local import WhisperLocalTranscribeProvider
 
 _CHAT = {
     "mock": MockChatProvider,
@@ -26,6 +28,11 @@ _EMBED = {
     "ollama": OllamaEmbedProvider,
     "ollama_cloud": OllamaCloudEmbedProvider,
 }
+_TRANSCRIBE = {
+    "mock": MockTranscribeProvider,
+    "whisper_local": WhisperLocalTranscribeProvider,
+    "openai": OpenAITranscribeProvider,
+}
 
 
 def _provider_kwargs(provider, cfg):
@@ -35,6 +42,7 @@ def _provider_kwargs(provider, cfg):
         "jina": {"api_key": cfg["jina_api_key"], "base_url": cfg["jina_base_url"]},
         "ollama": {"base_url": cfg["ollama_base_url"]},
         "ollama_cloud": {"api_key": cfg["ollama_cloud_api_key"], "base_url": cfg["ollama_cloud_base_url"]},
+        "whisper_local": {"url": cfg["whisper_url"]},
         "mock": {},
     }.get(provider, {})
 
@@ -61,9 +69,24 @@ def build_embed_client(cfg):
     return cls(model=cfg["embed_model"], dim=cfg["embed_dim"], **kwargs)
 
 
+def build_transcribe_client(cfg):
+    """Construye el cliente de transcripción a partir de un cfg ya resuelto (dict)."""
+    provider = cfg["transcribe_provider"]
+    cls = _TRANSCRIBE.get(provider)
+    if cls is None:
+        raise ValueError(f"Proveedor de transcripción desconocido: {provider}")
+    kwargs = _provider_kwargs(provider, cfg)
+    kwargs["timeout"] = settings.AI.get("TRANSCRIBE_TIMEOUT", 1800)
+    return cls(model=cfg["transcribe_model"], **kwargs)
+
+
 def get_chat_client(user=None):
     return build_chat_client(effective_config(user))
 
 
 def get_embed_client(user=None):
     return build_embed_client(effective_config(user))
+
+
+def get_transcribe_client(user=None):
+    return build_transcribe_client(effective_config(user))

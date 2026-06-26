@@ -21,6 +21,19 @@ def sync_aifeeds_enabled(user) -> bool:
     return not (cfg and cfg.data.get("sync_aifeeds") == "0")
 
 
+def sync_transcription_enabled(user) -> bool:
+    """¿Se incluyen las transcripciones en el cuerpo enviado por Fever/GReader? (por defecto sí)."""
+    cfg = getattr(user, "config", None)
+    return not (cfg and cfg.data.get("sync_transcription") == "0")
+
+
+def sync_body(article, user) -> str:
+    """Cuerpo del artículo para sync; oculta la transcripción si el usuario lo desactivó."""
+    if article.fulltext_source == "transcript" and not sync_transcription_enabled(user):
+        return article.summary or article.body or article.title
+    return article.best_text or ""
+
+
 def visible_articles(user):
     """Queryset base de artículos para las APIs de sync, respetando la preferencia de fuentes IA."""
     from articles.models import Article
@@ -32,7 +45,7 @@ def visible_articles(user):
 
 
 def enriched_html(article, user) -> str:
-    base = article.best_text or ""
+    base = sync_body(article, user)
     if not curation_enabled(user):
         return base
 

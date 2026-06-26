@@ -12,7 +12,7 @@ def sidebar(request):
         return {}
 
     feeds = (
-        Feed.objects.filter(user=user, ai_feed__isnull=True)  # los feeds IA van en su sección
+        Feed.objects.filter(user=user, ai_feed__isnull=True, kind="rss")  # IA y audio en su sección
         .select_related("source", "category")
         .annotate(unread=Count("articles", filter=Q(articles__is_read=False)))
     )
@@ -45,10 +45,18 @@ def sidebar(request):
         aifeeds.append({"id": ai.id, "name": ai.name, "feed_id": ai.feed_id,
                         "unread": ai.unread, "pending": ai.pending})
 
+    # Fuentes audio (podcasts + canales de YouTube).
+    audio_feeds = list(
+        Feed.objects.filter(user=user, kind__in=["podcast", "youtube"])
+        .select_related("source")
+        .annotate(unread=Count("articles", filter=Q(articles__is_read=False)))
+    )
+
     return {
         "sidebar_categories": categories,
         "sidebar_uncategorized": uncategorized,
         "sidebar_aifeeds": aifeeds,
+        "sidebar_audio": audio_feeds,
         "sidebar_tags": tags,
         "reading_ui": reading_prefs(user),
         "sidebar_counts": {

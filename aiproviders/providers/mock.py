@@ -5,7 +5,7 @@ import hashlib
 import json as jsonlib
 import math
 
-from ..base import BaseChatProvider, BaseEmbedProvider
+from ..base import BaseChatProvider, BaseEmbedProvider, BaseTranscribeProvider
 
 
 class MockChatProvider(BaseChatProvider):
@@ -71,3 +71,11 @@ class MockEmbedProvider(BaseEmbedProvider):
             vec[h % self.dim] += 1.0
         norm = math.sqrt(sum(v * v for v in vec)) or 1.0
         return [v / norm for v in vec]
+
+
+class MockTranscribeProvider(BaseTranscribeProvider):
+    def list_models(self):
+        return ["mock-whisper"]
+
+    def transcribe(self, audio_bytes, *, filename="audio.mp3", lang=""):
+        return f"[mock] transcripción determinista de {len(audio_bytes)} bytes."

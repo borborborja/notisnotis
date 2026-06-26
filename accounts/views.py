@@ -84,6 +84,16 @@ def settings_view(request, tab="general"):
             config.save(update_fields=["data"])
             messages.success(request, "Ajustes de fuentes IA guardados.")
             return redirect("account_settings_tab", tab="updates")
+        elif action == "save_audio":
+            from aiproviders.config import transcribe_fields
+            from notisnotis import optconfig
+
+            optconfig.save_user_fields(request.user, transcribe_fields(), request.POST)
+            cfg, _ = UserConfig.objects.get_or_create(user=request.user)
+            cfg.data["auto_transcribe"] = "1" if request.POST.get("auto_transcribe") == "1" else "0"
+            cfg.save(update_fields=["data"])
+            messages.success(request, "Ajustes de fuentes audio guardados.")
+            return redirect("account_settings_tab", tab="updates")
         elif action == "save_reading":
             _save_reading(request)
             messages.success(request, "Preferencias de lectura guardadas.")
@@ -139,6 +149,7 @@ def settings_view(request, tab="general"):
             cfg, _ = UserConfig.objects.get_or_create(user=request.user)
             cfg.data["sync_curation"] = "1" if request.POST.get("sync_curation") == "1" else "0"
             cfg.data["sync_aifeeds"] = "1" if request.POST.get("sync_aifeeds") == "1" else "0"
+            cfg.data["sync_transcription"] = "1" if request.POST.get("sync_transcription") == "1" else "0"
             cfg.save(update_fields=["data"])
             messages.success(request, "Preferencia de sincronización guardada.")
             return redirect("account_settings_tab", tab="tokens")
@@ -217,6 +228,11 @@ def settings_view(request, tab="general"):
         ctx["ai_search_minutes"] = int(data.get("ai_search_minutes", 720))
         ctx["ai_min_score"] = int(data.get("ai_min_score", 6))
         ctx["ai_feeds"] = request.user.ai_feeds.all()
+        from aiproviders.config import TRANSCRIBE_KEYS, fields_state
+
+        st = fields_state(request.user)
+        ctx["transcribe_fields"] = [st[k] for k in TRANSCRIBE_KEYS]
+        ctx["auto_transcribe"] = data.get("auto_transcribe", "0") == "1"
         ctx["feeds"] = Feed.objects.filter(user=request.user).select_related("source").order_by(
             "fetch_interval_minutes"
         )
@@ -230,6 +246,7 @@ def settings_view(request, tab="general"):
         cfg = getattr(request.user, "config", None)
         ctx["sync_curation"] = bool(cfg and cfg.data.get("sync_curation") == "1")
         ctx["sync_aifeeds"] = not (cfg and cfg.data.get("sync_aifeeds") == "0")
+        ctx["sync_transcription"] = not (cfg and cfg.data.get("sync_transcription") == "0")
     elif tab == "account":
         from django_otp.plugins.otp_totp.models import TOTPDevice
 

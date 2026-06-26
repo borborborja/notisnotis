@@ -57,3 +57,17 @@ class BaseEmbedProvider:
     def list_models(self):
         """Lista de ids de modelos de embeddings disponibles (vacío si no aplica)."""
         return []
+
+
+class BaseTranscribeProvider:
+    """Transcripción audio→texto (whisper local, OpenAI o mock)."""
+
+    def __init__(self, model: str = "", **kwargs):
+        self.model = model
+        self.config = kwargs
+
+    def transcribe(self, audio_bytes, *, filename="audio.mp3", lang=""):  # pragma: no cover
+        raise NotImplementedError
+
+    def list_models(self):
+        return []

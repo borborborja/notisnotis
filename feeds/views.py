@@ -13,9 +13,10 @@ from .opml import _domain, crawl_new_feeds, import_opml_for_user
 def _create_feed(user, url, title, category=None):
     domain = _domain(url) or "unknown"
     source, _ = Source.objects.get_or_create(domain=domain, defaults={"name": title or domain})
+    kind = "youtube" if "youtube.com/feeds/videos.xml" in url else "rss"
     feed, created = Feed.objects.get_or_create(
         user=user, url=url,
-        defaults={"source": source, "title": title or "", "category": category,
+        defaults={"source": source, "title": title or "", "category": category, "kind": kind,
                   "crawler": crawl_new_feeds(user)},
     )
     return feed, created
@@ -240,6 +241,9 @@ def feed_edit(request, pk):
         feed.enabled = request.POST.get("enabled") == "1"
         feed.crawler = request.POST.get("crawler") == "1"
         feed.auto_interval = request.POST.get("auto_interval") == "1"
+        kind = request.POST.get("kind", feed.kind)
+        if kind in dict(Feed.KIND_CHOICES):
+            feed.kind = kind
         try:
             feed.fetch_interval_minutes = max(5, int(request.POST.get("interval", feed.fetch_interval_minutes)))
         except (TypeError, ValueError):

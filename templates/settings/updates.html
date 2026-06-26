@@ -101,12 +101,34 @@
   </div>
 </div>
 
-{# ---------------- AUDIO (futuro) ---------------- #}
+{# ---------------- AUDIO ---------------- #}
 <div data-subpane="audio" hidden>
   <div class="card">
-    <h3>Fuentes audio</h3>
-    <p class="muted">Próximamente: podcasts y canales de YouTube con reproductor y transcripción
-      automática, tratados como artículos. (Funcionalidad futura.)</p>
+    <p class="muted">Podcasts y canales de YouTube con reproductor y transcripción automática,
+      tratados como artículos. Importa un OPML de podcasts o añade un canal de YouTube desde
+      “Añadir feed”.</p>
+    <form method="post" action="{% url 'account_settings_tab' 'updates' %}">{% csrf_token %}
+      <input type="hidden" name="action" value="save_audio">
+      {% for f in transcribe_fields %}
+        <div class="form-row">
+          <label>{{ f.label }}</label>
+          {% if f.locked %}
+            <p class="locked-val"><code>{{ f.effective }}</code> <span class="muted">· fijado por el operador</span></p>
+          {% elif f.choices %}
+            <select name="{{ f.key }}">{% for c in f.choices %}<option value="{{ c }}" {% if c == f.effective %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+          {% else %}
+            <input type="text" name="{{ f.key }}" value="{{ f.value }}" placeholder="{{ f.default }}">
+          {% endif %}
+        </div>
+      {% endfor %}
+      <div class="form-row">
+        <label class="switch"><input type="checkbox" name="auto_transcribe" value="1" {% if auto_transcribe %}checked{% endif %}>
+          <span>Transcribir automáticamente los episodios nuevos</span></label>
+        <p class="field-help muted">Si lo desactivas, solo se transcribe lo que pidas con el botón
+          “Transcribir” del lector. La transcripción la hace el servidor en segundo plano.</p>
+      </div>
+      <button class="btn" type="submit">Guardar</button>
+    </form>
   </div>
 </div>
 {% endblock %}

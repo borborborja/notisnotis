@@ -96,6 +96,21 @@
 </div></div>
 {% endif %}
 
+{% if sidebar_audio %}
+<div class="sb-section" data-section="audio">
+<button class="sb-section-head" type="button" data-section-toggle><span class="caret">▸</span> Fuentes audio</button>
+<div class="sb-section-body">
+<nav class="sb-nav">
+  {% for f in sidebar_audio %}
+    <a href="{% url 'articles:list' %}?feed={{ f.id }}" class="sb-item">
+      <span><svg class="ic"><use href="#i-{% if f.kind == 'youtube' %}video{% else %}mic{% endif %}"/></svg> <span class="sb-feed-name">{{ f.title|default:f.source.name }}</span></span>
+      {% if f.unread %}<span class="sb-count">{{ f.unread }}</span>{% endif %}
+    </a>
+  {% endfor %}
+</nav>
+</div></div>
+{% endif %}
+
 {% if sidebar_tags %}
 <div class="sb-section-title">Etiquetas</div>
 <nav class="sb-nav">

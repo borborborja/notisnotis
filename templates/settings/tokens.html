@@ -34,6 +34,12 @@
       <p class="field-help muted">Si lo desactivas, los artículos de tus “Feeds con IA” no se
         envían por Fever/Google Reader (tu lector externo queda solo con tus RSS).</p>
     </div>
+    <div class="form-row">
+      <label class="switch"><input type="checkbox" name="sync_transcription" value="1" {% if sync_transcription %}checked{% endif %}>
+        <span>Incluir las transcripciones de podcasts en la sincronización</span></label>
+      <p class="field-help muted">Si lo desactivas, los episodios se sincronizan sin la transcripción
+        automática (solo con su descripción).</p>
+    </div>
     <button class="btn btn-ghost" type="submit">Guardar</button>
   </form>
 </div>

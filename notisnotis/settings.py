@@ -190,6 +190,7 @@ AI = {
     "CLUSTER_THRESHOLD": float(os.environ.get("AI_CLUSTER_THRESHOLD", "0.78")),
     "CLUSTER_WINDOW_DAYS": int(os.environ.get("AI_CLUSTER_WINDOW_DAYS", "3")),
     "TIMEOUT": int(os.environ.get("AI_TIMEOUT", "120")),
+    "TRANSCRIBE_TIMEOUT": int(os.environ.get("AI_TRANSCRIBE_TIMEOUT", "1800")),
 }
 
 RSS_USER_AGENT = os.environ.get("RSS_USER_AGENT", "NotisNotis/0.1")

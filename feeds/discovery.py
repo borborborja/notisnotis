@@ -1,12 +1,25 @@
 """Autodescubrimiento de feeds a partir de una URL (feed directo o página HTML)."""
 from __future__ import annotations
 
+import re
 from urllib.parse import urljoin
 
 import feedparser
 import requests
 from bs4 import BeautifulSoup
 from django.conf import settings
+
+
+def _youtube_feed(url, text):
+    """Si la URL es un canal de YouTube, devuelve su feed RSS (videos.xml)."""
+    if "youtube.com" not in url and "youtu.be" not in url:
+        return None
+    if "/feeds/videos.xml" in url:
+        return url
+    m = re.search(r'"channelId":"(UC[\w-]{20,})"', text) or re.search(r"/channel/(UC[\w-]{20,})", text)
+    if m:
+        return f"https://www.youtube.com/feeds/videos.xml?channel_id={m.group(1)}"
+    return None
 
 
 def _looks_like_feed(text, ctype):
@@ -31,6 +44,11 @@ def discover_feeds(url):
         return []
     text = resp.text
     ctype = resp.headers.get("Content-Type", "")
+
+    yt = _youtube_feed(resp.url, text)
+    if yt:
+        parsed = feedparser.parse(yt)
+        return [(yt, parsed.feed.get("title", "Canal de YouTube"))]
 
     if _looks_like_feed(text, ctype):
         parsed = feedparser.parse(text)

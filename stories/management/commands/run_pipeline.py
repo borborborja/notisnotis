@@ -28,6 +28,10 @@ class Command(BaseCommand):
         run("enrich_articles", **user_args)  # solo enriquece usuarios en modo batch
         run("cluster_stories", **user_args)
         run("rate_sources")
+        try:
+            run("transcribe_episodes", limit=3)  # trickle: transcribir es lento
+        except Exception as exc:  # noqa: BLE001 - no debe tumbar el pipeline
+            self.stderr.write(f"[transcribe] {exc}")
         run("fetch_favicons", limit=25)  # trickle: evita bloquear el pipeline
         run("analyze_stories")
         self.stdout.write(self.style.SUCCESS("Pipeline completado."))

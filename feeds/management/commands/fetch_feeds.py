@@ -111,12 +111,18 @@ class Command(BaseCommand):
                 if feed.crawler and settings.FULLTEXT_ENABLED:
                     self._crawl(new_articles)
 
+                fields = ["etag", "last_modified", "last_fetched", "last_error", "fail_count"]
+                # Auto-detección: si llegan adjuntos de audio, es un podcast.
+                if feed.kind == "rss" and any("audio" in (a.enclosure_type or "") for a in new_articles):
+                    feed.kind = "podcast"
+                    fields.append("kind")
+
                 feed.etag = (getattr(parsed, "etag", "") or "")[:512]
                 feed.last_modified = (getattr(parsed, "modified", "") or "")[:128]
                 feed.last_fetched = timezone.now()
                 feed.last_error = "" if not parsed.get("bozo") else str(parsed.get("bozo_exception", ""))[:500]
                 feed.fail_count = 0
-                feed.save(update_fields=["etag", "last_modified", "last_fetched", "last_error", "fail_count"])
+                feed.save(update_fields=fields)
 
         self.stdout.write(self.style.SUCCESS(
             f"Nuevos: {total_new} | bloqueados: {total_blocked} | 304: {not_modified} | "
