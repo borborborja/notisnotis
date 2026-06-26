@@ -79,11 +79,13 @@ def import_opml_for_user(user, content: str):
                 cat_cache[cat_name], _ = Category.objects.get_or_create(user=user, name=cat_name)
             category = cat_cache[cat_name]
 
+        # Detección de tipo por URL (los podcasts se auto-detectan luego por su audio).
+        kind = "youtube" if "youtube.com/feeds/videos.xml" in url else "rss"
         feed, was_created = Feed.objects.get_or_create(
             user=user,
             url=url,
             defaults={"source": source, "title": entry["title"], "category": category,
-                      "crawler": want_crawl},
+                      "crawler": want_crawl, "kind": kind},
         )
         if was_created:
             created += 1

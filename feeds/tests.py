@@ -177,3 +177,18 @@ class CrawlNewFeedsTests(TestCase):
                '<outline type="rss" text="Y" xmlUrl="http://y.com/rss"/></body></opml>'
         import_opml_for_user(user, opml)
         self.assertFalse(Feed.objects.get(user=user, url="http://y.com/rss").crawler)
+
+
+class OpmlKindTests(TestCase):
+    def test_opml_marks_youtube_kind(self):
+        from django.contrib.auth import get_user_model
+        from feeds.models import Feed
+        from feeds.opml import import_opml_for_user
+
+        u = get_user_model().objects.create_user("yt", "", "pw")
+        opml = ('<?xml version="1.0"?><opml><body>'
+                '<outline type="rss" text="Canal" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UC123"/>'
+                '<outline type="rss" text="Blog" xmlUrl="https://blog.com/rss"/></body></opml>')
+        import_opml_for_user(u, opml)
+        self.assertEqual(Feed.objects.get(user=u, url__contains="youtube").kind, "youtube")
+        self.assertEqual(Feed.objects.get(user=u, url="https://blog.com/rss").kind, "rss")
